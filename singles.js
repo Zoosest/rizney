@@ -1,24 +1,35 @@
-/* Singles — first test: Monkey Judge.
- *
- * Standalone file.
- * Does not modify main.js or whack-a-track.js.
- */
+/* =========================================================
+   SINGLES
+   YOU DON'T KNOW TRACK
+
+   First test:
+   #114 — Monkey Judge 🐒⚖
+   YouTube ID: SHhsdD5viWs
+
+   This file is intentionally standalone.
+   It does not modify main.js.
+   It does not modify whack-a-track.js.
+   ========================================================= */
 
 (() => {
   "use strict";
+
 
   /* =========================================================
      SINGLE #1
      ========================================================= */
 
   const SINGLE_TRACK_NUMBER = 114;
-  const SINGLE_VIDEO_ID = "SHhsdD5viWs";
 
-  const BANNER_ID = "singles-banner";
+  const SINGLE_VIDEO_ID =
+    "SHhsdD5viWs";
+
+  const BANNER_ID =
+    "singles-banner";
 
 
   /* =========================================================
-     HELPERS
+     HELPER
      ========================================================= */
 
   const $ = selector =>
@@ -31,29 +42,46 @@
 
   function createBanner() {
 
-    if ($(`#${BANNER_ID}`)) {
-      return $(`#${BANNER_ID}`);
+    /*
+     * Don't create it twice.
+     */
+
+    const existing =
+      $(`#${BANNER_ID}`);
+
+    if (existing) {
+      return existing;
     }
+
 
     const banner =
       document.createElement("section");
 
-    banner.id = BANNER_ID;
+    banner.id =
+      BANNER_ID;
 
     banner.setAttribute(
       "aria-label",
       "Singles"
     );
 
+
     banner.innerHTML = `
-      <div class="singles-banner-text">
+
+      <div class="singles-banner-main">
         YOU DON'T KNOW TRACK
       </div>
 
-      <div class="singles-banner-subtitle">
+      <div class="singles-banner-label">
         🎤 SINGLES
       </div>
+
     `;
+
+
+    /* =======================================================
+       SINGLES BANNER STYLE
+       ======================================================= */
 
     const style =
       document.createElement("style");
@@ -61,9 +89,11 @@
     style.textContent = `
 
       #${BANNER_ID} {
+
         display: none;
 
         width: 100%;
+
         box-sizing: border-box;
 
         margin: 0;
@@ -76,8 +106,11 @@
 
         background: #120b18;
 
-        border-top: 1px solid #d4af37;
-        border-bottom: 1px solid #d4af37;
+        border-top:
+          1px solid #d4af37;
+
+        border-bottom:
+          1px solid #d4af37;
 
         font-family:
           Georgia,
@@ -85,15 +118,18 @@
           serif;
 
         box-shadow:
-          0 4px 14px rgba(0,0,0,.45);
+          0 4px 14px
+          rgba(0,0,0,.45);
 
         position: relative;
+
         z-index: 80;
+
       }
 
 
       #${BANNER_ID}
-      .singles-banner-text {
+      .singles-banner-main {
 
         font-size: 1rem;
 
@@ -105,7 +141,7 @@
 
 
       #${BANNER_ID}
-      .singles-banner-subtitle {
+      .singles-banner-label {
 
         margin-top: 3px;
 
@@ -126,8 +162,9 @@
 
         }
 
+
         #${BANNER_ID}
-        .singles-banner-text {
+        .singles-banner-main {
 
           font-size: .85rem;
 
@@ -137,16 +174,19 @@
 
     `;
 
-    document.head.appendChild(style);
+
+    document.head.appendChild(
+      style
+    );
 
 
-    /*
-     * Put the banner directly underneath
-     * the existing music toolbar.
-     */
+    /* =======================================================
+       PLACE BANNER UNDER THE MUSIC TOOLBAR
+       ======================================================= */
 
     const controls =
       $(".controls");
+
 
     if (controls) {
 
@@ -156,6 +196,11 @@
       );
 
     } else {
+
+      /*
+       * Fallback in case the toolbar
+       * hasn't appeared yet.
+       */
 
       document.body.prepend(
         banner
@@ -169,17 +214,23 @@
 
 
   /* =========================================================
-     DETECT MONKEY JUDGE
+     CHECK CURRENT SONG
      ========================================================= */
 
   function isMonkeyJudgePlaying() {
 
     /*
-     * First try the YouTube player.
+     * The main player exposes itself as:
+     *
+     * window.rizneyPlayer
+     *
+     * We use that instead of touching
+     * main.js's private variables.
      */
 
     const player =
       window.rizneyPlayer;
+
 
     if (
       player &&
@@ -192,13 +243,16 @@
         const data =
           player.getVideoData();
 
+
         if (
           data &&
           data.video_id
         ) {
 
           return (
-            String(data.video_id) ===
+            String(
+              data.video_id
+            ) ===
             SINGLE_VIDEO_ID
           );
 
@@ -206,33 +260,42 @@
 
       } catch (error) {
 
-        /* Player may not be ready yet. */
+        /*
+         * Player may not be ready yet.
+         */
 
       }
 
     }
 
 
-    /*
-     * Fallback: inspect the now-playing
-     * display on the page.
-     */
+    /* =======================================================
+       FALLBACK
+
+       If the YouTube player isn't ready,
+       look at the Now Playing display.
+       ======================================================= */
 
     const nowPlaying =
       $("#now-playing");
+
 
     if (!nowPlaying) {
       return false;
     }
 
-    return /Song\s+114/i.test(
+
+    return (
       nowPlaying.textContent
+        .includes(
+          `Song ${SINGLE_TRACK_NUMBER}`
+        )
     );
   }
 
 
   /* =========================================================
-     SHOW / HIDE
+     UPDATE BANNER
      ========================================================= */
 
   function updateBanner() {
@@ -240,9 +303,11 @@
     const banner =
       $(`#${BANNER_ID}`);
 
+
     if (!banner) {
       return;
     }
+
 
     if (
       isMonkeyJudgePlaying()
@@ -257,6 +322,7 @@
         "none";
 
     }
+
   }
 
 
@@ -270,23 +336,27 @@
 
     updateBanner();
 
+
     /*
-     * The existing player code changes the
-     * current song internally, so we don't
-     * touch it.
+     * main.js owns the actual YouTube
+     * player events.
      *
-     * We simply watch it from the outside.
+     * We don't interfere with them.
+     *
+     * We simply check periodically which
+     * video is currently loaded.
      */
 
-    setInterval(
+    window.setInterval(
       updateBanner,
       500
     );
+
   }
 
 
   /* =========================================================
-     START
+     INITIALIZE
      ========================================================= */
 
   function init() {
@@ -296,6 +366,10 @@
   }
 
 
+  /* =========================================================
+     START SAFELY
+     * ========================================================= */
+
   if (
     document.readyState ===
     "loading"
@@ -304,7 +378,9 @@
     document.addEventListener(
       "DOMContentLoaded",
       init,
-      { once: true }
+      {
+        once: true
+      }
     );
 
   } else {
@@ -312,5 +388,6 @@
     init();
 
   }
+
 
 })();
