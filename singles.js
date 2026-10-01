@@ -108,7 +108,10 @@
         border-bottom: 1px solid #d4af37;
         font-family: Georgia, "Times New Roman", serif;
         box-shadow: 0 4px 14px rgba(0,0,0,.45);
-        position: relative;
+        
+        /* Make the Singles banner sticky right under your toolbar */
+        position: sticky;
+        top: 48px; /* Adjust this number if your toolbar height is taller/shorter */
         z-index: 80;
       }
 
@@ -136,6 +139,7 @@
       @media (max-width: 500px) {
         #${BANNER_ID} {
           padding: 8px 10px;
+          top: 40px;
         }
 
         #${BANNER_ID} .singles-banner-main {
@@ -179,7 +183,6 @@
     const player =
       window.rizneyPlayer;
 
-
     if (
       player &&
       typeof player.getVideoData ===
@@ -195,11 +198,9 @@
           data &&
           data.video_id
         ) {
-
-          return (
-            String(data.video_id) ===
-            SINGLE_VIDEO_ID
-          );
+          const isMatch = String(data.video_id) === SINGLE_VIDEO_ID;
+          console.log("[Singles] YouTube Player Video ID:", data.video_id, "Match:", isMatch);
+          return isMatch;
         }
 
       } catch (error) {}
@@ -213,12 +214,10 @@
       return false;
     }
 
-
-    return (
-      nowPlaying.textContent.includes(
-        `Song ${SINGLE_TRACK_NUMBER}`
-      )
-    );
+    const textMatch = nowPlaying.textContent.includes(`Song ${SINGLE_TRACK_NUMBER}`);
+    console.log("[Singles] #now-playing text:", nowPlaying.textContent, "Match:", textMatch);
+    
+    return textMatch;
   }
 
 
@@ -235,13 +234,10 @@
       return;
     }
 
-
     const singlesActive =
       isMonkeyJudgePlaying();
 
-
     if (singlesActive) {
-      // Drop down cleanly right under the toolbar without yanking the page
       banner.style.display = "block";
     } else {
       banner.style.display = "none";
@@ -259,7 +255,6 @@
 
     updateBanner();
 
-
     window.setInterval(
       updateBanner,
       500
@@ -272,7 +267,6 @@
      ========================================================= */
 
   function init() {
-
     startWatching();
   }
 
@@ -281,15 +275,12 @@
     document.readyState ===
     "loading"
   ) {
-
     document.addEventListener(
       "DOMContentLoaded",
       init,
       { once: true }
     );
-
   } else {
-
     init();
   }
 
