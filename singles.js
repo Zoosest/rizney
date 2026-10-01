@@ -19,12 +19,6 @@
   const BANNER_ID = "singles-banner";
   const STORAGE_KEY = "singles_arcade_score";
 
-  /*
-   * State flags to track behaviors that should 
-   * only happen once per appearance.
-   */
-  let singlesWasActive = false;
-
   const $ = selector =>
     document.querySelector(selector);
 
@@ -170,7 +164,6 @@
       );
     }
 
-    // Render the score as soon as the banner is created
     renderScoreDisplay();
 
     return banner;
@@ -248,47 +241,10 @@
 
 
     if (singlesActive) {
-
-      banner.style.display =
-        "block";
-
-
-      /*
-       * We just arrived at the Single.
-       *
-       * Scroll the page up to the
-       * Singles area exactly once.
-       */
-
-      if (!singlesWasActive) {
-
-        singlesWasActive = true;
-
-        window.setTimeout(() => {
-
-          banner.scrollIntoView({
-            behavior: "smooth",
-            block: "start"
-          });
-
-        }, 100);
-      }
-
-
+      // Drop down cleanly right under the toolbar without yanking the page
+      banner.style.display = "block";
     } else {
-
-      /*
-       * The Single is no longer active.
-       *
-       * Reset the flag so the next time
-       * Monkey Judge comes around,
-       * we scroll again.
-       */
-
-      singlesWasActive = false;
-
-      banner.style.display =
-        "none";
+      banner.style.display = "none";
     }
   }
 
