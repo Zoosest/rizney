@@ -17,15 +17,49 @@
   const SINGLE_TRACK_NUMBER = 114;
   const SINGLE_VIDEO_ID = "SHhsdD5viWs";
   const BANNER_ID = "singles-banner";
+  const STORAGE_KEY = "singles_arcade_score";
 
   /*
-   * Remembers whether we've already scrolled
-   * for the current appearance of the Single.
+   * State flags to track behaviors that should 
+   * only happen once per appearance.
    */
   let singlesWasActive = false;
 
   const $ = selector =>
     document.querySelector(selector);
+
+
+  /* =========================================================
+     SCORE & QUARTER SYSTEM (LOCAL STORAGE)
+     ========================================================= */
+
+  function getScore() {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    return saved !== null ? parseInt(saved, 10) : 0;
+  }
+
+  function updateScore(change) {
+    const current = getScore();
+    const newScore = current + change;
+    localStorage.setItem(STORAGE_KEY, newScore);
+    renderScoreDisplay();
+    return newScore;
+  }
+
+  function renderScoreDisplay() {
+    let scoreEl = $(`#${BANNER_ID}-score`);
+    const banner = $(`#${BANNER_ID}`);
+    
+    if (!banner) return;
+
+    if (!scoreEl) {
+      scoreEl = document.createElement("div");
+      scoreEl.id = `${BANNER_ID}-score`;
+      banner.appendChild(scoreEl);
+    }
+
+    scoreEl.textContent = `SCORE: ${getScore()}`;
+  }
 
 
   /* =========================================================
@@ -97,6 +131,14 @@
         letter-spacing: .16em;
       }
 
+      #${BANNER_ID}-score {
+        margin-top: 6px;
+        color: #f5d76e;
+        font-size: .85rem;
+        letter-spacing: .1em;
+        font-weight: bold;
+      }
+
       @media (max-width: 500px) {
         #${BANNER_ID} {
           padding: 8px 10px;
@@ -127,6 +169,9 @@
         banner
       );
     }
+
+    // Render the score as soon as the banner is created
+    renderScoreDisplay();
 
     return banner;
   }
