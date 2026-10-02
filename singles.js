@@ -1,4 +1,3 @@
-
 /* =========================================================
    "YOU DON'T KNOW TRACK" - PIRATE DUEL EDITION (WITH BOOTY)
    ========================================================= */ 
@@ -76,7 +75,7 @@
     wrapper.style.pointerEvents = "none";
   } 
 
-  // State 1: The initial opt-in banner with full-box Captain Black Bear
+  // State 1: The initial opt-in banner with full uncropped Captain Black Bear
   function showPromptState() {
     const wrapper = document.getElementById(CONTAINER_ID);
     if (!wrapper) return;
@@ -87,13 +86,13 @@
         ⚔️ PIRATE DUEL CHALLENGE: Monkey Judge
       </div>
       
-      <!-- Full box image container -->
-      <div style="width: 100%; max-height: 240px; overflow: hidden; border-radius: 6px; border: 1px solid #d4af37; margin-bottom: 15px; background: #000;">
+      <!-- Full box image container using contain so nothing gets cut off -->
+      <div style="width: 100%; max-height: 260px; overflow: hidden; border-radius: 6px; border: 1px solid #d4af37; margin-bottom: 15px; background: #0c0810; display: flex; justify-content: center; align-items: center;">
         <img src="./assets/black-bear.png" alt="Captain Black Bear" style="
           width: 100%;
           height: auto;
-          max-height: 240px;
-          object-fit: cover;
+          max-height: 260px;
+          object-fit: contain;
           display: block;
           image-rendering: pixelated;
         ">
