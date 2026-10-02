@@ -1,5 +1,5 @@
 /* =========================================================
-   "YOU DON'T KNOW TRACK" - WITH AUTO-SKIP TO NEXT TRACK
+   "YOU DON'T KNOW TRACK" - FIXED BOTTOM POPUP VERSION
    ========================================================= */
 
 (() => {
@@ -29,28 +29,27 @@
 
     const wrapper = document.createElement("div");
     wrapper.id = CONTAINER_ID;
+    // Pinned to the bottom center of the screen so it floats over everything without scrolling
     wrapper.style.cssText = `
       display: none;
+      position: fixed;
+      bottom: 25px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 90%;
+      max-width: 550px;
       background: #1a1420;
       border: 2px solid #d4af37;
       color: #f5d76e;
       padding: 20px;
-      margin: 15px auto;
-      max-width: 600px;
-      border-radius: 8px;
+      border-radius: 10px;
       font-family: Georgia, serif;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+      box-shadow: 0 8px 30px rgba(0,0,0,0.8);
       text-align: center;
-      z-index: 999;
-      position: relative;
+      z-index: 99999;
     `;
 
-    const targetAnchor = document.querySelector(".controls") || document.body.firstElementChild;
-    if (targetAnchor) {
-      targetAnchor.insertAdjacentElement("afterend", wrapper);
-    } else {
-      document.body.prepend(wrapper);
-    }
+    document.body.appendChild(wrapper);
   }
 
   // State 1: The initial opt-in banner
@@ -194,7 +193,7 @@
       feedback.textContent = `❌ Not quite! The correct answer was: ${QUIZ.options[QUIZ.correctIndex]}`;
     }
 
-    // Wait 2.5 seconds so they can read the result, then skip to the next track
+    // Wait 2.5 seconds to read the feedback, then skip to the next track and hide the box
     setTimeout(() => {
       skipToNextTrack();
     }, 2500);
