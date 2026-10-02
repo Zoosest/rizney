@@ -1,802 +1,152 @@
 /* =========================================================
-   SINGLES
-   YOU DON'T KNOW TRACK
-
-   First test:
-   #114 — Monkey Judge 🐒⚖
-   YouTube ID: SHhsdD5viWs
-
-   This file is intentionally standalone.
-   It does not modify main.js.
-   It does not modify whack-a-track.js.
+   SIMPLIFIED "YOU DON'T KNOW TRACK"
+   Triggers a dropdown quiz when Monkey Judge plays.
    ========================================================= */
 
 (() => {
   "use strict";
 
-  const SINGLE_TRACK_NUMBER = 114;
-  const SINGLE_VIDEO_ID = "SHhsdD5viWs";
-  const BANNER_ID = "singles-banner";
-  const QUIZ_MODAL_ID = "you-dont-know-track-quiz";
-  const POINTS_STORAGE_KEY = "youDontKnowTrackPoints";
-  
-  // Quiz configuration
-  const ENTRY_COST = 25;
-  const WIN_REWARD = 100;
-  const LOSE_PENALTY = 25;
-  const STARTING_POINTS = 100;
+  const TARGET_VIDEO_ID = "SHhsdD5viWs";
+  const TARGET_TITLE = "Monkey Judge";
+  const CONTAINER_ID = "simple-quiz-container";
 
-  /*
-   * Remembers whether we've already scrolled
-   * for the current appearance of the Single.
-   */
-  let singlesWasActive = false;
+  // 1. Define your question
+  const QUIZ = {
+    question: "Fill in the blank: 'Monkey judge, monkey jury, ____.'",
+    options: [
+      "Everyone in such a hurry",
+      "Monkeys are always so dirty",
+      "Everything is getting blurry",
+      "Getting so worried"
+    ],
+    correctIndex: 0
+  };
 
-  const $ = selector =>
-    document.querySelector(selector);
+  // 2. Create and inject the quiz HTML into the page once on load
+  function injectQuizUI() {
+    if (document.getElementById(CONTAINER_ID)) return;
 
-  const $$ = selector =>     document.querySelectorAll(selector);     /* =========================================================      QUIZ QUESTIONS DATABASE      ========================================================= */    const QUIZ_QUESTIONS = [     {       id: 1,       song: "Monkey Judge 🐒⚖",       trackNumber: 114,       videoId: "SHhsdD5viWs",       question: "Fill in the blank: 'Monkey judge, monkey jury, ____.'",       options: [         "Everyone in such a hurry",         "Monkeys are always so dirty",         "Everything is getting blurry",         "Getting so worried"       ],       correctAnswer: 0     }   ];     /* =========================================================      POINTS MANAGEMENT      ========================================================= */    function getPlayerPoints() {     const stored = localStorage.getItem(POINTS_STORAGE_KEY);     if (stored === null) {       localStorage.setItem(POINTS_STORAGE_KEY, STARTING_POINTS);       return STARTING_POINTS;     }     return parseInt(stored, 10);   }    function setPlayerPoints(points) {     const newPoints = Math.max(0, points);     localStorage.setItem(POINTS_STORAGE_KEY, newPoints);     updatePointsDisplay();     return newPoints;   }    function addPoints(amount) {     const current = getPlayerPoints();     return setPlayerPoints(current + amount);   }    function subtractPoints(amount) {     return addPoints(-amount);   }    function updatePointsDisplay() {     const displays = $$(`#${BANNER_ID} .points-display`);
-    const points = getPlayerPoints();
-    displays.forEach(display => {
-      display.textContent = `Points: ${points}`;
-    });
-  }
-
-
-  /* =========================================================
-     CREATE BANNER
-     ========================================================= */
-
-  function createBanner() {
-
-    const existing =
-      $(`#${BANNER_ID}`);
-
-    if (existing) {
-      return existing;
-    }
-
-    const banner =
-      document.createElement("section");
-
-    banner.id =
-      BANNER_ID;
-
-    banner.setAttribute(
-      "aria-label",
-      "Singles"
-    );
-
-    const currentPoints = getPlayerPoints();
-
-    banner.innerHTML = `
-      <div class="singles-banner-main">
-        YOU DON'T KNOW TRACK
-      </div>
-
-      <div class="singles-banner-label">
-        🎤 SINGLES
-      </div>
-
-      <div class="singles-banner-controls">
-        <button class="quiz-button" id="open-quiz-button" type="button">
-          ❓ Test Your Knowledge
-        </button>
-        <span class="points-display">Points: ${currentPoints}</span>
-      </div>
+    const wrapper = document.createElement("div");
+    wrapper.id = CONTAINER_ID;
+    wrapper.style.cssText = `
+      display: none;
+      background: #1a1420;
+      border: 2px solid #d4af37;
+      color: #f5d76e;
+      padding: 20px;
+      margin: 15px auto;
+      max-width: 600px;
+      border-radius: 8px;
+      font-family: Georgia, serif;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+      text-align: center;
+      z-index: 999;
+      position: relative;
     `;
 
-
-    const style =
-      document.createElement("style");
-
-    style.textContent = `
-      #${BANNER_ID} {
-        display: none;
-        width: 100%;
-        box-sizing: border-box;
-        margin: 0;
-        padding: 10px 12px;
-        text-align: center;
-        color: #f5d76e;
-        background: #120b18;
-        border-top: 1px solid #d4af37;
-        border-bottom: 1px solid #d4af37;
-        font-family: Georgia, "Times New Roman", serif;
-        box-shadow: 0 4px 14px rgba(0,0,0,.45);
-        position: relative;
-        z-index: 80;
-      }
-
-      #${BANNER_ID} .singles-banner-main {
-        font-size: 1rem;
-        font-weight: bold;
-        letter-spacing: .12em;
-      }
-
-      #${BANNER_ID} .singles-banner-label {
-        margin-top: 3px;
-        color: #c084fc;
-        font-size: .7rem;
-        letter-spacing: .16em;
-        margin-bottom: 10px;
-      }
-
-      #${BANNER_ID} .singles-banner-controls {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        gap: 15px;
-        flex-wrap: wrap;
-      }
-
-      #${BANNER_ID} .quiz-button {
-        padding: 8px 16px;
-        background: #c084fc;
-        color: #120b18;
-        border: none;
-        border-radius: 4px;
-        font-weight: bold;
-        cursor: pointer;
-        font-family: Georgia, "Times New Roman", serif;
-        font-size: 0.9rem;
-        transition: all 0.2s ease;
-      }
-
-      #${BANNER_ID} .quiz-button:hover {
-        background: #d4a5ff;
-        transform: scale(1.05);
-      }
-
-      #${BANNER_ID} .quiz-button:active {
-        transform: scale(0.98);
-      }
-
-      #${BANNER_ID} .points-display {
-        font-size: 0.9rem;
-        color: #f5d76e;
-        font-weight: bold;
-      }
-
-      @media (max-width: 500px) {
-        #${BANNER_ID} {
-          padding: 8px 10px;
-        }
-
-        #${BANNER_ID} .singles-banner-main {
-          font-size: .85rem;
-        }
-
-        #${BANNER_ID} .singles-banner-controls {
-          gap: 10px;
-        }
-
-        #${BANNER_ID} .quiz-button {
-          padding: 6px 12px;
-          font-size: 0.8rem;
-        }
-
-        #${BANNER_ID} .points-display {
-          font-size: 0.8rem;
-        }
-      }
+    wrapper.innerHTML = `
+      <h3 style="color: #c084fc; margin-top: 0;">🎤 YOU DON'T KNOW TRACK: Monkey Judge</h3>
+      <p style="font-size: 1.1rem; margin: 15px 0;">${QUIZ.question}</p>
+      <div id="quiz-options-list" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px;"></div>
+      <div id="quiz-feedback" style="font-weight: bold; font-size: 1.1rem; min-height: 24px;"></div>
     `;
 
-    document.head.appendChild(style);
-
-
-    const controls =
-      $(".controls");
-
-    if (controls) {
-
-      controls.insertAdjacentElement(
-        "afterend",
-        banner
-      );
-
+    // Try to insert it right below your controls or header, fallback to top of body
+    const targetAnchor = document.querySelector(".controls") || document.body.firstElementChild;
+    if (targetAnchor) {
+      targetAnchor.insertAdjacentElement("afterend", wrapper);
     } else {
-
-      document.body.prepend(
-        banner
-      );
+      document.body.prepend(wrapper);
     }
 
-    // Use event delegation so button clicks are never missed
-    banner.addEventListener("click", (e) => {
-      if (e.target.closest("#open-quiz-button")) {
-        startQuiz();
-      }
-    });
-
-    return banner;
+    renderOptions();
   }
 
+  // Render the multiple choice buttons
+  function renderOptions() {
+    const list = document.getElementById("quiz-options-list");
+    if (!list) return;
 
-  /* =========================================================
-     CREATE QUIZ MODAL
-     ========================================================= */
-
-  function createQuizModal() {
-    const existing = $(`#${QUIZ_MODAL_ID}`);
-    if (existing) {
-      return existing;
-    }
-
-    const modal = document.createElement("div");
-    modal.id = QUIZ_MODAL_ID;
-
-    const style = document.createElement("style");
-    style.textContent = `
-      #${QUIZ_MODAL_ID} {
-        display: none;
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0, 0, 0, 0.8);
-        z-index: 1000;
-        justify-content: center;
-        align-items: center;
-        overflow-y: auto;
-      }
-
-      #${QUIZ_MODAL_ID}.active {
-        display: flex;
-      }
-
-      .quiz-modal-content {
-        background: #1a1420;
-        border: 2px solid #d4af37;
-        border-radius: 8px;
-        padding: 30px;
-        max-width: 600px;
-        width: 90%;
-        margin: 20px;
-        color: #f5d76e;
-        font-family: Georgia, "Times New Roman", serif;
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.8);
-      }
-
-      .quiz-header {
-        text-align: center;
-        margin-bottom: 25px;
-        border-bottom: 1px solid #d4af37;
-        padding-bottom: 15px;
-      }
-
-      .quiz-header h2 {
-        margin: 0 0 5px 0;
-        font-size: 1.5rem;
-        color: #c084fc;
-      }
-
-      .quiz-song-title {
-        font-size: 1.1rem;
-        color: #f5d76e;
-        margin-bottom: 10px;
-      }
-
-      .quiz-cost {
-        font-size: 0.9rem;
-        color: #ff6b6b;
-        font-weight: bold;
-      }
-
-      .quiz-question {
-        font-size: 1.1rem;
-        margin: 20px 0;
-        text-align: center;
-        color: #f5d76e;
-        line-height: 1.6;
-      }
-
-      .quiz-options {
-        display: flex;
-        flex-direction: column;
-        gap: 12px;
-        margin: 25px 0;
-      }
-
-      .quiz-option {
-        padding: 12px;
+    list.innerHTML = "";
+    QUIZ.options.forEach((opt, index) => {
+      const btn = document.createElement("button");
+      btn.textContent = `${String.fromCharCode(65 + index)}. ${opt}`;
+      btn.style.cssText = `
+        padding: 10px;
         background: #0f0a13;
-        border: 2px solid #c084fc;
-        border-radius: 4px;
+        border: 1px solid #c084fc;
         color: #f5d76e;
+        border-radius: 4px;
         cursor: pointer;
-        font-family: Georgia, "Times New Roman", serif;
-        font-size: 1rem;
-        transition: all 0.2s ease;
         text-align: left;
-      }
-
-      .quiz-option:hover {
-        background: #1a1520;
-        border-color: #d4a5ff;
-      }
-
-      .quiz-option.selected {
-        background: #c084fc;
-        color: #120b18;
-        border-color: #c084fc;
-      }
-
-      .quiz-option.correct {
-        background: #51cf66;
-        color: #fff;
-        border-color: #51cf66;
-      }
-
-      .quiz-option.incorrect {
-        background: #ff6b6b;
-        color: #fff;
-        border-color: #ff6b6b;
-      }
-
-      .quiz-option:disabled {
-        cursor: not-allowed;
-      }
-
-      .quiz-button-group {
-        display: flex;
-        gap: 10px;
-        justify-content: center;
-        margin-top: 25px;
-        flex-wrap: wrap;
-      }
-
-      .quiz-action-button {
-        padding: 10px 20px;
-        background: #c084fc;
-        color: #120b18;
-        border: none;
-        border-radius: 4px;
-        font-weight: bold;
-        cursor: pointer;
-        font-family: Georgia, "Times New Roman", serif;
+        font-family: Georgia, serif;
         font-size: 1rem;
-        transition: all 0.2s ease;
-      }
-
-      .quiz-action-button:hover {
-        background: #d4a5ff;
-      }
-
-      .quiz-action-button:disabled {
-        background: #888;
-        cursor: not-allowed;
-      }
-
-      .quiz-action-button.cancel {
-        background: #666;
-      }
-
-      .quiz-action-button.cancel:hover {
-        background: #777;
-      }
-
-      .quiz-result {
-        margin-top: 20px;
-        padding: 15px;
-        border-radius: 4px;
-        text-align: center;
-        font-weight: bold;
-        display: none;
-      }
-
-      .quiz-result.show {
-        display: block;
-      }
-
-      .quiz-result.win {
-        background: #51cf66;
-        color: #fff;
-      }
-
-      .quiz-result.lose {
-        background: #ff6b6b;
-        color: #fff;
-      }
-
-      .quiz-result-message {
-        font-size: 1.2rem;
-        margin-bottom: 10px;
-      }
-
-      .quiz-result-points {
-        font-size: 1rem;
-      }
-
-      .quiz-insufficient-points {
-        background: #ff6b6b;
-        color: #fff;
-        padding: 15px;
-        border-radius: 4px;
-        text-align: center;
-        font-weight: bold;
-      }
-
-      @media (max-width: 500px) {
-        .quiz-modal-content {
-          padding: 20px;
-        }
-
-        .quiz-header h2 {
-          font-size: 1.2rem;
-        }
-
-        .quiz-question {
-          font-size: 1rem;
-        }
-
-        .quiz-option {
-          padding: 10px;
-          font-size: 0.95rem;
-        }
-
-        .quiz-action-button {
-          padding: 8px 16px;
-          font-size: 0.9rem;
-        }
-      }
-    `;
-
-    document.head.appendChild(style);
-    document.body.appendChild(modal);
-
-    return modal;
-  }
-
-
-  /* =========================================================
-     QUIZ LOGIC
-     ========================================================= */
-
-  function startQuiz() {
-    const points = getPlayerPoints();
-    const modal = createQuizModal();
-
-    // Check if player has enough points
-    if (points < ENTRY_COST) {
-      modal.innerHTML = `
-        <div class="quiz-modal-content">
-          <div class="quiz-header">
-            <h2>YOU DON'T KNOW TRACK</h2>
-          </div>
-          <div class="quiz-insufficient-points">
-            <div>Not Enough Points!</div>
-            <div style="margin-top: 10px; font-size: 1rem;">
-              You need ${ENTRY_COST} points to play.
-              <br>
-              You currently have ${points} points.
-            </div>
-          </div>
-          <div class="quiz-button-group">
-            <button class="quiz-action-button cancel" onclick="document.getElementById('${QUIZ_MODAL_ID}').classList.remove('active')">
-              Close
-            </button>
-          </div>
-        </div>
       `;
-      modal.classList.add("active");
-      return;
-    }
+      
+      btn.onmouseover = () => btn.style.background = "#2a1f35";
+      btn.onmouseout = () => btn.style.background = "#0f0a13";
 
-    // Get current playing song's quiz question
-    const currentQuestion = getCurrentQuestion();
-
-    if (!currentQuestion) {
-      modal.innerHTML = `
-        <div class="quiz-modal-content">
-          <div class="quiz-header">
-            <h2>YOU DON'T KNOW TRACK</h2>
-          </div>
-          <div style="text-align: center; padding: 20px; color: #f5d76e;">
-            No quiz available for this song yet.
-          </div>
-          <div class="quiz-button-group">
-            <button class="quiz-action-button cancel" onclick="document.getElementById('${QUIZ_MODAL_ID}').classList.remove('active')">
-              Close
-            </button>
-          </div>
-        </div>
-      `;
-      modal.classList.add("active");
-      return;
-    }
-
-    let selectedAnswer = null;
-    let answered = false;
-
-    const optionsHtml = currentQuestion.options
-      .map((option, index) => {
-        const letter = String.fromCharCode(65 + index);
-        return `
-          <button class="quiz-option" data-index="${index}" type="button" onclick="event.stopPropagation()">
-            <strong>${letter}</strong> — ${option}
-          </button>
-        `;
-      })
-      .join("");
-
-    modal.innerHTML = `
-      <div class="quiz-modal-content">
-        <div class="quiz-header">
-          <h2>YOU DON'T KNOW TRACK</h2>
-          <div class="quiz-song-title">${currentQuestion.song}</div>
-          <div class="quiz-cost">Entry Cost: ${ENTRY_COST} points</div>
-          <div style="color: #c084fc; margin-top: 8px;">Your Points: ${points}</div>
-        </div>
-
-        <div class="quiz-question">
-          ${currentQuestion.question}
-        </div>
-
-        <div class="quiz-options">
-          ${optionsHtml}
-        </div>
-
-        <div class="quiz-result"></div>
-
-        <div class="quiz-button-group">
-          <button class="quiz-action-button" id="submit-answer-btn" type="button" disabled>
-            Submit Answer
-          </button>
-          <button class="quiz-action-button cancel" id="cancel-quiz-btn" type="button">
-            Cancel
-          </button>
-        </div>
-      </div>
-    `;
-
-    modal.classList.add("active");
-
-    // Event listeners
-    const optionButtons = $$(`#${QUIZ_MODAL_ID} .quiz-option`);
-    const submitBtn = $(`#${QUIZ_MODAL_ID} #submit-answer-btn`);
-    const cancelBtn = $(`#${QUIZ_MODAL_ID} #cancel-quiz-btn`);
-    const resultDiv = $(`#${QUIZ_MODAL_ID} .quiz-result`);
-
-    optionButtons.forEach(btn => {
-      btn.addEventListener("click", () => {
-        if (answered) return;
-
-        optionButtons.forEach(b => b.classList.remove("selected"));
-        btn.classList.add("selected");
-        selectedAnswer = parseInt(btn.dataset.index, 10);
-        submitBtn.disabled = false;
-      });
-    });
-
-    submitBtn.addEventListener("click", () => {
-      if (selectedAnswer === null || answered) return;
-
-      answered = true;
-      submitBtn.disabled = true;
-
-      // Disable option buttons
-      optionButtons.forEach(btn => btn.disabled = true);
-
-      // Check answer
-      const isCorrect = selectedAnswer === currentQuestion.correctAnswer;
-
-      // Show correct/incorrect on options
-      optionButtons.forEach((btn, index) => {
-        btn.classList.remove("selected");
-        if (index === currentQuestion.correctAnswer) {
-          btn.classList.add("correct");
-        } else if (index === selectedAnswer && !isCorrect) {
-          btn.classList.add("incorrect");
-        }
-      });
-
-      // Calculate points
-      let newPoints;
-      if (isCorrect) {
-        newPoints = addPoints(WIN_REWARD - ENTRY_COST);
-        resultDiv.classList.add("show", "win");
-        resultDiv.innerHTML = `
-          <div class="quiz-result-message">🎉 Correct!</div>
-          <div class="quiz-result-points">+${WIN_REWARD - ENTRY_COST} Points</div>
-          <div class="quiz-result-points" style="margin-top: 8px; font-size: 0.9rem;">Total: ${newPoints}</div>
-        `;
-      } else {
-        newPoints = subtractPoints(ENTRY_COST);
-        resultDiv.classList.add("show", "lose");
-        resultDiv.innerHTML = `
-          <div class="quiz-result-message">❌ Incorrect</div>
-          <div class="quiz-result-points">-${ENTRY_COST} Points</div>
-          <div class="quiz-result-points" style="margin-top: 8px; font-size: 0.9rem;">Total: ${newPoints}</div>
-        `;
-      }
-
-      // Change submit button to "Play Again" or "Close"
-      setTimeout(() => {
-        submitBtn.textContent = "Play Again";
-        submitBtn.disabled = false;
-        submitBtn.onclick = startQuiz;
-      }, 1500);
-    });
-
-    cancelBtn.addEventListener("click", () => {
-      modal.classList.remove("active");
-    });
-
-    // Close modal on outside click
-    modal.addEventListener("click", (e) => {
-      if (e.target === modal) {
-        modal.classList.remove("active");
-      }
+      btn.onclick = () => handleAnswer(index);
+      list.appendChild(btn);
     });
   }
 
-  function getCurrentQuestion() {
-    // Check if Monkey Judge is currently playing
-    if (isMonkeyJudgePlaying()) {
-      return QUIZ_QUESTIONS.find(q => q.videoId === SINGLE_VIDEO_ID);
-    }
-    return null;
-  }
+  // Handle user clicking an option
+  function handleAnswer(selectedIndex) {
+    const feedback = document.getElementById("quiz-feedback");
+    const buttons = document.querySelectorAll("#quiz-options-list button");
 
+    // Disable all buttons after answering
+    buttons.forEach(b => b.disabled = true);
 
-  /* =========================================================
-     DETECT MONKEY JUDGE
-     ========================================================= */
-
-  function isMonkeyJudgePlaying() {
-
-    const player =
-      window.rizneyPlayer;
-
-
-    if (
-      player &&
-      typeof player.getVideoData ===
-        "function"
-    ) {
-
-      try {
-
-        const data =
-          player.getVideoData();
-
-        if (
-          data &&
-          data.video_id
-        ) {
-          if (String(data.video_id) === SINGLE_VIDEO_ID) {
-            return true;
-          }
-        }
-
-      } catch (error) {}
-    }
-
-
-    const nowPlaying =
-      $("#now-playing");
-
-    if (!nowPlaying) {
-      return false;
-    }
-
-    const text = nowPlaying.textContent;
-    return (
-      text.includes(`Song ${SINGLE_TRACK_NUMBER}`) ||
-      text.includes("Monkey Judge") ||
-      text.includes(SINGLE_VIDEO_ID)
-    );
-  }
-
-
-  /* =========================================================
-     UPDATE BANNER
-     ========================================================= */
-
-  function updateBanner() {
-
-    const banner =
-      $(`#${BANNER_ID}`);
-
-    if (!banner) {
-      return;
-    }
-
-
-    const singlesActive =
-      isMonkeyJudgePlaying();
-
-
-    if (singlesActive) {
-
-      banner.style.display =
-        "block";
-
-
-      /*
-       * We just arrived at the Single.
-       *
-       * Scroll the page up to the
-       * Singles area exactly once.
-       */
-
-      if (!singlesWasActive) {
-
-        singlesWasActive = true;
-
-        window.setTimeout(() => {
-
-          banner.scrollIntoView({
-            behavior: "smooth",
-            block: "start"
-          });
-
-        }, 100);
-      }
-
-
+    if (selectedIndex === QUIZ.correctIndex) {
+      feedback.style.color = "#51cf66";
+      feedback.textContent = "🎉 Correct! Great job!";
     } else {
-
-      /*
-       * The Single is no longer active.
-       *
-       * Reset the flag so the next time
-       * Monkey Judge comes around,
-       * we scroll again.
-       */
-
-      singlesWasActive = false;
-
-      banner.style.display =
-        "none";
+      feedback.style.color = "#ff6b6b";
+      feedback.textContent = `❌ Not quite! The correct answer was: ${QUIZ.options[QUIZ.correctIndex]}`;
     }
   }
 
+  // 3. Check if the song is playing
+  function checkSongStatus() {
+    const quizBox = document.getElementById(CONTAINER_ID);
+    if (!quizBox) return;
 
-  /* =========================================================
-     WATCH THE PLAYER
-     ========================================================= */
+    // Look at your page's current playing text
+    const nowPlaying = document.querySelector("#now-playing");
+    const text = nowPlaying ? nowPlaying.textContent : "";
 
-  function startWatching() {
+    // Also check window player if available
+    let videoMatch = false;
+    if (window.rizneyPlayer && typeof window.rizneyPlayer.getVideoData === "function") {
+      try {
+        const data = window.rizneyPlayer.getVideoData();
+        if (data && String(data.video_id) === TARGET_VIDEO_ID) {
+          videoMatch = true;
+        }
+      } catch (e) {}
+    }
 
-    createBanner();
-    createQuizModal();
+    const isPlayingTarget = videoMatch || text.includes(TARGET_TITLE) || text.includes(TARGET_VIDEO_ID);
 
-    updateBanner();
-
-
-    window.setInterval(
-      updateBanner,
-      500
-    );
+    if (isPlayingTarget) {
+      quizBox.style.display = "block";
+    } else {
+      quizBox.style.display = "none";
+    }
   }
 
-
-  /* =========================================================
-     INIT
-     ========================================================= */
-
+  // Initialize
   function init() {
-
-    startWatching();
+    injectQuizUI();
+    // Check every second
+    setInterval(checkSongStatus, 1000);
   }
 
-
-  if (
-    document.readyState ===
-    "loading"
-  ) {
-
-    document.addEventListener(
-      "DOMContentLoaded",
-      init,
-      { once: true }
-    );
-
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", init);
   } else {
-
     init();
   }
 
