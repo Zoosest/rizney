@@ -1,5 +1,5 @@
 /* =========================================================
-   "YOU DON'T KNOW TRACK" - OPT-IN FLOW
+   "YOU DON'T KNOW TRACK" - DELAYED FLOW
    ========================================================= */
 
 (() => {
@@ -20,7 +20,9 @@
     correctIndex: 0
   };
 
-  // 1. Inject the container that will hold either the prompt button OR the quiz
+  // State tracker so we don't reset the prompt while the song is playing
+  let currentState = "hidden"; // "hidden", "prompt", "listening", "quiz"
+
   function injectContainer() {
     if (document.getElementById(CONTAINER_ID)) return;
 
@@ -42,21 +44,20 @@
       position: relative;
     `;
 
-    // Try to insert it below controls or at top of body
     const targetAnchor = document.querySelector(".controls") || document.body.firstElementChild;
     if (targetAnchor) {
       targetAnchor.insertAdjacentElement("afterend", wrapper);
     } else {
       document.body.prepend(wrapper);
     }
-
-    showPromptState();
   }
 
-  // 2. Show the initial "Do you want to play?" prompt
+  // State 1: The initial opt-in banner
   function showPromptState() {
     const wrapper = document.getElementById(CONTAINER_ID);
     if (!wrapper) return;
+    currentState = "prompt";
+    wrapper.style.display = "block";
 
     wrapper.innerHTML = `
       <div style="font-size: 1.1rem; font-weight: bold; color: #c084fc; margin-bottom: 12px;">
@@ -76,13 +77,34 @@
       ">Yes!</button>
     `;
 
-    document.getElementById("start-quiz-optin").onclick = showQuizState;
+    document.getElementById("start-quiz-optin").onclick = showListeningState;
   }
 
-  // 3. Switch to the actual multiple choice quiz when "Yes" is clicked
+  // State 2: "Pay attention" mode after clicking Yes
+  function showListeningState() {
+    const wrapper = document.getElementById(CONTAINER_ID);
+    if (!wrapper) return;
+    currentState = "listening";
+
+    wrapper.innerHTML = `
+      <div style="font-size: 1.1rem; font-weight: bold; color: #c084fc; margin-bottom: 12px;">
+        🎧 GET READY...
+      </div>
+      <p style="font-size: 1.05rem; margin: 15px 0; line-height: 1.5;">
+        Pay attention to the song!<br>
+        <span style="color: #f5d76e; font-style: italic; font-size: 0.95rem;">The question is coming up near the end...</span>
+      </p>
+    `;
+
+    // Later on, when you're ready to trigger the actual question at the end of the song,
+    // you can call showQuizState()! For now, this holds the screen in the listening phase.
+  }
+
+  // State 3: The actual multiple choice quiz
   function showQuizState() {
     const wrapper = document.getElementById(CONTAINER_ID);
     if (!wrapper) return;
+    currentState = "quiz";
 
     const optionsHtml = QUIZ.options.map((opt, index) => {
       const letter = String.fromCharCode(65 + index);
@@ -102,7 +124,7 @@
     }).join("");
 
     wrapper.innerHTML = `
-      <h3 style="color: #c084fc; margin-top: 0;">🎤 YOU DON'T KNOW TRACK</h3>
+      <h3 style="color: #c084fc; margin-top: 0;">🎤 YOU DON'T KNOW TRACK: Time's Up!</h3>
       <p style="font-size: 1.1rem; margin: 15px 0;">${QUIZ.question}</p>
       <div id="quiz-options-list" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px;">
         ${optionsHtml}
@@ -110,7 +132,6 @@
       <div id="quiz-feedback" style="font-weight: bold; font-size: 1.1rem; min-height: 24px;"></div>
     `;
 
-    // Hook up option buttons
     const buttons = wrapper.querySelectorAll(".quiz-opt-btn");
     buttons.forEach(btn => {
       btn.onmouseover = () => { if (!btn.disabled) btn.style.background = "#2a1f35"; };
@@ -123,7 +144,6 @@
     });
   }
 
-  // 4. Handle right/wrong choice
   function handleAnswer(selectedIndex, buttons) {
     const feedback = document.getElementById("quiz-feedback");
     buttons.forEach(b => b.disabled = true);
@@ -137,7 +157,7 @@
     }
   }
 
-  // 5. Monitor if the song is playing
+  // Monitor song status
   function checkSongStatus() {
     const wrapper = document.getElementById(CONTAINER_ID);
     if (!wrapper) return;
@@ -158,13 +178,14 @@
     const isPlayingTarget = videoMatch || text.includes(TARGET_TITLE) || text.includes(TARGET_VIDEO_ID);
 
     if (isPlayingTarget) {
-      // Only force show/reset if it was completely hidden before
-      if (wrapper.style.display === "none") {
+      // If the song just started and we haven't shown anything yet, show the prompt
+      if (currentState === "hidden") {
         showPromptState();
-        wrapper.style.display = "block";
       }
     } else {
+      // If the song changed or stopped, hide it and reset state
       wrapper.style.display = "none";
+      currentState = "hidden";
     }
   }
 
