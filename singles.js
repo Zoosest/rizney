@@ -1,5 +1,5 @@
 /* =========================================================
-   "YOU DON'T KNOW TRACK" - TOOLBAR-SYNCED AUTO-SKIP
+   "YOU DON'T KNOW TRACK" - WITH ANIMATION & DISMISS BUTTON
    ========================================================= */
 
 (() => {
@@ -22,19 +22,21 @@
     correctIndex: 0
   };
 
-  let currentState = "hidden"; // "hidden", "prompt", "listening", "quiz"
+  let currentState = "hidden"; // "hidden", "prompt", "dismissed", "listening", "quiz"
 
   function injectContainer() {
     if (document.getElementById(CONTAINER_ID)) return;
 
     const wrapper = document.createElement("div");
     wrapper.id = CONTAINER_ID;
+    // Styled for smooth slide-up animation using transform and opacity
     wrapper.style.cssText = `
-      display: none;
       position: fixed;
       bottom: 25px;
       left: 50%;
-      transform: translateX(-50%);
+      transform: translateX(-50%) translateY(150%);
+      opacity: 0;
+      pointer-events: none;
       width: 90%;
       max-width: 550px;
       background: #1a1420;
@@ -46,9 +48,28 @@
       box-shadow: 0 8px 30px rgba(0,0,0,0.8);
       text-align: center;
       z-index: 99999;
+      transition: transform 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s ease;
     `;
 
     document.body.appendChild(wrapper);
+  }
+
+  // Helper to show the container with the slide-up animation
+  function showContainer() {
+    const wrapper = document.getElementById(CONTAINER_ID);
+    if (!wrapper) return;
+    wrapper.style.transform = "translateX(-50%) translateY(0)";
+    wrapper.style.opacity = "1";
+    wrapper.style.pointerEvents = "auto";
+  }
+
+  // Helper to hide the container with a slide-down animation
+  function hideContainer() {
+    const wrapper = document.getElementById(CONTAINER_ID);
+    if (!wrapper) return;
+    wrapper.style.transform = "translateX(-50%) translateY(150%)";
+    wrapper.style.opacity = "0";
+    wrapper.style.pointerEvents = "none";
   }
 
   // State 1: The initial opt-in banner
@@ -56,29 +77,47 @@
     const wrapper = document.getElementById(CONTAINER_ID);
     if (!wrapper) return;
     currentState = "prompt";
-    wrapper.style.display = "block";
 
     wrapper.innerHTML = `
       <div style="font-size: 1.1rem; font-weight: bold; color: #c084fc; margin-bottom: 12px;">
         🎤 YOU DON'T KNOW TRACK: Monkey Judge
       </div>
       <p style="margin-bottom: 15px;">Want to test your knowledge for bonus points?</p>
-      <button id="start-quiz-optin" style="
-        padding: 10px 24px;
-        background: #c084fc;
-        color: #120b18;
-        border: none;
-        border-radius: 4px;
-        font-weight: bold;
-        cursor: pointer;
-        font-family: Georgia, serif;
-        font-size: 1rem;
-      ">Yes!</button>
+      <div style="display: flex; gap: 12px; justify-content: center; align-items: center;">
+        <button id="start-quiz-optin" style="
+          padding: 10px 24px;
+          background: #c084fc;
+          color: #120b18;
+          border: none;
+          border-radius: 4px;
+          font-weight: bold;
+          cursor: pointer;
+          font-family: Georgia, serif;
+          font-size: 1rem;
+        ">Yes!</button>
+        <button id="dismiss-quiz-optin" style="
+          padding: 10px 18px;
+          background: transparent;
+          color: #a78bfa;
+          border: 1px solid #7c3aed;
+          border-radius: 4px;
+          cursor: pointer;
+          font-family: Georgia, serif;
+          font-size: 0.95rem;
+        ">No thanks</button>
+      </div>
     `;
+
+    showContainer();
 
     document.getElementById("start-quiz-optin").onclick = () => {
       playVoiceClip();
       showListeningState();
+    };
+
+    document.getElementById("dismiss-quiz-optin").onclick = () => {
+      currentState = "dismissed";
+      hideContainer();
     };
   }
 
@@ -108,13 +147,11 @@
 
   // Trigger next track exactly like your toolbar button
   function skipToNextTrack() {
-    // Look for a next button in your controls toolbar first
     const toolbarNextBtn = document.querySelector(".controls button:last-child, .controls [data-action='next'], .controls .next-btn, button[title*='Next'], button[aria-label*='Next']");
     
     if (toolbarNextBtn) {
       toolbarNextBtn.click();
     } else if (window.rizneyPlayer && typeof window.rizneyPlayer.nextVideo === "function") {
-      // Fallback to player API if toolbar button isn't found
       try {
         window.rizneyPlayer.nextVideo();
       } catch (e) {
@@ -138,6 +175,7 @@
         <span style="color: #f5d76e; font-style: italic; font-size: 0.95rem;">The question is coming up near the end...</span>
       </p>
     `;
+    showContainer();
   }
 
   // State 3: The actual multiple choice quiz
@@ -174,6 +212,8 @@
       <div id="quiz-feedback" style="font-weight: bold; font-size: 1.1rem; min-height: 24px;"></div>
     `;
 
+    showContainer();
+
     const buttons = wrapper.querySelectorAll(".quiz-opt-btn");
     buttons.forEach(btn => {
       btn.onmouseover = () => { if (!btn.disabled) btn.style.background = "#2a1f35"; };
@@ -198,17 +238,15 @@
       feedback.textContent = `❌ Not quite! The correct answer was: ${QUIZ.options[QUIZ.correctIndex]}`;
     }
 
-    // Wait 2.5 seconds to read feedback, then trigger the next track
+    // Wait 2.5 seconds to read feedback, slide box down, then trigger the next track
     setTimeout(() => {
-      skipToNextTrack();
+      hideContainer();
+      setTimeout(skipToNextTrack, 300); // slight delay to let slide-down finish before track skips
     }, 2500);
   }
 
   // Monitor song status and playback time
   function checkSongStatus() {
-    const wrapper = document.getElementById(CONTAINER_ID);
-    if (!wrapper) return;
-
     const nowPlaying = document.querySelector("#now-playing");
     const text = nowPlaying ? nowPlaying.textContent : "";
 
@@ -225,10 +263,12 @@
     const isPlayingTarget = videoMatch || text.includes(TARGET_TITLE) || text.includes(TARGET_VIDEO_ID);
 
     if (isPlayingTarget) {
+      // If song just started and we haven't shown or dismissed it yet, show prompt
       if (currentState === "hidden") {
         showPromptState();
       }
 
+      // If user clicked "Yes" and we are in listening mode, check progress
       if (currentState === "listening" && window.rizneyPlayer) {
         try {
           if (
@@ -246,8 +286,9 @@
       }
 
     } else {
+      // If song changes away from Monkey Judge, reset everything back to hidden
       if (currentState !== "hidden") {
-        wrapper.style.display = "none";
+        hideContainer();
         currentState = "hidden";
       }
     }
