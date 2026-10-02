@@ -18,13 +18,13 @@
     quiz: [
       {
         question:
-          "Complete the pirate's lyric line: 'Monkey judge, monkey jury, ____.'",
+          "Complete the lyrics: 'Monkey judge, monkey jury, ____.'",
 
         options: [
           "Everyone in such a hurry",
           "Monkeys are always so dirty",
           "Everything is getting blurry",
-          "Getting so worried"
+          "Everybody getting worried"
         ],
 
         correctIndex: 0
@@ -36,9 +36,9 @@
 
         options: [
           "Her keys",
-          "Her money",
+          "Her cake",
           "Her hat",
-          "Her case"
+          "Her purse"
         ],
 
         correctIndex: 2
@@ -1053,7 +1053,7 @@
           "#51cf66";
 
         feedback.innerHTML = `
-          🎯 <strong>ARRR! CORRECT!</strong><br>
+          🎯 <strong>YARRR! </strong><br>
 
           <span style="
             color: #f5d76e;
