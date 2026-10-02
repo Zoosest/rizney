@@ -31,35 +31,16 @@
       font-family:Georgia,"Times New Roman",serif;
     }
 
-    /* Header updated to a vertical flex container with padding */
+    /* Original header layout with relative positioning restored */
     .top-area {
       position:relative;
       padding:14px 12px 10px;
-      display:flex;
-      flex-direction:column;
-      align-items:center;
-      gap:10px;
-      text-align:center;
     }
 
-    /* Top row holding donate, context buttons, and logo */
-    .top-controls-row {
-      width:100%;
-      max-width:900px;
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-    }
-
-    .top-controls-left {
-      display:flex;
-      gap:8px;
-      align-items:center;
-    }
-
-    .donate,
-    .context {
-      position:static;
+    .donate {
+      position:absolute;
+      left:12px;
+      top:12px;
       border:1px solid var(--gold);
       border-radius:999px;
       padding:5px 9px;
@@ -70,30 +51,42 @@
     }
 
     .context {
+      position:absolute;
+      left:78px;
+      top:12px;
+      border:1px solid var(--gold);
+      border-radius:999px;
+      padding:5px 9px;
+      color:var(--bright-gold);
+      background:#160c1c;
+      font-size:.68rem;
+      line-height:1;
       cursor:pointer;
     }
 
-    /* Scoreboard centered at the bottom of the header with padding */
+    /* Scoreboard centered beneath the original header items */
     #ydkt-score-display {
-      position:static;
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      width:fit-content;
+      margin:0 auto;
       border:1px solid var(--gold);
       border-radius:999px;
-      padding:6px 14px;
+      padding:5px 12px;
       color:var(--bright-gold);
       background:#160c1c;
-      font-size:.72rem;
+      font-size:.7rem;
       line-height:1;
       font-family:Georgia,"Times New Roman",serif;
       text-decoration:none;
-      display:inline-flex;
-      align-items:center;
       gap:6px;
-      box-shadow:none;
-      margin:2px 0 0;
     }
 
     .logo-img {
-      position:static;
+      position:absolute;
+      right:12px;
+      top:10px;
       width:110px;
       height:56px;
       object-fit:contain;
@@ -397,7 +390,6 @@
     @media(max-width:500px) {
       .top-area {
         padding:10px 8px 8px;
-        gap:8px;
       }
 
       .donate,
@@ -406,8 +398,12 @@
         font-size:.63rem;
       }
 
+      .context {
+        left:68px;
+      }
+
       #ydkt-score-display {
-        padding:5px 10px;
+        padding:4px 10px;
         font-size:.63rem;
       }
 
@@ -486,36 +482,30 @@
 <body>
 
   <section class="top-area">
+    <a
+      class="donate"
+      href="https://venmo.com/u/YOUR_VENMO_USERNAME"
+      target="_blank"
+      rel="noopener"
+    >♥ Donate</a>
 
-    <div class="top-controls-row">
-      <div class="top-controls-left">
-        <a
-          class="donate"
-          href="https://venmo.com/u/YOUR_VENMO_USERNAME"
-          target="_blank"
-          rel="noopener"
-        >♥ Donate</a>
+    <button
+      class="context"
+      id="context-button"
+      type="button"
+      aria-label="Open Context"
+    >✦ Context</button>
 
-        <button
-          class="context"
-          id="context-button"
-          type="button"
-          aria-label="Open Context"
-        >✦ Context</button>
-      </div>
-
-      <img
-        src="./assets/rizney.png"
-        alt="Rizney"
-        class="logo-img"
-      />
-    </div>
-
-    <!-- Scoreboard centered at the bottom of the header -->
+    <!-- Scoreboard centered nicely in the header -->
     <div id="ydkt-score-display">
       🏆 Score: <strong style="color: #c084fc;">100</strong>
     </div>
 
+    <img
+      src="./assets/rizney.png"
+      alt="Rizney"
+      class="logo-img"
+    />
   </section>
 
   <section class="player-dock">
