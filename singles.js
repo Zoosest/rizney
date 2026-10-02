@@ -1,8 +1,8 @@
 /* =========================================================
    SINGLES
-   YOU DON'T KNOW TRACK
+   YOU DON'T KNOW TRACK (TRIVIA EDITION)
 
-   Best version:
+   Cleaned & Optimized Version:
    - listens for actual song changes
    - detects player/video state without polling
    - triggers only when Monkey Judge is active
@@ -12,10 +12,6 @@
    Track:
    #114 — Monkey Judge 🐒⚖
    YouTube ID: SHhsdD5viWs
-
-   This file is intentionally standalone.
-   It does not modify main.js.
-   It does not modify whack-a-track.js.
    ========================================================= */
 
 (() => {
@@ -27,7 +23,6 @@
 
   const $ = selector => document.querySelector(selector);
 
-  let singlesWasActive = false;
   let lastKnownSongId = null;
   let lastKnownSongNumber = null;
 
@@ -144,7 +139,7 @@
     document.body.appendChild(overlay);
 
     $("#trivia-close-btn").addEventListener("click", closeTrivia);
-    $("#trivia-submit-btn").addEventListener("click", submitTriviaAnswer);
+    $("#trivia-submit-btn").addEventListener("click", handleModalAction);
 
     overlay.addEventListener("click", event => {
       if (event.target.id === "trivia-modal-overlay") {
@@ -162,7 +157,6 @@
     style.id = "trivia-styles";
 
     style.textContent = `
-      /* Trivia Banner */
       #trivia-banner {
         position: sticky;
         top: 0;
@@ -179,7 +173,7 @@
       }
 
       #trivia-banner.hidden {
-        display: none;
+        display: none !important;
       }
 
       .trivia-banner-content {
@@ -236,16 +230,6 @@
         box-shadow: 0 4px 12px rgba(245,215,110,0.4);
       }
 
-      #play-trivia-btn:active:not(:disabled) {
-        transform: translateY(0);
-      }
-
-      #play-trivia-btn:disabled {
-        opacity: 0.6;
-        cursor: not-allowed;
-      }
-
-      /* Modal */
       #trivia-modal-overlay {
         position: fixed;
         top: 0;
@@ -273,18 +257,6 @@
         max-height: 90vh;
         overflow-y: auto;
         box-shadow: 0 20px 60px rgba(0,0,0,0.8);
-        animation: slideUp 0.3s ease;
-      }
-
-      @keyframes slideUp {
-        from {
-          transform: translateY(40px);
-          opacity: 0;
-        }
-        to {
-          transform: translateY(0);
-          opacity: 1;
-        }
       }
 
       .trivia-modal-header {
@@ -412,17 +384,20 @@
         justify-content: center;
       }
 
-      .trivia-close-btn {
+      .trivia-close-btn, .trivia-submit-btn {
         padding: 10px 24px;
-        background: transparent;
-        border: 2px solid #f5d76e;
         border-radius: 8px;
-        color: #f5d76e;
         font-weight: 700;
         font-size: 0.9rem;
         cursor: pointer;
-        transition: all 0.2s ease;
         font-family: inherit;
+        transition: all 0.2s ease;
+      }
+
+      .trivia-close-btn {
+        background: transparent;
+        border: 2px solid #f5d76e;
+        color: #f5d76e;
       }
 
       .trivia-close-btn:hover {
@@ -431,65 +406,14 @@
       }
 
       .trivia-submit-btn {
-        padding: 10px 24px;
         background: linear-gradient(135deg, #d4af37, #f5d76e);
         border: 0;
-        border-radius: 8px;
         color: #000;
-        font-weight: 700;
-        font-size: 0.9rem;
-        cursor: pointer;
-        transition: all 0.2s ease;
-        font-family: inherit;
-      }
-
-      .trivia-submit-btn:hover:not(:disabled) {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(245,215,110,0.4);
       }
 
       .trivia-submit-btn:disabled {
         opacity: 0.6;
         cursor: not-allowed;
-      }
-
-      #trivia-modal::-webkit-scrollbar {
-        width: 8px;
-      }
-
-      #trivia-modal::-webkit-scrollbar-track {
-        background: transparent;
-      }
-
-      #trivia-modal::-webkit-scrollbar-thumb {
-        background: #f5d76e;
-        border-radius: 4px;
-      }
-
-      @media (max-width: 600px) {
-        #trivia-banner {
-          flex-direction: column;
-          gap: 12px;
-          padding: 10px 12px;
-        }
-
-        .trivia-banner-content {
-          width: 100%;
-        }
-
-        #play-trivia-btn {
-          width: 100%;
-          padding: 10px 12px;
-        }
-
-        #trivia-modal {
-          padding: 24px;
-          width: 95%;
-        }
-
-        .trivia-modal-question {
-          font-size: 1.1rem;
-        }
       }
     `;
 
@@ -497,7 +421,7 @@
   }
 
   /* =========================================================
-     TRIVIA GAME FUNCTIONS
+     TRIVIA GAME LOGIC
      ========================================================= */
 
   function lockPage() {
@@ -552,11 +476,12 @@
     });
 
     const resultMsg = $("#trivia-result-message");
-    resultMsg.className = "";
+    resultMsg.className = "trivia-result-message";
     resultMsg.textContent = "";
-    resultMsg.classList.remove("show");
 
-    $("#trivia-submit-btn").disabled = true;
+    const submitBtn = $("#trivia-submit-btn");
+    submitBtn.textContent = "Submit Answer";
+    submitBtn.disabled = true;
   }
 
   function selectTriviaAnswer(buttonElement, answerLetter) {
@@ -572,6 +497,15 @@
     $("#trivia-submit-btn").disabled = false;
   }
 
+  function handleModalAction() {
+    const submitBtn = $("#trivia-submit-btn");
+    if (!triviaState.hasAnswered) {
+      submitTriviaAnswer();
+    } else {
+      closeTrivia();
+    }
+  }
+
   function submitTriviaAnswer() {
     if (triviaState.hasAnswered || !triviaState.selectedAnswer) return;
 
@@ -582,7 +516,6 @@
 
     document.querySelectorAll(".trivia-option").forEach(btn => {
       btn.disabled = true;
-
       const answer = btn.dataset.answer;
 
       if (answer === trivia.correctAnswer) {
@@ -602,22 +535,15 @@
 
     if (isCorrect) {
       resultMsg.classList.add("correct");
-      resultMsg.innerHTML = `
-        ✅ Correct!<br>
-        <span class="trivia-points-change">+10 points</span>
-      `;
+      resultMsg.innerHTML = `✅ Correct!<br><span class="trivia-points-change">+10 points</span>`;
     } else {
       resultMsg.classList.add("incorrect");
-      resultMsg.innerHTML = `
-        ❌ Incorrect!<br>
-        <span class="trivia-points-change">-5 points</span>
-      `;
+      resultMsg.innerHTML = `❌ Incorrect!<br><span class="trivia-points-change">-5 points</span>`;
     }
 
     const submitBtn = $("#trivia-submit-btn");
     submitBtn.textContent = "Done";
     submitBtn.disabled = false;
-    submitBtn.onclick = closeTrivia;
   }
 
   function closeTrivia() {
@@ -626,16 +552,7 @@
     triviaState.selectedAnswer = null;
 
     const overlay = $("#trivia-modal-overlay");
-    if (overlay) {
-      overlay.classList.remove("active");
-    }
-
-    const submitBtn = $("#trivia-submit-btn");
-    if (submitBtn) {
-      submitBtn.textContent = "Submit Answer";
-      submitBtn.disabled = true;
-      submitBtn.onclick = null;
-    }
+    if (overlay) overlay.classList.remove("active");
 
     unlockPage();
   }
@@ -651,38 +568,26 @@
   }
 
   /* =========================================================
-     CREATE SINGLES BANNER
+     SINGLES BANNER
      ========================================================= */
 
   function createBanner() {
-    const existing = $(`#${BANNER_ID}`);
-
-    if (existing) {
-      return existing;
-    }
+    if ($(`#${BANNER_ID}`)) return $(`#${BANNER_ID}`);
 
     const banner = document.createElement("section");
-
     banner.id = BANNER_ID;
-
     banner.setAttribute("aria-label", "Singles");
 
     banner.innerHTML = `
-      <div class="singles-banner-main">
-        YOU DON'T KNOW TRACK
-      </div>
-
-      <div class="singles-banner-label">
-        🎤 SINGLES
-      </div>
+      <div class="singles-banner-main">YOU DON'T KNOW TRACK</div>
+      <div class="singles-banner-label">🎤 SINGLES</div>
     `;
 
     const style = document.createElement("style");
-
     style.textContent = `
       #${BANNER_ID} {
         display: none;
-        width: 100%;
+        width: 15%;
         box-sizing: border-box;
         margin: 0;
         padding: 10px 12px;
@@ -696,35 +601,12 @@
         position: relative;
         z-index: 80;
       }
-
-      #${BANNER_ID} .singles-banner-main {
-        font-size: 1rem;
-        font-weight: bold;
-        letter-spacing: .12em;
-      }
-
-      #${BANNER_ID} .singles-banner-label {
-        margin-top: 3px;
-        color: #c084fc;
-        font-size: .7rem;
-        letter-spacing: .16em;
-      }
-
-      @media (max-width: 500px) {
-        #${BANNER_ID} {
-          padding: 8px 10px;
-        }
-
-        #${BANNER_ID} .singles-banner-main {
-          font-size: .85rem;
-        }
-      }
+      #${BANNER_ID} .singles-banner-main { font-size: 1rem; font-weight: bold; letter-spacing: .12em; }
+      #${BANNER_ID} .singles-banner-label { margin-top: 3px; color: #c084fc; font-size: .7rem; letter-spacing: .16em; }
     `;
-
     document.head.appendChild(style);
 
     const controls = $(".controls");
-
     if (controls) {
       controls.insertAdjacentElement("afterend", banner);
     } else {
@@ -735,60 +617,34 @@
   }
 
   /* =========================================================
-     PLAYER / SONG DETECTION
+     PLAYER & DETECTION
      ========================================================= */
 
   function getCurrentVideoId() {
     const player = window.rizneyPlayer;
-
     if (player && typeof player.getVideoData === "function") {
       try {
         const data = player.getVideoData();
-        if (data && data.video_id) {
-          return String(data.video_id);
-        }
+        if (data && data.video_id) return String(data.video_id);
       } catch (error) {}
     }
-
-    const nowPlaying = $("#now-playing");
-    if (!nowPlaying) return null;
-
-    const text = (nowPlaying.textContent || "").trim();
-    const match = text.match(/Song\s+(\d+)/i);
-    if (match) {
-      return null;
-    }
-
-    const ytMatch = text.match(/[A-Za-z0-9_-]{11}/);
-    if (ytMatch) {
-      return ytMatch[0];
-    }
-
     return null;
   }
 
   function getCurrentSongNumber() {
     const nowPlaying = $("#now-playing");
     if (!nowPlaying) return null;
-
     const text = (nowPlaying.textContent || "").trim();
     const match = text.match(/Song\s+(\d+)/i);
-    if (match) return Number(match[1]);
-
-    return null;
+    return match ? Number(match[1]) : null;
   }
 
   function isMonkeyJudgePlaying() {
     const currentId = getCurrentVideoId();
-
-    if (currentId) {
-      return currentId === SINGLE_VIDEO_ID;
-    }
+    if (currentId) return currentId === SINGLE_VIDEO_ID;
 
     const currentNumber = getCurrentSongNumber();
-    if (currentNumber !== null) {
-      return currentNumber === SINGLE_TRACK_NUMBER;
-    }
+    if (currentNumber !== null) return currentNumber === SINGLE_TRACK_NUMBER;
 
     return false;
   }
@@ -798,78 +654,26 @@
     const currentId = getCurrentVideoId();
     const currentNumber = getCurrentSongNumber();
 
+    const banner = $(`#${BANNER_ID}`);
+
     if (active) {
       if (currentId && lastKnownSongId !== currentId) {
         lastKnownSongId = currentId;
         showTriviaBanner();
-
-        const banner = $(`#${BANNER_ID}`);
-        if (banner) {
-          setTimeout(() => {
-            if (document.body.contains(banner)) {
-              banner.scrollIntoView({
-                behavior: "smooth",
-                block: "start"
-              });
-            }
-          }, 120);
-        }
       }
-
       if (currentNumber !== null && lastKnownSongNumber !== currentNumber) {
         lastKnownSongNumber = currentNumber;
       }
 
-      const banner = $(`#${BANNER_ID}`);
-      if (banner) {
-        banner.style.display = "block";
-      }
-
-      return;
-    }
-
-    if (lastKnownSongId !== null) {
+      if (banner) banner.style.display = "block";
+      showTriviaBanner();
+    } else {
       lastKnownSongId = null;
-    }
-
-    if (lastKnownSongNumber !== null) {
       lastKnownSongNumber = null;
+
+      if (banner) banner.style.display = "none";
+      hideTriviaBanner();
     }
-
-    const banner = $(`#${BANNER_ID}`);
-    if (banner) {
-      banner.style.display = "none";
-    }
-
-    hideTriviaBanner();
-  }
-
-  /* =========================================================
-     OBSERVE CHANGES
-     ========================================================= */
-
-  function startWatching() {
-    createBanner();
-    addTriviaStyles();
-    createTriviaBanner();
-    createTriviaModal();
-    initTriviaScore();
-
-    const observeTarget = document.body;
-
-    const observer = new MutationObserver(() => {
-      onSongChange();
-    });
-
-    observer.observe(observeTarget, {
-      childList: true,
-      subtree: true,
-      attributes: true,
-      attributeFilter: ["class", "src", "title", "textContent"]
-    });
-
-    // First check immediately
-    onSongChange();
   }
 
   /* =========================================================
@@ -877,7 +681,24 @@
      ========================================================= */
 
   function init() {
-    startWatching();
+    createBanner();
+    addTriviaStyles();
+    createTriviaBanner();
+    createTriviaModal();
+    initTriviaScore();
+
+    const observer = new MutationObserver(() => {
+      onSongChange();
+    });
+
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ["class", "src", "title", "textContent"]
+    });
+
+    onSongChange();
   }
 
   if (document.readyState === "loading") {
