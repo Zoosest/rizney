@@ -1,4 +1,3 @@
-
 /* =========================================================
    RIZNEY MUSIC ARCHIVE
    Animal icons + song titles + keywords + Music Reading cards
@@ -946,11 +945,20 @@
     }
 
     /*
-      songIndex is the visible song number.
-      SONG_INFO is zero-indexed.
+      FIX:
+      SONG_INFO[0] is the intro track.
+      The visible playlist numbering starts
+      at SONG_INFO[1].
+
+      Therefore:
+        visible Song 1 -> SONG_INFO[1]
+        visible Song 2 -> SONG_INFO[2]
+        etc.
+
+      We must NOT subtract 1 here.
     */
     const info =
-      SONG_INFO[songIndex - 1];
+      SONG_INFO[songIndex];
 
     return (
       info &&
@@ -967,11 +975,16 @@
     }
 
     /*
-      songNumber is the visible song number.
-      SONG_INFO is zero-indexed.
+      FIX:
+      Music Reading card song numbers use the
+      same visible-song numbering.
+
+      SONG_INFO[0] is the intro, so the visible
+      song number maps directly to SONG_INFO
+      at that same index.
     */
     const info =
-      SONG_INFO[songNumber - 1];
+      SONG_INFO[songNumber];
 
     return (
       info &&
