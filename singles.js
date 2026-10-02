@@ -18,13 +18,13 @@
     quiz: [
       {
         question:
-          "Complete the lyrics: 'Monkey judge, monkey jury, ____.'",
+          "Complete the pirate's lyric line: 'Monkey judge, monkey jury, ____.'",
 
         options: [
           "Everyone in such a hurry",
           "Monkeys are always so dirty",
           "Everything is getting blurry",
-          "Everybody getting worried"
+          "Getting so worried"
         ],
 
         correctIndex: 0
@@ -36,9 +36,9 @@
 
         options: [
           "Her keys",
-          "Her cake",
+          "Her money",
           "Her hat",
-          "Her purse"
+          "Her case"
         ],
 
         correctIndex: 2
@@ -117,6 +117,60 @@
   };
 
 
+  const YOHO = {
+    videoId: "",
+    title: "YOHO (Davy Jones)",
+    image: "./assets/octopus.png",
+    imageAlt: "Pirate Octopus",
+
+    quiz: [
+      {
+        question:
+          "What were the last lyrics spoken in the song?",
+
+        options: [
+          "Its Game Over",
+          "YOHO",
+          "I gotta fix my front tooth",
+          "some dont even notice"
+        ],
+
+        correctIndex: 2
+      },
+
+      {
+        question:
+          'When Davy Jones asks Will Turner "what is your purpose here?" What is his response?',
+
+        options: [
+          "To challenge Davy Jones",
+          "Jack Sparrow sent me to settle his debt",
+          "Never shall we die",
+          "Don't listen to him"
+        ],
+
+        correctIndex: 1
+      },
+
+      {
+        question:
+          "What Ace Of Base song was sampled in this track?",
+
+        options: [
+          "The Sign",
+          "All That She Wants",
+          "Don't Turn Around",
+          "None"
+        ],
+
+        correctIndex: 1
+      }
+    ],
+
+    unlocksPottyTime: false
+  };
+
+
   // =========================================================
   // ACTIVE DUEL
   // =========================================================
@@ -136,6 +190,7 @@
     /*
       Check YouTube video ID first.
     */
+
     if (
       window.rizneyPlayer &&
       typeof window.rizneyPlayer.getVideoData ===
@@ -181,6 +236,14 @@
       )
     ) {
       return DELAWARE;
+    }
+
+    if (
+      lowerText.includes(
+        YOHO.title.toLowerCase()
+      )
+    ) {
+      return YOHO;
     }
 
     return null;
@@ -241,6 +304,15 @@
   */
 
   let niceAndSlowChosen = false;
+
+
+  /*
+    Keeps track of whether the player chose
+    to play A ROLLING STONE GATHERS NO MAS
+    from the victory screen.
+  */
+
+  let rollingStoneChosen = false;
 
 
   // =========================================================
@@ -509,6 +581,95 @@
 
 
   // =========================================================
+  // ROLLING STONE PLAY BUTTON
+  // =========================================================
+
+  function playRollingStone() {
+
+    const rows =
+      Array.from(
+        document.querySelectorAll(
+          "#song-list .song"
+        )
+      );
+
+    const rollingStoneRow =
+      rows.find(row => {
+
+        const title =
+          row.querySelector(
+            ".song-title"
+          );
+
+        return (
+          title &&
+          title.textContent.includes(
+            "A Rolling Stone Gathers NO MAS"
+          )
+        );
+      });
+
+    if (!rollingStoneRow) {
+
+      console.log(
+        "Could not find A Rolling Stone Gathers NO MAS in the playlist."
+      );
+
+      return;
+    }
+
+    rollingStoneChosen =
+      true;
+
+    /*
+      Scroll A ROLLING STONE GATHERS NO MAS
+      into view first.
+    */
+
+    rollingStoneRow.scrollIntoView({
+      behavior: "smooth",
+      block: "center"
+    });
+
+
+    /*
+      Give the scroll a moment to begin,
+      then use the existing row-play system.
+    */
+
+    setTimeout(() => {
+
+      const title =
+        rollingStoneRow.querySelector(
+          ".song-title"
+        );
+
+      if (title) {
+
+        title.click();
+
+        return;
+      }
+
+
+      const playButton =
+        rollingStoneRow.querySelector(
+          ".play"
+        );
+
+      if (playButton) {
+
+        playButton.click();
+      }
+
+    }, 350);
+
+
+    hideContainer();
+  }
+
+
+  // =========================================================
   // STATE 1 — INITIAL PROMPT
   // =========================================================
 
@@ -540,6 +701,9 @@
       false;
 
     niceAndSlowChosen =
+      false;
+
+    rollingStoneChosen =
       false;
 
 
@@ -584,7 +748,9 @@
       ">
         ${duel === DELAWARE
           ? "Pirate Fox has challenged you, ye scurvy sea dog."
-          : "Captain Black Bear called you a scurvy sea dog."
+          : duel === YOHO
+            ? "The Pirate Octopus has challenged you, ye scurvy sea dog."
+            : "Captain Black Bear called you a scurvy sea dog."
         }<br>
 
         <span style="
@@ -1053,7 +1219,7 @@
           "#51cf66";
 
         feedback.innerHTML = `
-          🎯 <strong>YARRR! </strong><br>
+          🎯 <strong>ARRR! CORRECT!</strong><br>
 
           <span style="
             color: #f5d76e;
@@ -1313,6 +1479,131 @@
 
           if (
             niceAndSlowChosen
+          ) {
+            return;
+          }
+
+
+          hideContainer();
+
+
+          setTimeout(
+            skipToNextTrack,
+            300
+          );
+
+        }, 5000);
+
+
+        return;
+      }
+
+
+      // =====================================================
+      // YOHO / ROLLING STONE UNLOCK
+      // =====================================================
+
+      if (
+        duel === YOHO
+      ) {
+
+        /*
+          Unlock Song #215:
+          A Rolling Stone Gathers NO MAS
+        */
+
+        localStorage.setItem(
+          "rollingStoneUnlocked",
+          "true"
+        );
+
+
+        /*
+          Tell main.js immediately so the
+          locked playlist row updates.
+        */
+
+        window.dispatchEvent(
+          new CustomEvent(
+            "rollingStoneUnlocked"
+          )
+        );
+
+
+        rollingStoneChosen =
+          false;
+
+
+        feedback.style.color =
+          "#51cf66";
+
+
+        feedback.innerHTML = `
+          <div style="
+            font-size: 1.15rem;
+            line-height: 1.5;
+            margin-bottom: 12px;
+          ">
+            🏆 <strong>YOU SURVIVED THE PIRATE DUEL!</strong><br>
+
+            🎉 <strong>YOU'VE UNLOCKED<br>
+            "A ROLLING STONE GATHERS NO MAS"!</strong>
+          </div>
+
+          <div style="
+            color: #f5d76e;
+            font-size: 1rem;
+            line-height: 1.5;
+            margin-bottom: 14px;
+          ">
+            🐙 The Pirate Octopus approves.<br>
+
+            🪙 Booty Secured:
+            <strong>${playerBooty} Gold</strong>
+          </div>
+
+          <button
+            id="play-rolling-stone"
+            style="
+              padding: 11px 22px;
+              background: #c084fc;
+              color: #120b18;
+              border: none;
+              border-radius: 5px;
+              font-weight: bold;
+              cursor: pointer;
+              font-family: Georgia, serif;
+              font-size: 1rem;
+              box-shadow: 0 3px 10px rgba(0,0,0,0.4);
+            "
+          >
+            💀 PLAY A ROLLING STONE GATHERS NO MAS
+          </button>
+        `;
+
+
+        const rollingStoneButton =
+          document.getElementById(
+            "play-rolling-stone"
+          );
+
+
+        if (rollingStoneButton) {
+
+          rollingStoneButton.onclick =
+            playRollingStone;
+        }
+
+
+        /*
+          Wait five seconds unless the player
+          chooses PLAY.
+        */
+
+        setTimeout(() => {
+
+          if (
+            rollingStoneChosen
           ) {
             return;
           }
