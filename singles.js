@@ -1,18 +1,18 @@
 /* =========================================================
-   "YOU DON'T KNOW TRACK" - WITH ANIMATION & DISMISS BUTTON
-   ========================================================= */
+   "YOU DON'T KNOW TRACK" - PIRATE DUEL EDITION
+   ========================================================= */ 
 
 (() => {
-  "use strict";
+  "use strict"; 
 
   const TARGET_VIDEO_ID = "SHhsdD5viWs";
   const TARGET_TITLE = "Monkey Judge";
   const CONTAINER_ID = "simple-quiz-container";
   
-  const AUDIO_PATH = "./assets/You-dont-know-track.mp3";
+  const AUDIO_PATH = "./assets/You-dont-know-track.mp3"; 
 
   const QUIZ = {
-    question: "Fill in the blank: 'Monkey judge, monkey jury, ____.'",
+    question: "Complete the pirate's lyric line: 'Monkey judge, monkey jury, ____.'",
     options: [
       "Everyone in such a hurry",
       "Monkeys are always so dirty",
@@ -20,12 +20,12 @@
       "Getting so worried"
     ],
     correctIndex: 0
-  };
+  }; 
 
-  let currentState = "hidden"; // "hidden", "prompt", "dismissed", "listening", "quiz"
+  let currentState = "hidden"; // "hidden", "prompt", "dismissed", "listening", "quiz" 
 
   function injectContainer() {
-    if (document.getElementById(CONTAINER_ID)) return;
+    if (document.getElementById(CONTAINER_ID)) return; 
 
     const wrapper = document.createElement("div");
     wrapper.id = CONTAINER_ID;
@@ -49,10 +49,10 @@
       text-align: center;
       z-index: 99999;
       transition: transform 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s ease;
-    `;
+    `; 
 
     document.body.appendChild(wrapper);
-  }
+  } 
 
   // Helper to show the container with the slide-up animation
   function showContainer() {
@@ -61,7 +61,7 @@
     wrapper.style.transform = "translateX(-50%) translateY(0)";
     wrapper.style.opacity = "1";
     wrapper.style.pointerEvents = "auto";
-  }
+  } 
 
   // Helper to hide the container with a slide-down animation
   function hideContainer() {
@@ -70,19 +70,19 @@
     wrapper.style.transform = "translateX(-50%) translateY(150%)";
     wrapper.style.opacity = "0";
     wrapper.style.pointerEvents = "none";
-  }
+  } 
 
   // State 1: The initial opt-in banner
   function showPromptState() {
     const wrapper = document.getElementById(CONTAINER_ID);
     if (!wrapper) return;
-    currentState = "prompt";
+    currentState = "prompt"; 
 
     wrapper.innerHTML = `
       <div style="font-size: 1.1rem; font-weight: bold; color: #c084fc; margin-bottom: 12px;">
-        🎤 YOU DON'T KNOW TRACK: Monkey Judge
+        ⚔️ PIRATE DUEL CHALLENGE: Monkey Judge
       </div>
-      <p style="margin-bottom: 15px;">Want to test your knowledge for bonus points?</p>
+      <p style="margin-bottom: 15px;">A challenger approaches! Will you cross swords and match wits?</p>
       <div style="display: flex; gap: 12px; justify-content: center; align-items: center;">
         <button id="start-quiz-optin" style="
           padding: 10px 24px;
@@ -94,7 +94,7 @@
           cursor: pointer;
           font-family: Georgia, serif;
           font-size: 1rem;
-        ">Yes!</button>
+        ">En Garde!</button>
         <button id="dismiss-quiz-optin" style="
           padding: 10px 18px;
           background: transparent;
@@ -104,22 +104,22 @@
           cursor: pointer;
           font-family: Georgia, serif;
           font-size: 0.95rem;
-        ">No thanks</button>
+        ">Flee in Terror</button>
       </div>
-    `;
+    `; 
 
-    showContainer();
+    showContainer(); 
 
     document.getElementById("start-quiz-optin").onclick = () => {
       playVoiceClip();
       showListeningState();
-    };
+    }; 
 
     document.getElementById("dismiss-quiz-optin").onclick = () => {
       currentState = "dismissed";
       hideContainer();
     };
-  }
+  } 
 
   // Play your custom voice mp3
   function playVoiceClip() {
@@ -132,7 +132,7 @@
     } catch (e) {
       console.log("Could not initialize audio:", e);
     }
-  }
+  } 
 
   // Stop the YouTube music player
   function stopSong() {
@@ -143,7 +143,7 @@
         console.log("Could not pause player:", e);
       }
     }
-  }
+  } 
 
   // Trigger next track exactly like your toolbar button
   function skipToNextTrack() {
@@ -158,33 +158,33 @@
         console.log("Could not skip to next video:", e);
       }
     }
-  }
+  } 
 
   // State 2: "Pay attention" mode after clicking Yes
   function showListeningState() {
     const wrapper = document.getElementById(CONTAINER_ID);
     if (!wrapper) return;
-    currentState = "listening";
+    currentState = "listening"; 
 
     wrapper.innerHTML = `
       <div style="font-size: 1.1rem; font-weight: bold; color: #c084fc; margin-bottom: 12px;">
-        🎧 GET READY...
+        🗡️ DRAW YOUR BLADE...
       </div>
       <p style="font-size: 1.05rem; margin: 15px 0; line-height: 1.5;">
-        Pay attention to the song!<br>
-        <span style="color: #f5d76e; font-style: italic; font-size: 0.95rem;">The question is coming up near the end...</span>
+        Listen closely to the song!<br>
+        <span style="color: #f5d76e; font-style: italic; font-size: 0.95rem;">The lyrical riposte approaches near the end...</span>
       </p>
     `;
     showContainer();
-  }
+  } 
 
   // State 3: The actual multiple choice quiz
   function showQuizState() {
     const wrapper = document.getElementById(CONTAINER_ID);
     if (!wrapper) return;
-    currentState = "quiz";
+    currentState = "quiz"; 
 
-    stopSong();
+    stopSong(); 
 
     const optionsHtml = QUIZ.options.map((opt, index) => {
       const letter = String.fromCharCode(65 + index);
@@ -201,18 +201,18 @@
           font-size: 1rem;
         ">${letter}. ${opt}</button>
       `;
-    }).join("");
+    }).join(""); 
 
     wrapper.innerHTML = `
-      <h3 style="color: #c084fc; margin-top: 0;">🎤 YOU DON'T KNOW TRACK: Time's Up!</h3>
+      <h3 style="color: #c084fc; margin-top: 0;">⚔️ SWASHBUCKLING STANDOFF</h3>
       <p style="font-size: 1.1rem; margin: 15px 0;">${QUIZ.question}</p>
       <div id="quiz-options-list" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px;">
         ${optionsHtml}
       </div>
       <div id="quiz-feedback" style="font-weight: bold; font-size: 1.1rem; min-height: 24px;"></div>
-    `;
+    `; 
 
-    showContainer();
+    showContainer(); 
 
     const buttons = wrapper.querySelectorAll(".quiz-opt-btn");
     buttons.forEach(btn => {
@@ -224,31 +224,31 @@
         handleAnswer(selectedIndex, buttons);
       };
     });
-  }
+  } 
 
   function handleAnswer(selectedIndex, buttons) {
     const feedback = document.getElementById("quiz-feedback");
-    buttons.forEach(b => b.disabled = true);
+    buttons.forEach(b => b.disabled = true); 
 
     if (selectedIndex === QUIZ.correctIndex) {
       feedback.style.color = "#51cf66";
-      feedback.textContent = "🎉 Correct! Great job!";
+      feedback.textContent = "⚔️ Touche! Flawless comeback!";
     } else {
       feedback.style.color = "#ff6b6b";
-      feedback.textContent = `❌ Not quite! The correct answer was: ${QUIZ.options[QUIZ.correctIndex]}`;
-    }
+      feedback.textContent = `💥 Oof! You stumbled: "${QUIZ.options[QUIZ.correctIndex]}"`;
+    } 
 
     // Wait 2.5 seconds to read feedback, slide box down, then trigger the next track
     setTimeout(() => {
       hideContainer();
       setTimeout(skipToNextTrack, 300); // slight delay to let slide-down finish before track skips
     }, 2500);
-  }
+  } 
 
   // Monitor song status and playback time
   function checkSongStatus() {
     const nowPlaying = document.querySelector("#now-playing");
-    const text = nowPlaying ? nowPlaying.textContent : "";
+    const text = nowPlaying ? nowPlaying.textContent : ""; 
 
     let videoMatch = false;
     if (window.rizneyPlayer && typeof window.rizneyPlayer.getVideoData === "function") {
@@ -258,15 +258,15 @@
           videoMatch = true;
         }
       } catch (e) {}
-    }
+    } 
 
-    const isPlayingTarget = videoMatch || text.includes(TARGET_TITLE) || text.includes(TARGET_VIDEO_ID);
+    const isPlayingTarget = videoMatch || text.includes(TARGET_TITLE) || text.includes(TARGET_VIDEO_ID); 
 
     if (isPlayingTarget) {
       // If song just started and we haven't shown or dismissed it yet, show prompt
       if (currentState === "hidden") {
         showPromptState();
-      }
+      } 
 
       // If user clicked "Yes" and we are in listening mode, check progress
       if (currentState === "listening" && window.rizneyPlayer) {
@@ -276,14 +276,14 @@
             typeof window.rizneyPlayer.getDuration === "function"
           ) {
             const currentTime = window.rizneyPlayer.getCurrentTime();
-            const duration = window.rizneyPlayer.getDuration();
+            const duration = window.rizneyPlayer.getDuration(); 
 
             if (duration > 0 && (duration - currentTime <= 3)) {
               showQuizState();
             }
           }
         } catch (e) {}
-      }
+      } 
 
     } else {
       // If song changes away from Monkey Judge, reset everything back to hidden
@@ -292,17 +292,17 @@
         currentState = "hidden";
       }
     }
-  }
+  } 
 
   function init() {
     injectContainer();
     setInterval(checkSongStatus, 1000);
-  }
+  } 
 
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", init);
   } else {
     init();
-  }
+  } 
 
 })();
