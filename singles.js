@@ -1,5 +1,5 @@
 /* =========================================================
-   "YOU DON'T KNOW TRACK" - FIXED BOTTOM POPUP VERSION
+   "YOU DON'T KNOW TRACK" - TOOLBAR-SYNCED AUTO-SKIP
    ========================================================= */
 
 (() => {
@@ -29,7 +29,6 @@
 
     const wrapper = document.createElement("div");
     wrapper.id = CONTAINER_ID;
-    // Pinned to the bottom center of the screen so it floats over everything without scrolling
     wrapper.style.cssText = `
       display: none;
       position: fixed;
@@ -107,9 +106,15 @@
     }
   }
 
-  // Advance to the next track in your playlist
+  // Trigger next track exactly like your toolbar button
   function skipToNextTrack() {
-    if (window.rizneyPlayer && typeof window.rizneyPlayer.nextVideo === "function") {
+    // Look for a next button in your controls toolbar first
+    const toolbarNextBtn = document.querySelector(".controls button:last-child, .controls [data-action='next'], .controls .next-btn, button[title*='Next'], button[aria-label*='Next']");
+    
+    if (toolbarNextBtn) {
+      toolbarNextBtn.click();
+    } else if (window.rizneyPlayer && typeof window.rizneyPlayer.nextVideo === "function") {
+      // Fallback to player API if toolbar button isn't found
       try {
         window.rizneyPlayer.nextVideo();
       } catch (e) {
@@ -193,7 +198,7 @@
       feedback.textContent = `❌ Not quite! The correct answer was: ${QUIZ.options[QUIZ.correctIndex]}`;
     }
 
-    // Wait 2.5 seconds to read the feedback, then skip to the next track and hide the box
+    // Wait 2.5 seconds to read feedback, then trigger the next track
     setTimeout(() => {
       skipToNextTrack();
     }, 2500);
