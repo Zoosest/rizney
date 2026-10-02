@@ -82,6 +82,34 @@
         ],
 
         correctIndex: 1
+      },
+
+      {
+        question:
+          "What band are the couple talking about?",
+
+        options: [
+          "Led Zeppelin",
+          "The Beatles",
+          "The Police",
+          "Rush"
+        ],
+
+        correctIndex: 3
+      },
+
+      {
+        question:
+          "Fill in the lyrics: \"Hella scared on some welfare about some _____\"",
+
+        options: [
+          "Fresh Air",
+          "Dental Health Care",
+          "Impaired",
+          "Derrieres"
+        ],
+
+        correctIndex: 1
       }
     ],
 
@@ -1083,7 +1111,87 @@
 
 
       // =====================================================
-      // DELAWARE / NON-UNLOCKING VICTORY
+      // DELAWARE / NICE & SLOW UNLOCK
+      // =====================================================
+
+      if (
+        duel === DELAWARE
+      ) {
+
+        /*
+          Unlock Nice & Slow in main.js.
+        */
+
+        localStorage.setItem(
+          "niceAndSlowUnlocked",
+          "true"
+        );
+
+
+        /*
+          Tell main.js immediately so the
+          locked playlist row updates.
+        */
+
+        window.dispatchEvent(
+          new CustomEvent(
+            "niceAndSlowUnlocked"
+          )
+        );
+
+
+        feedback.style.color =
+          "#51cf66";
+
+
+        feedback.innerHTML = `
+          <div style="
+            font-size: 1.15rem;
+            line-height: 1.5;
+            margin-bottom: 12px;
+          ">
+            🏆 <strong>YOU SURVIVED THE PIRATE DUEL!</strong>
+          </div>
+
+          <div style="
+            color: #f5d76e;
+            font-size: 1rem;
+            line-height: 1.5;
+          ">
+            🦊 The Pirate Fox approves.<br>
+
+            🪙 Booty Secured:
+            <strong>${playerBooty} Gold</strong><br>
+
+            🐌 <strong>NICE & SLOW HAS BEEN UNLOCKED!</strong>
+          </div>
+        `;
+
+
+        /*
+          Give the player five seconds to see
+          the victory message, then continue.
+        */
+
+        setTimeout(() => {
+
+          hideContainer();
+
+
+          setTimeout(
+            skipToNextTrack,
+            300
+          );
+
+        }, 5000);
+
+
+        return;
+      }
+
+
+      // =====================================================
+      // FALLBACK VICTORY
       // =====================================================
 
       feedback.style.color =
@@ -1103,9 +1211,8 @@
           color: #f5d76e;
           font-size: 1rem;
         ">
-          🦊 The Pirate Fox approves.<br>
           🪙 Booty Secured:
-          <strong>+50 Gold</strong>
+          <strong>${playerBooty} Gold</strong>
         </div>
       `;
 
