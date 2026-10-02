@@ -1,3 +1,4 @@
+
 /* =========================================================
    "YOU DON'T KNOW TRACK" - PIRATE DUEL EDITION (WITH BOOTY)
    ========================================================= */ 
@@ -75,17 +76,28 @@
     wrapper.style.pointerEvents = "none";
   } 
 
-  // State 1: The initial opt-in banner
+  // State 1: The initial opt-in banner with Captain Black Bear
   function showPromptState() {
     const wrapper = document.getElementById(CONTAINER_ID);
     if (!wrapper) return;
     currentState = "prompt"; 
 
     wrapper.innerHTML = `
-      <div style="font-size: 1.1rem; font-weight: bold; color: #c084fc; margin-bottom: 12px;">
-        ⚔️ PIRATE DUEL CHALLENGE: Monkey Judge
+      <div style="display: flex; flex-direction: column; align-items: center; gap: 12px; margin-bottom: 15px;">
+        <img src="./assets/black-bear.png" alt="Captain Black Bear" style="
+          width: 90px;
+          height: 90px;
+          object-fit: cover;
+          border-radius: 50%;
+          border: 2px solid #d4af37;
+          box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+          image-rendering: pixelated;
+        ">
+        <div style="font-size: 1.15rem; font-weight: bold; color: #c084fc; line-height: 1.4;">
+          Captain Black Bear called you a scurvy sea dog.<br>
+          <span style="color: #f5d76e; font-size: 1.25rem;">Duel?</span>
+        </div>
       </div>
-      <p style="margin-bottom: 15px;">A challenger approaches! Will you cross swords and match wits for the booty?</p>
       <div style="display: flex; gap: 12px; justify-content: center; align-items: center;">
         <button id="start-quiz-optin" style="
           padding: 10px 24px;
