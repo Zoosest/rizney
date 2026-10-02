@@ -1,31 +1,72 @@
 /* =========================================================
    "YOU DON'T KNOW TRACK" - PIRATE DUEL EDITION (WITH BOOTY)
-   ========================================================= */ 
+   ========================================================= */
 
 (() => {
-  "use strict"; 
+  "use strict";
 
   const TARGET_VIDEO_ID = "SHhsdD5viWs";
   const TARGET_TITLE = "Monkey Judge";
   const CONTAINER_ID = "simple-quiz-container";
-  
-  const AUDIO_PATH = "./assets/You-dont-know-track.mp3"; 
+
+  const AUDIO_PATH = "./assets/You-dont-know-track.mp3";
 
   // Player booty stash
   let playerBooty = 0;
 
-  const QUIZ = {
-    question: "Complete the pirate's lyric line: 'Monkey judge, monkey jury, ____.'",
-    options: [
-      "Everyone in such a hurry",
-      "Monkeys are always so dirty",
-      "Everything is getting blurry",
-      "Getting so worried"
-    ],
-    correctIndex: 0
-  }; 
+  // =========================================================
+  // THREE QUESTION PIRATE QUIZ
+  // =========================================================
 
-  let currentState = "hidden"; // "hidden", "prompt", "dismissed", "listening", "quiz"
+  const QUIZ = [
+    {
+      question:
+        "Complete the pirate's lyric line: 'Monkey judge, monkey jury, ____.'",
+
+      options: [
+        "Everyone in such a hurry",
+        "Monkeys are always so dirty",
+        "Everything is getting blurry",
+        "Getting so worried"
+      ],
+
+      correctIndex: 0
+    },
+
+    {
+      question:
+        "What did the monkey steal?",
+
+      options: [
+        "Her keys",
+        "Her money",
+        "Her hat",
+        "Her case"
+      ],
+
+      correctIndex: 2
+    },
+
+    {
+      question:
+        "What is the name of the Monkey Judge?",
+
+      options: [
+        "Bubbles",
+        "Matt",
+        "Tango",
+        "Tom"
+      ],
+
+      correctIndex: 2
+    }
+  ];
+
+  // Current question number
+  let currentQuestionIndex = 0;
+
+  let currentState = "hidden";
+  // "hidden", "prompt", "dismissed", "listening", "quiz"
 
   /*
     Keeps track of whether the player chose
@@ -33,8 +74,12 @@
   */
   let pottyTimeChosen = false;
 
+  // =========================================================
+  // CONTAINER
+  // =========================================================
+
   function injectContainer() {
-    if (document.getElementById(CONTAINER_ID)) return; 
+    if (document.getElementById(CONTAINER_ID)) return;
 
     const wrapper = document.createElement("div");
     wrapper.id = CONTAINER_ID;
@@ -58,42 +103,49 @@
       text-align: center;
       z-index: 99999;
       transition: transform 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s ease;
-    `; 
+    `;
 
     document.body.appendChild(wrapper);
-  } 
+  }
 
   function showContainer() {
-    const wrapper = document.getElementById(CONTAINER_ID);
+    const wrapper =
+      document.getElementById(CONTAINER_ID);
+
     if (!wrapper) return;
 
-    wrapper.style.transform = "translateX(-50%) translateY(0)";
+    wrapper.style.transform =
+      "translateX(-50%) translateY(0)";
+
     wrapper.style.opacity = "1";
     wrapper.style.pointerEvents = "auto";
-  } 
+  }
 
   function hideContainer() {
-    const wrapper = document.getElementById(CONTAINER_ID);
+    const wrapper =
+      document.getElementById(CONTAINER_ID);
+
     if (!wrapper) return;
 
-    wrapper.style.transform = "translateX(-50%) translateY(150%)";
+    wrapper.style.transform =
+      "translateX(-50%) translateY(150%)";
+
     wrapper.style.opacity = "0";
     wrapper.style.pointerEvents = "none";
-  } 
+  }
 
   // =========================================================
   // POTTY TIME PLAY BUTTON
   // =========================================================
 
   function playPottyTime() {
-    pottyTimeChosen = true;
-
     const rows = Array.from(
       document.querySelectorAll("#song-list .song")
     );
 
     const pottyRow = rows.find(row => {
-      const title = row.querySelector(".song-title");
+      const title =
+        row.querySelector(".song-title");
 
       return (
         title &&
@@ -102,9 +154,13 @@
     });
 
     if (!pottyRow) {
-      console.log("Could not find POTTY TIME in the playlist.");
+      console.log(
+        "Could not find POTTY TIME in the playlist."
+      );
       return;
     }
+
+    pottyTimeChosen = true;
 
     /*
       Scroll POTTY TIME into view first.
@@ -143,66 +199,124 @@
   // =========================================================
 
   function showPromptState() {
-    const wrapper = document.getElementById(CONTAINER_ID);
+    const wrapper =
+      document.getElementById(CONTAINER_ID);
+
     if (!wrapper) return;
 
-    currentState = "prompt"; 
+    currentState = "prompt";
+
+    /*
+      Start the three-question quiz from Question 1
+      every time a new duel begins.
+    */
+    currentQuestionIndex = 0;
+    playerBooty = 0;
+    pottyTimeChosen = false;
 
     wrapper.innerHTML = `
-      <div style="width: 100%; max-height: 260px; overflow: hidden; border-radius: 6px; border: 1px solid #d4af37; margin-bottom: 15px; background: #0c0810; display: flex; justify-content: center; align-items: center;">
-        <img src="./assets/black-bear.png" alt="Captain Black Bear" style="
-          width: 100%;
-          height: auto;
-          max-height: 260px;
-          object-fit: contain;
-          display: block;
-          image-rendering: pixelated;
-        ">
+      <div style="
+        width: 100%;
+        max-height: 260px;
+        overflow: hidden;
+        border-radius: 6px;
+        border: 1px solid #d4af37;
+        margin-bottom: 15px;
+        background: #0c0810;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      ">
+        <img
+          src="./assets/black-bear.png"
+          alt="Captain Black Bear"
+          style="
+            width: 100%;
+            height: auto;
+            max-height: 260px;
+            object-fit: contain;
+            display: block;
+            image-rendering: pixelated;
+          "
+        >
       </div>
 
-      <div style="font-size: 1.15rem; font-weight: bold; color: #f5d76e; margin-bottom: 15px; line-height: 1.4;">
+      <div style="
+        font-size: 1.15rem;
+        font-weight: bold;
+        color: #f5d76e;
+        margin-bottom: 15px;
+        line-height: 1.4;
+      ">
         Captain Black Bear called you a scurvy sea dog.<br>
-        <span style="color: #c084fc; font-size: 1.25rem;">Duel?</span>
+
+        <span style="
+          color: #c084fc;
+          font-size: 1.25rem;
+        ">
+          Duel?
+        </span>
       </div>
 
-      <div style="display: flex; gap: 12px; justify-content: center; align-items: center;">
-        <button id="start-quiz-optin" style="
-          padding: 10px 24px;
-          background: #c084fc;
-          color: #120b18;
-          border: none;
-          border-radius: 4px;
-          font-weight: bold;
-          cursor: pointer;
-          font-family: Georgia, serif;
-          font-size: 1rem;
-        ">En Garde!</button>
+      <div style="
+        display: flex;
+        gap: 12px;
+        justify-content: center;
+        align-items: center;
+      ">
 
-        <button id="dismiss-quiz-optin" style="
-          padding: 10px 18px;
-          background: transparent;
-          color: #a78bfa;
-          border: 1px solid #7c3aed;
-          border-radius: 4px;
-          cursor: pointer;
-          font-family: Georgia, serif;
-          font-size: 0.95rem;
-        ">Flee in Terror</button>
+        <button
+          id="start-quiz-optin"
+          style="
+            padding: 10px 24px;
+            background: #c084fc;
+            color: #120b18;
+            border: none;
+            border-radius: 4px;
+            font-weight: bold;
+            cursor: pointer;
+            font-family: Georgia, serif;
+            font-size: 1rem;
+          "
+        >
+          En Garde!
+        </button>
+
+        <button
+          id="dismiss-quiz-optin"
+          style="
+            padding: 10px 18px;
+            background: transparent;
+            color: #a78bfa;
+            border: 1px solid #7c3aed;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: Georgia, serif;
+            font-size: 0.95rem;
+          "
+        >
+          Flee in Terror
+        </button>
+
       </div>
-    `; 
+    `;
 
-    showContainer(); 
+    showContainer();
 
-    document.getElementById("start-quiz-optin").onclick = () => {
+    document.getElementById(
+      "start-quiz-optin"
+    ).onclick = () => {
       playVoiceClip();
       showListeningState();
-    }; 
+    };
 
-    document.getElementById("dismiss-quiz-optin").onclick = () => {
+    document.getElementById(
+      "dismiss-quiz-optin"
+    ).onclick = () => {
       currentState = "dismissed";
       hideContainer();
     };
-  } 
+  }
 
   // =========================================================
   // VOICE CLIP
@@ -210,7 +324,9 @@
 
   function playVoiceClip() {
     try {
-      const audio = new Audio(AUDIO_PATH);
+      const audio =
+        new Audio(AUDIO_PATH);
+
       audio.volume = 1.0;
 
       audio.play().catch(err => {
@@ -219,13 +335,14 @@
           err
         );
       });
+
     } catch (e) {
       console.log(
         "Could not initialize audio:",
         e
       );
     }
-  } 
+  }
 
   // =========================================================
   // STOP YOUTUBE
@@ -234,10 +351,12 @@
   function stopSong() {
     if (
       window.rizneyPlayer &&
-      typeof window.rizneyPlayer.pauseVideo === "function"
+      typeof window.rizneyPlayer.pauseVideo ===
+        "function"
     ) {
       try {
         window.rizneyPlayer.pauseVideo();
+
       } catch (e) {
         console.log(
           "Could not pause player:",
@@ -245,7 +364,7 @@
         );
       }
     }
-  } 
+  }
 
   // =========================================================
   // NEXT TRACK
@@ -256,16 +375,18 @@
       document.querySelector(
         ".controls button:last-child, .controls [data-action='next'], .controls .next-btn, button[title*='Next'], button[aria-label*='Next']"
       );
-    
+
     if (toolbarNextBtn) {
       toolbarNextBtn.click();
 
     } else if (
       window.rizneyPlayer &&
-      typeof window.rizneyPlayer.nextVideo === "function"
+      typeof window.rizneyPlayer.nextVideo ===
+        "function"
     ) {
       try {
         window.rizneyPlayer.nextVideo();
+
       } catch (e) {
         console.log(
           "Could not skip to next video:",
@@ -273,7 +394,7 @@
         );
       }
     }
-  } 
+  }
 
   // =========================================================
   // STATE 2 — LISTENING
@@ -287,24 +408,38 @@
 
     if (!wrapper) return;
 
-    currentState = "listening"; 
+    currentState = "listening";
 
     wrapper.innerHTML = `
-      <div style="font-size: 1.1rem; font-weight: bold; color: #c084fc; margin-bottom: 12px;">
+      <div style="
+        font-size: 1.1rem;
+        font-weight: bold;
+        color: #c084fc;
+        margin-bottom: 12px;
+      ">
         PAY ATTENTION...<br>
         YOU'RE BEING TESTED.
       </div>
 
-      <p style="font-size: 1.05rem; margin: 15px 0; line-height: 1.5;">
+      <p style="
+        font-size: 1.05rem;
+        margin: 15px 0;
+        line-height: 1.5;
+      ">
         Listen closely to the song!<br>
-        <span style="color: #f5d76e; font-style: italic; font-size: 0.95rem;">
+
+        <span style="
+          color: #f5d76e;
+          font-style: italic;
+          font-size: 0.95rem;
+        ">
           The lyrical riposte approaches near the end...
         </span>
       </p>
     `;
 
     showContainer();
-  } 
+  }
 
   // =========================================================
   // STATE 3 — QUIZ
@@ -318,12 +453,21 @@
 
     if (!wrapper) return;
 
-    currentState = "quiz"; 
+    currentState = "quiz";
 
-    stopSong(); 
+    stopSong();
+
+    const quiz =
+      QUIZ[currentQuestionIndex];
+
+    const questionNumber =
+      currentQuestionIndex + 1;
+
+    const totalQuestions =
+      QUIZ.length;
 
     const optionsHtml =
-      QUIZ.options
+      quiz.options
         .map((opt, index) => {
           const letter =
             String.fromCharCode(
@@ -331,48 +475,78 @@
             );
 
           return `
-            <button class="quiz-opt-btn" data-index="${index}" style="
-              padding: 10px;
-              background: #0f0a13;
-              border: 1px solid #c084fc;
-              color: #f5d76e;
-              border-radius: 4px;
-              cursor: pointer;
-              text-align: left;
-              font-family: Georgia, serif;
-              font-size: 1rem;
-            ">${letter}. ${opt}</button>
+            <button
+              class="quiz-opt-btn"
+              data-index="${index}"
+              style="
+                padding: 10px;
+                background: #0f0a13;
+                border: 1px solid #c084fc;
+                color: #f5d76e;
+                border-radius: 4px;
+                cursor: pointer;
+                text-align: left;
+                font-family: Georgia, serif;
+                font-size: 1rem;
+              "
+            >
+              ${letter}. ${opt}
+            </button>
           `;
         })
-        .join(""); 
+        .join("");
 
     wrapper.innerHTML = `
-      <h3 style="color: #c084fc; margin-top: 0;">
+      <div style="
+        color: #d4af37;
+        font-size: 0.9rem;
+        font-weight: bold;
+        margin-bottom: 6px;
+      ">
+        PIRATE DUEL — QUESTION
+        ${questionNumber}
+        OF
+        ${totalQuestions}
+      </div>
+
+      <h3 style="
+        color: #c084fc;
+        margin-top: 0;
+      ">
         ⚔️ SWASHBUCKLING STANDOFF
       </h3>
 
-      <p style="font-size: 1.1rem; margin: 15px 0;">
-        ${QUIZ.question}
+      <p style="
+        font-size: 1.1rem;
+        margin: 15px 0;
+      ">
+        ${quiz.question}
       </p>
 
-      <div id="quiz-options-list" style="
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-        margin-bottom: 15px;
-      ">
+      <div
+        id="quiz-options-list"
+        style="
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+          margin-bottom: 15px;
+        "
+      >
         ${optionsHtml}
       </div>
 
-      <div id="quiz-feedback" style="
-        font-weight: bold;
-        font-size: 1.05rem;
-        min-height: 36px;
-        line-height: 1.4;
-      "></div>
-    `; 
+      <div
+        id="quiz-feedback"
+        style="
+          font-weight: bold;
+          font-size: 1.05rem;
+          min-height: 36px;
+          line-height: 1.4;
+        "
+      ></div>
+    `;
 
-    showContainer(); 
+    showContainer();
 
     const buttons =
       wrapper.querySelectorAll(
@@ -380,6 +554,7 @@
       );
 
     buttons.forEach(btn => {
+
       btn.onmouseover = () => {
         if (!btn.disabled) {
           btn.style.background =
@@ -393,8 +568,9 @@
             "#0f0a13";
         }
       };
-      
+
       btn.onclick = () => {
+
         const selectedIndex =
           parseInt(
             btn.dataset.index,
@@ -406,8 +582,9 @@
           buttons
         );
       };
+
     });
-  } 
+  }
 
   // =========================================================
   // HANDLE ANSWER
@@ -417,19 +594,79 @@
     selectedIndex,
     buttons
   ) {
+
     const feedback =
       document.getElementById(
         "quiz-feedback"
       );
 
+    if (!feedback) return;
+
     buttons.forEach(b => {
       b.disabled = true;
-    }); 
+    });
+
+    const quiz =
+      QUIZ[currentQuestionIndex];
+
+    // =======================================================
+    // CORRECT ANSWER
+    // =======================================================
 
     if (
       selectedIndex ===
-      QUIZ.correctIndex
+      quiz.correctIndex
     ) {
+
+      playerBooty += 50;
+
+      /*
+        If there are still questions remaining,
+        move to the next question.
+      */
+      if (
+        currentQuestionIndex <
+        QUIZ.length - 1
+      ) {
+
+        feedback.style.color =
+          "#51cf66";
+
+        feedback.innerHTML = `
+          🎯 <strong>ARRR! CORRECT!</strong><br>
+
+          <span style="
+            color: #f5d76e;
+            font-size: 0.95rem;
+          ">
+            🪙 +50 Gold
+            &nbsp;•&nbsp;
+            Booty: <strong>${playerBooty}</strong>
+          </span>
+
+          <div style="
+            margin-top: 12px;
+            color: #c084fc;
+            font-size: 0.95rem;
+          ">
+            Prepare yourself for the next question...
+          </div>
+        `;
+
+        setTimeout(() => {
+
+          currentQuestionIndex++;
+
+          showQuizState();
+
+        }, 1600);
+
+        return;
+      }
+
+      // =====================================================
+      // ALL THREE QUESTIONS COMPLETE!
+      // =====================================================
 
       /*
         🏴‍☠️ POTTY TIME UNLOCKED!
@@ -448,8 +685,6 @@
         )
       );
 
-      playerBooty += 50;
-
       pottyTimeChosen = false;
 
       feedback.style.color =
@@ -461,6 +696,8 @@
           line-height: 1.5;
           margin-bottom: 12px;
         ">
+          🏆 <strong>YOU SURVIVED THE PIRATE DUEL!</strong><br>
+
           🎉 <strong>YOU'VE UNLOCKED<br>
           "POTTY TIME" IN THE PLAYLIST!</strong>
         </div>
@@ -475,18 +712,21 @@
           (Total: ${playerBooty})
         </div>
 
-        <button id="play-potty-time" style="
-          padding: 11px 22px;
-          background: #c084fc;
-          color: #120b18;
-          border: none;
-          border-radius: 5px;
-          font-weight: bold;
-          cursor: pointer;
-          font-family: Georgia, serif;
-          font-size: 1rem;
-          box-shadow: 0 3px 10px rgba(0,0,0,0.4);
-        ">
+        <button
+          id="play-potty-time"
+          style="
+            padding: 11px 22px;
+            background: #c084fc;
+            color: #120b18;
+            border: none;
+            border-radius: 5px;
+            font-weight: bold;
+            cursor: pointer;
+            font-family: Georgia, serif;
+            font-size: 1rem;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.4);
+          "
+        >
           🚽 PLAY POTTY TIME
         </button>
       `;
@@ -501,37 +741,65 @@
           playPottyTime;
       }
 
-    } else {
+      /*
+        Wait five seconds unless the player
+        chooses PLAY POTTY TIME.
+      */
+      setTimeout(() => {
 
-      playerBooty = 0;
+        if (pottyTimeChosen) {
+          return;
+        }
 
-      feedback.style.color =
-        "#ff6b6b";
+        hideContainer();
 
-      feedback.innerHTML = `
-        💥 Oof! You stumbled:
-        "${QUIZ.options[QUIZ.correctIndex]}"<br>
+        setTimeout(
+          skipToNextTrack,
+          300
+        );
 
-        <span style="color: #f5d76e; font-size: 0.95rem;">
-          🌊 Argh! They plundered your pockets!
-          Booty: <strong>0 Gold</strong>
-        </span>
-      `;
-    } 
+      }, 5000);
+
+      return;
+    }
+
+    // =======================================================
+    // WRONG ANSWER
+    // =======================================================
+
+    playerBooty = 0;
+
+    feedback.style.color =
+      "#ff6b6b";
+
+    feedback.innerHTML = `
+      💥 <strong>WRONG, YE SCURVY DOG!</strong><br>
+
+      <span style="
+        color: #f5d76e;
+        font-size: 0.95rem;
+      ">
+        The answer was:
+        <strong>
+          ${quiz.options[quiz.correctIndex]}
+        </strong>
+      </span>
+
+      <br>
+
+      <span style="
+        color: #f5d76e;
+        font-size: 0.95rem;
+      ">
+        🌊 They plundered your pockets!
+        Booty: <strong>0 Gold</strong>
+      </span>
+    `;
 
     /*
-      Give the player a few seconds to read
-      the victory message.
-
-      If they choose PLAY POTTY TIME,
-      that button takes over and the automatic
-      next-track action is cancelled.
+      Wrong answer ends the duel.
     */
     setTimeout(() => {
-
-      if (pottyTimeChosen) {
-        return;
-      }
 
       hideContainer();
 
@@ -541,13 +809,14 @@
       );
 
     }, 5000);
-  } 
+  }
 
   // =========================================================
   // MONITOR SONG STATUS
   // =========================================================
 
   function checkSongStatus() {
+
     const nowPlaying =
       document.querySelector(
         "#now-playing"
@@ -556,7 +825,7 @@
     const text =
       nowPlaying
         ? nowPlaying.textContent
-        : ""; 
+        : "";
 
     let videoMatch = false;
 
@@ -565,7 +834,9 @@
       typeof window.rizneyPlayer.getVideoData ===
         "function"
     ) {
+
       try {
+
         const data =
           window.rizneyPlayer.getVideoData();
 
@@ -578,12 +849,12 @@
         }
 
       } catch (e) {}
-    } 
+    }
 
     const isPlayingTarget =
       videoMatch ||
       text.includes(TARGET_TITLE) ||
-      text.includes(TARGET_VIDEO_ID); 
+      text.includes(TARGET_VIDEO_ID);
 
     if (isPlayingTarget) {
 
@@ -592,13 +863,14 @@
         "hidden"
       ) {
         showPromptState();
-      } 
+      }
 
       if (
         currentState ===
           "listening" &&
         window.rizneyPlayer
       ) {
+
         try {
 
           if (
@@ -614,7 +886,7 @@
 
             const duration =
               window.rizneyPlayer
-                .getDuration(); 
+                .getDuration();
 
             if (
               duration > 0 &&
@@ -622,13 +894,13 @@
                 currentTime <=
                 3
             ) {
+
               showQuizState();
             }
-
           }
 
         } catch (e) {}
-      } 
+      }
 
     } else {
 
@@ -636,35 +908,42 @@
         currentState !==
         "hidden"
       ) {
+
         hideContainer();
+
         currentState =
           "hidden";
       }
     }
-  } 
+  }
 
   // =========================================================
   // INITIALIZATION
   // =========================================================
 
   function init() {
+
     injectContainer();
+
     setInterval(
       checkSongStatus,
       1000
     );
-  } 
+  }
 
   if (
     document.readyState ===
     "loading"
   ) {
+
     document.addEventListener(
       "DOMContentLoaded",
       init
     );
+
   } else {
+
     init();
-  } 
+  }
 
 })();
