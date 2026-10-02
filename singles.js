@@ -1197,7 +1197,7 @@
           "#51cf66";
 
         feedback.innerHTML = `
-          ✓ CORRECT
+          YARRRR!
           <span style="
             color: #f5d76e;
             font-size: 0.95rem;
