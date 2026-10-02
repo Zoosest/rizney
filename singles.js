@@ -149,10 +149,6 @@
     currentState = "prompt"; 
 
     wrapper.innerHTML = `
-      <div style="font-size: 1.1rem; font-weight: bold; color: #c084fc; margin-bottom: 12px;">
-        ⚔️ PIRATE DUEL CHALLENGE: Monkey Judge
-      </div>
-      
       <div style="width: 100%; max-height: 260px; overflow: hidden; border-radius: 6px; border: 1px solid #d4af37; margin-bottom: 15px; background: #0c0810; display: flex; justify-content: center; align-items: center;">
         <img src="./assets/black-bear.png" alt="Captain Black Bear" style="
           width: 100%;
@@ -295,7 +291,8 @@
 
     wrapper.innerHTML = `
       <div style="font-size: 1.1rem; font-weight: bold; color: #c084fc; margin-bottom: 12px;">
-        🗡️ DRAW YOUR BLADE...
+        PAY ATTENTION...<br>
+        YOU'RE BEING TESTED.
       </div>
 
       <p style="font-size: 1.05rem; margin: 15px 0; line-height: 1.5;">
