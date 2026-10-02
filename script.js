@@ -1,870 +1,481 @@
-/* =========================================================
-   SINGLES
-   YOU DON'T KNOW TRACK
-
-   First test:
-   #114 — Monkey Judge 🐒⚖
-   YouTube ID: SHhsdD5viWs
-
-   This file is intentionally standalone.
-   It does not modify main.js.
-   It does not modify whack-a-track.js.
-   ========================================================= */
-
 (() => {
-  "use strict";
-
-  const SINGLE_TRACK_NUMBER = 114;
-  const SINGLE_VIDEO_ID = "SHhsdD5viWs";
-  const BANNER_ID = "singles-banner";
-  const QUIZ_MODAL_ID = "you-dont-know-track-quiz";
-  const POINTS_STORAGE_KEY = "youDontKnowTrackPoints";
-  
-  // Quiz configuration
+  const STORAGE_KEY = 'rizneyYouDontKnowTrackPoints';
+  const STARTING_POINTS = 100;
   const ENTRY_COST = 25;
   const WIN_REWARD = 100;
-  const LOSE_PENALTY = 25;
-  const STARTING_POINTS = 100;
 
-  /*
-   * Remembers whether we've already scrolled
-   * for the current appearance of the Single.
-   */
-  let singlesWasActive = false;
-
-  const $ = selector =>
-    document.querySelector(selector);
-
-  const $$ = selector =>
-    document.querySelectorAll(selector);
-
-
-  /* =========================================================
-     QUIZ QUESTIONS DATABASE
-     ========================================================= */
-
-  const QUIZ_QUESTIONS = [
-    {
-      id: 1,
-      song: "Monkey Judge 🐒⚖",
-      trackNumber: 114,
-      videoId: "SHhsdD5viWs",
-      question: "Fill in the blank: 'Monkey judge, monkey jury, ____.'",
-      options: [
-        "Everyone in such a hurry",
-        "Monkeys are always so dirty",
-        "Everything is getting blurry",
-        "Getting so worried"
-      ],
-      correctAnswer: 0
-    }
-    // Add more songs here in the future:
-    // {
-    //   id: 2,
-    //   song: "Song Title",
-    //   trackNumber: 115,
-    //   videoId: "xxxxx",
-    //   question: "Question text",
-    //   options: ["A", "B", "C", "D"],
-    //   correctAnswer: 0
-    // }
+  const SONG_MATCHERS = [
+    /monkey judge/i,
+    /monkey judge 🐒⚖/i,
+    /monkey judge monkey jury/i,
+    /song.*monkey.*judge/i
   ];
 
+  const QUESTION = {
+    prompt: "Fill in the blank: \"monkey judge monkey jury, ____\"",
+    answers: [
+      'Everyone in such a hurry.',
+      'Monkeys are always so dirty.',
+      'Everything is getting blurry.',
+      'Getting so worried.'
+    ],
+    correctIndex: 0,
+    title: 'Monkey Judge 🐒⚖'
+  };
 
-  /* =========================================================
-     POINTS MANAGEMENT
-     ========================================================= */
+  const readPoints = () => {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw === null || raw === '') {
+        localStorage.setItem(STORAGE_KEY, String(STARTING_POINTS));
+        return STARTING_POINTS;
+      }
 
-  function getPlayerPoints() {
-    const stored = localStorage.getItem(POINTS_STORAGE_KEY);
-    if (stored === null) {
-      localStorage.setItem(POINTS_STORAGE_KEY, STARTING_POINTS);
+      const parsed = Number(raw);
+      if (Number.isNaN(parsed)) {
+        localStorage.setItem(STORAGE_KEY, String(STARTING_POINTS));
+        return STARTING_POINTS;
+      }
+
+      return parsed;
+    } catch (error) {
       return STARTING_POINTS;
     }
-    return parseInt(stored, 10);
-  }
+  };
 
-  function setPlayerPoints(points) {
-    const newPoints = Math.max(0, points);
-    localStorage.setItem(POINTS_STORAGE_KEY, newPoints);
-    updatePointsDisplay();
-    return newPoints;
-  }
-
-  function addPoints(amount) {
-    const current = getPlayerPoints();
-    return setPlayerPoints(current + amount);
-  }
-
-  function subtractPoints(amount) {
-    return addPoints(-amount);
-  }
-
-  function updatePointsDisplay() {
-    const displays = $$(`#${BANNER_ID} .points-display`);
-    const points = getPlayerPoints();
-    displays.forEach(display => {
-      display.textContent = `Points: ${points}`;
-    });
-  }
-
-
-  /* =========================================================
-     CREATE BANNER
-     ========================================================= */
-
-  function createBanner() {
-
-    const existing =
-      $(`#${BANNER_ID}`);
-
-    if (existing) {
-      return existing;
+  const writePoints = (value) => {
+    const nextValue = Math.max(0, Number(value) || 0);
+    try {
+      localStorage.setItem(STORAGE_KEY, String(nextValue));
+    } catch (error) {
+      // no-op in private mode or blocked storage
     }
+    updatePointsLabels();
+    return nextValue;
+  };
 
-    const banner =
-      document.createElement("section");
+  const addPoints = (amount) => writePoints(readPoints() + amount);
 
-    banner.id =
-      BANNER_ID;
+  const currentNowPlayingText = () => {
+    const nowPlaying = document.querySelector('#now-playing');
+    if (!nowPlaying) return '';
+    return (nowPlaying.textContent || '').replace(/\s+/g, ' ').trim();
+  };
 
-    banner.setAttribute(
-      "aria-label",
-      "Singles"
-    );
+  const songIsActive = () => {
+    const text = currentNowPlayingText();
+    return SONG_MATCHERS.some((matcher) => matcher.test(text)) ||
+      !!document.querySelector('.song.playing .song-title') &&
+      SONG_MATCHERS.some((matcher) => matcher.test(document.querySelector('.song.playing .song-title').textContent || ''));
+  };
 
-    const currentPoints = getPlayerPoints();
+  const updatePointsLabels = () => {
+    const points = readPoints();
+    document.querySelectorAll('[data-ydkt-points]').forEach((el) => {
+      el.textContent = `Points: ${points}`;
+    });
+    document.querySelectorAll('[data-ydkt-score]').forEach((el) => {
+      el.textContent = String(points);
+    });
+  };
 
-    banner.innerHTML = `
-      <div class="singles-banner-main">
-        YOU DON'T KNOW TRACK
-      </div>
+  const injectStyles = () => {
+    if (document.getElementById('ydkt-styles')) return;
 
-      <div class="singles-banner-label">
-        🎤 SINGLES
-      </div>
-
-      <div class="singles-banner-controls">
-        <button class="quiz-button" id="open-quiz-button">
-          ❓ Test Your Knowledge
-        </button>
-        <span class="points-display">Points: ${currentPoints}</span>
-      </div>
-    `;
-
-
-    const style =
-      document.createElement("style");
-
+    const style = document.createElement('style');
+    style.id = 'ydkt-styles';
     style.textContent = `
-      #${BANNER_ID} {
+      #ydkt-banner {
+        position: sticky;
+        top: 124px;
+        z-index: 90;
         display: none;
         width: 100%;
-        box-sizing: border-box;
-        margin: 0;
-        padding: 10px 12px;
-        text-align: center;
-        color: #f5d76e;
-        background: #120b18;
+        background: linear-gradient(180deg, rgba(17,9,22,1), rgba(32,17,44,1));
         border-top: 1px solid #d4af37;
         border-bottom: 1px solid #d4af37;
-        font-family: Georgia, "Times New Roman", serif;
-        box-shadow: 0 4px 14px rgba(0,0,0,.45);
-        position: relative;
-        z-index: 80;
-      }
-
-      #${BANNER_ID} .singles-banner-main {
-        font-size: 1rem;
-        font-weight: bold;
-        letter-spacing: .12em;
-      }
-
-      #${BANNER_ID} .singles-banner-label {
-        margin-top: 3px;
-        color: #c084fc;
-        font-size: .7rem;
-        letter-spacing: .16em;
-        margin-bottom: 10px;
-      }
-
-      #${BANNER_ID} .singles-banner-controls {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        gap: 15px;
-        flex-wrap: wrap;
-      }
-
-      #${BANNER_ID} .quiz-button {
-        padding: 8px 16px;
-        background: #c084fc;
-        color: #120b18;
-        border: none;
-        border-radius: 4px;
-        font-weight: bold;
-        cursor: pointer;
-        font-family: Georgia, "Times New Roman", serif;
-        font-size: 0.9rem;
-        transition: all 0.2s ease;
-      }
-
-      #${BANNER_ID} .quiz-button:hover {
-        background: #d4a5ff;
-        transform: scale(1.05);
-      }
-
-      #${BANNER_ID} .quiz-button:active {
-        transform: scale(0.98);
-      }
-
-      #${BANNER_ID} .points-display {
-        font-size: 0.9rem;
-        color: #f5d76e;
-        font-weight: bold;
-      }
-
-      @media (max-width: 500px) {
-        #${BANNER_ID} {
-          padding: 8px 10px;
-        }
-
-        #${BANNER_ID} .singles-banner-main {
-          font-size: .85rem;
-        }
-
-        #${BANNER_ID} .singles-banner-controls {
-          gap: 10px;
-        }
-
-        #${BANNER_ID} .quiz-button {
-          padding: 6px 12px;
-          font-size: 0.8rem;
-        }
-
-        #${BANNER_ID} .points-display {
-          font-size: 0.8rem;
-        }
-      }
-    `;
-
-    document.head.appendChild(style);
-
-
-    const controls =
-      $(".controls");
-
-    if (controls) {
-
-      controls.insertAdjacentElement(
-        "afterend",
-        banner
-      );
-
-    } else {
-
-      document.body.prepend(
-        banner
-      );
-    }
-
-    return banner;
-  }
-
-
-  /* =========================================================
-     CREATE QUIZ MODAL
-     ========================================================= */
-
-  function createQuizModal() {
-    const existing = $(`#${QUIZ_MODAL_ID}`);
-    if (existing) {
-      return existing;
-    }
-
-    const modal = document.createElement("div");
-    modal.id = QUIZ_MODAL_ID;
-
-    const style = document.createElement("style");
-    style.textContent = `
-      #${QUIZ_MODAL_ID} {
-        display: none;
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0, 0, 0, 0.8);
-        z-index: 1000;
-        justify-content: center;
-        align-items: center;
-        overflow-y: auto;
-      }
-
-      #${QUIZ_MODAL_ID}.active {
-        display: flex;
-      }
-
-      .quiz-modal-content {
-        background: #1a1420;
-        border: 2px solid #d4af37;
-        border-radius: 8px;
-        padding: 30px;
-        max-width: 600px;
-        width: 90%;
-        margin: 20px;
+        box-shadow: 0 8px 20px rgba(0,0,0,0.5);
         color: #f5d76e;
         font-family: Georgia, "Times New Roman", serif;
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.8);
+        padding: 10px 16px;
       }
 
-      .quiz-header {
-        text-align: center;
-        margin-bottom: 25px;
-        border-bottom: 1px solid #d4af37;
-        padding-bottom: 15px;
-      }
-
-      .quiz-header h2 {
-        margin: 0 0 5px 0;
-        font-size: 1.5rem;
-        color: #c084fc;
-      }
-
-      .quiz-song-title {
-        font-size: 1.1rem;
-        color: #f5d76e;
-        margin-bottom: 10px;
-      }
-
-      .quiz-cost {
-        font-size: 0.9rem;
-        color: #ff6b6b;
-        font-weight: bold;
-      }
-
-      .quiz-question {
-        font-size: 1.1rem;
-        margin: 20px 0;
-        text-align: center;
-        color: #f5d76e;
-        line-height: 1.6;
-      }
-
-      .quiz-options {
-        display: flex;
-        flex-direction: column;
-        gap: 12px;
-        margin: 25px 0;
-      }
-
-      .quiz-option {
-        padding: 12px;
-        background: #0f0a13;
-        border: 2px solid #c084fc;
-        border-radius: 4px;
-        color: #f5d76e;
-        cursor: pointer;
-        font-family: Georgia, "Times New Roman", serif;
-        font-size: 1rem;
-        transition: all 0.2s ease;
-        text-align: left;
-      }
-
-      .quiz-option:hover {
-        background: #1a1520;
-        border-color: #d4a5ff;
-      }
-
-      .quiz-option.selected {
-        background: #c084fc;
-        color: #120b18;
-        border-color: #c084fc;
-      }
-
-      .quiz-option.correct {
-        background: #51cf66;
-        color: #fff;
-        border-color: #51cf66;
-      }
-
-      .quiz-option.incorrect {
-        background: #ff6b6b;
-        color: #fff;
-        border-color: #ff6b6b;
-      }
-
-      .quiz-option:disabled {
-        cursor: not-allowed;
-      }
-
-      .quiz-button-group {
-        display: flex;
-        gap: 10px;
-        justify-content: center;
-        margin-top: 25px;
-        flex-wrap: wrap;
-      }
-
-      .quiz-action-button {
-        padding: 10px 20px;
-        background: #c084fc;
-        color: #120b18;
-        border: none;
-        border-radius: 4px;
-        font-weight: bold;
-        cursor: pointer;
-        font-family: Georgia, "Times New Roman", serif;
-        font-size: 1rem;
-        transition: all 0.2s ease;
-      }
-
-      .quiz-action-button:hover {
-        background: #d4a5ff;
-      }
-
-      .quiz-action-button:disabled {
-        background: #888;
-        cursor: not-allowed;
-      }
-
-      .quiz-action-button.cancel {
-        background: #666;
-      }
-
-      .quiz-action-button.cancel:hover {
-        background: #777;
-      }
-
-      .quiz-result {
-        margin-top: 20px;
-        padding: 15px;
-        border-radius: 4px;
-        text-align: center;
-        font-weight: bold;
-        display: none;
-      }
-
-      .quiz-result.show {
+      #ydkt-banner.visible {
         display: block;
       }
 
-      .quiz-result.win {
-        background: #51cf66;
-        color: #fff;
+      .ydkt-banner-inner {
+        max-width: 980px;
+        margin: 0 auto;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        flex-wrap: wrap;
       }
 
-      .quiz-result.lose {
-        background: #ff6b6b;
-        color: #fff;
+      .ydkt-banner-title {
+        font-size: 0.82rem;
+        letter-spacing: 0.14em;
+        color: #c084fc;
+        font-weight: 700;
       }
 
-      .quiz-result-message {
-        font-size: 1.2rem;
-        margin-bottom: 10px;
+      .ydkt-banner-copy {
+        font-size: 0.8rem;
+        color: #f5d76e;
       }
 
-      .quiz-result-points {
-        font-size: 1rem;
+      .ydkt-banner-button {
+        border: 1px solid #d4af37;
+        border-radius: 999px;
+        padding: 8px 14px;
+        background: #c084fc;
+        color: #120b18;
+        font-weight: 700;
+        font-size: 0.78rem;
+        cursor: pointer;
       }
 
-      .quiz-insufficient-points {
-        background: #ff6b6b;
-        color: #fff;
-        padding: 15px;
-        border-radius: 4px;
+      .ydkt-banner-button:hover {
+        background: #dcabff;
+      }
+
+      .ydkt-points {
+        font-size: 0.78rem;
+        font-weight: 700;
+        color: #f5d76e;
+      }
+
+      #ydkt-floating-btn {
+        position: fixed;
+        right: 18px;
+        bottom: 18px;
+        z-index: 200;
+        border: 2px solid #d4af37;
+        border-radius: 999px;
+        padding: 12px 18px;
+        background: #c084fc;
+        color: #120b18;
+        font-weight: 700;
+        font-family: Georgia, "Times New Roman", serif;
+        box-shadow: 0 10px 24px rgba(192,132,252,0.45);
+        cursor: pointer;
+      }
+
+      #ydkt-floating-btn:hover {
+        background: #dcaeff;
+      }
+
+      #ydkt-modal {
+        position: fixed;
+        inset: 0;
+        z-index: 300;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        padding: 18px;
+        background: rgba(0,0,0,0.8);
+      }
+
+      #ydkt-modal.visible {
+        display: flex;
+      }
+
+      .ydkt-modal-card {
+        width: min(680px, 92vw);
+        border: 2px solid #d4af37;
+        border-radius: 16px;
+        background: linear-gradient(180deg, #201120, #0e0912);
+        box-shadow: 0 20px 50px rgba(0,0,0,0.7);
+        padding: 20px 22px 18px;
+        color: #f5d76e;
+        font-family: Georgia, "Times New Roman", serif;
+      }
+
+      .ydkt-modal-card h3 {
+        margin: 0 0 10px;
         text-align: center;
-        font-weight: bold;
+        color: #c084fc;
+        letter-spacing: 0.12em;
       }
 
-      @media (max-width: 500px) {
-        .quiz-modal-content {
-          padding: 20px;
-        }
+      .ydkt-modal-song {
+        text-align: center;
+        margin-bottom: 14px;
+        font-weight: 700;
+      }
 
-        .quiz-header h2 {
-          font-size: 1.2rem;
-        }
+      .ydkt-question {
+        text-align: center;
+        font-size: 1.05rem;
+        line-height: 1.5;
+        margin: 14px 0;
+      }
 
-        .quiz-question {
-          font-size: 1rem;
-        }
+      .ydkt-options {
+        display: grid;
+        gap: 10px;
+      }
 
-        .quiz-option {
-          padding: 10px;
-          font-size: 0.95rem;
-        }
+      .ydkt-option {
+        border: 1px solid #c084fc;
+        border-radius: 10px;
+        background: #120b18;
+        color: #f5d76e;
+        padding: 12px 14px;
+        text-align: left;
+        cursor: pointer;
+      }
 
-        .quiz-action-button {
-          padding: 8px 16px;
-          font-size: 0.9rem;
-        }
+      .ydkt-option:hover {
+        background: #1d1222;
+      }
+
+      .ydkt-option.selected {
+        background: #c084fc;
+        color: #120b18;
+      }
+
+      .ydkt-option.correct {
+        background: #2d9b53;
+        border-color: #2d9b53;
+        color: white;
+      }
+
+      .ydkt-option.incorrect {
+        background: #b23a3a;
+        border-color: #b23a3a;
+        color: white;
+      }
+
+      .ydkt-actions {
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-top: 18px;
+      }
+
+      .ydkt-btn {
+        border: 1px solid #d4af37;
+        border-radius: 999px;
+        background: #55208a;
+        color: white;
+        padding: 10px 16px;
+        font-weight: 700;
+        cursor: pointer;
+      }
+
+      .ydkt-btn.secondary {
+        background: #1a1a1a;
+      }
+
+      .ydkt-result {
+        display: none;
+        margin-top: 14px;
+        padding: 12px 14px;
+        border-radius: 10px;
+        text-align: center;
+        font-weight: 700;
+      }
+
+      .ydkt-result.visible {
+        display: block;
+      }
+
+      .ydkt-result.win {
+        background: rgba(45,155,83,0.25);
+        color: #a9f5bd;
+      }
+
+      .ydkt-result.lose {
+        background: rgba(178,58,58,0.2);
+        color: #ffc5c5;
+      }
+
+      .ydkt-not-enough {
+        font-weight: 700;
+        text-align: center;
+        color: #ffd7d7;
       }
     `;
-
     document.head.appendChild(style);
-    document.body.appendChild(modal);
+  };
 
-    return modal;
-  }
+  const buildBanner = () => {
+    if (document.getElementById('ydkt-banner')) return;
 
+    const banner = document.createElement('section');
+    banner.id = 'ydkt-banner';
+    banner.innerHTML = `
+      <div class="ydkt-banner-inner">
+        <div class="ydkt-banner-title">YOU DON'T KNOW TRACK</div>
+        <div class="ydkt-banner-copy">Monkey Judge lyric challenge is live.</div>
+        <button class="ydkt-banner-button" type="button">Play for 25 pts</button>
+        <div class="ydkt-points" data-ydkt-points>Points: ${readPoints()}</div>
+      </div>
+    `;
 
-  /* =========================================================
-     QUIZ LOGIC
-     ========================================================= */
-
-  function startQuiz() {
-    const points = getPlayerPoints();
-    const modal = createQuizModal();
-
-    // Check if player has enough points
-    if (points < ENTRY_COST) {
-      modal.innerHTML = `
-        <div class="quiz-modal-content">
-          <div class="quiz-header">
-            <h2>YOU DON'T KNOW TRACK</h2>
-          </div>
-          <div class="quiz-insufficient-points">
-            <div>Not Enough Points!</div>
-            <div style="margin-top: 10px; font-size: 1rem;">
-              You need ${ENTRY_COST} points to play.
-              <br>
-              You currently have ${points} points.
-            </div>
-          </div>
-          <div class="quiz-button-group">
-            <button class="quiz-action-button cancel" onclick="document.getElementById('${QUIZ_MODAL_ID}').classList.remove('active')">
-              Close
-            </button>
-          </div>
-        </div>
-      `;
-      modal.classList.add("active");
-      return;
+    const anchor = document.querySelector('.player-dock') || document.querySelector('.top-area') || document.body.firstChild;
+    if (anchor && anchor.parentNode) {
+      anchor.parentNode.insertBefore(banner, anchor.nextSibling);
+    } else {
+      document.body.prepend(banner);
     }
 
-    // Get current playing song's quiz question
-    const currentQuestion = getCurrentQuestion();
+    banner.querySelector('.ydkt-banner-button').addEventListener('click', openQuiz);
+  };
 
-    if (!currentQuestion) {
-      modal.innerHTML = `
-        <div class="quiz-modal-content">
-          <div class="quiz-header">
-            <h2>YOU DON'T KNOW TRACK</h2>
-          </div>
-          <div style="text-align: center; padding: 20px; color: #f5d76e;">
-            No quiz available for this song yet.
-          </div>
-          <div class="quiz-button-group">
-            <button class="quiz-action-button cancel" onclick="document.getElementById('${QUIZ_MODAL_ID}').classList.remove('active')">
-              Close
-            </button>
-          </div>
-        </div>
-      `;
-      modal.classList.add("active");
-      return;
-    }
+  const buildFloatingButton = () => {
+    if (document.getElementById('ydkt-floating-btn')) return;
 
-    let selectedAnswer = null;
-    let answered = false;
+    const button = document.createElement('button');
+    button.id = 'ydkt-floating-btn';
+    button.type = 'button';
+    button.textContent = '🎮 You Don’t Know Track';
+    button.addEventListener('click', openQuiz);
+    document.body.appendChild(button);
+  };
 
-    const optionsHtml = currentQuestion.options
-      .map((option, index) => {
-        const letter = String.fromCharCode(65 + index);
-        return `
-          <button class="quiz-option" data-index="${index}" onclick="event.stopPropagation()">
-            <strong>${letter}</strong> — ${option}
-          </button>
-        `;
-      })
-      .join("");
+  const buildModal = () => {
+    if (document.getElementById('ydkt-modal')) return;
 
+    const modal = document.createElement('div');
+    modal.id = 'ydkt-modal';
     modal.innerHTML = `
-      <div class="quiz-modal-content">
-        <div class="quiz-header">
-          <h2>YOU DON'T KNOW TRACK</h2>
-          <div class="quiz-song-title">${currentQuestion.song}</div>
-          <div class="quiz-cost">Entry Cost: ${ENTRY_COST} points</div>
-          <div style="color: #c084fc; margin-top: 8px;">Your Points: ${points}</div>
-        </div>
-
-        <div class="quiz-question">
-          ${currentQuestion.question}
-        </div>
-
-        <div class="quiz-options">
-          ${optionsHtml}
-        </div>
-
-        <div class="quiz-result"></div>
-
-        <div class="quiz-button-group">
-          <button class="quiz-action-button" id="submit-answer-btn" disabled>
-            Submit Answer
-          </button>
-          <button class="quiz-action-button cancel" id="cancel-quiz-btn">
-            Cancel
-          </button>
+      <div class="ydkt-modal-card">
+        <h3>YOU DON'T KNOW TRACK</h3>
+        <div class="ydkt-modal-song">${QUESTION.title}</div>
+        <div class="ydkt-question"></div>
+        <div class="ydkt-options"></div>
+        <div class="ydkt-result"></div>
+        <div class="ydkt-actions">
+          <button class="ydkt-btn" type="button" id="ydkt-submit">Submit</button>
+          <button class="ydkt-btn secondary" type="button" id="ydkt-close">Close</button>
         </div>
       </div>
     `;
 
-    modal.classList.add("active");
-
-    // Event listeners
-    const optionButtons = $$(`#${QUIZ_MODAL_ID} .quiz-option`);
-    const submitBtn = $(`#${QUIZ_MODAL_ID} #submit-answer-btn`);
-    const cancelBtn = $(`#${QUIZ_MODAL_ID} #cancel-quiz-btn`);
-    const resultDiv = $(`#${QUIZ_MODAL_ID} .quiz-result`);
-
-    optionButtons.forEach(btn => {
-      btn.addEventListener("click", () => {
-        if (answered) return;
-
-        optionButtons.forEach(b => b.classList.remove("selected"));
-        btn.classList.add("selected");
-        selectedAnswer = parseInt(btn.dataset.index, 10);
-        submitBtn.disabled = false;
-      });
+    document.body.appendChild(modal);
+    modal.addEventListener('click', (event) => {
+      if (event.target === modal) modal.classList.remove('visible');
     });
 
-    submitBtn.addEventListener("click", () => {
-      if (selectedAnswer === null || answered) return;
+    document.getElementById('ydkt-close').addEventListener('click', () => modal.classList.remove('visible'));
+  };
 
-      answered = true;
-      submitBtn.disabled = true;
+  const openQuiz = () => {
+    buildModal();
 
-      // Disable option buttons
-      optionButtons.forEach(btn => btn.disabled = true);
+    const modal = document.getElementById('ydkt-modal');
+    const questionText = modal.querySelector('.ydkt-question');
+    const optionsWrap = modal.querySelector('.ydkt-options');
+    const result = modal.querySelector('.ydkt-result');
+    const submit = modal.querySelector('#ydkt-submit');
 
-      // Check answer
-      const isCorrect = selectedAnswer === currentQuestion.correctAnswer;
-
-      // Show correct/incorrect on options
-      optionButtons.forEach((btn, index) => {
-        btn.classList.remove("selected");
-        if (index === currentQuestion.correctAnswer) {
-          btn.classList.add("correct");
-        } else if (index === selectedAnswer && !isCorrect) {
-          btn.classList.add("incorrect");
-        }
-      });
-
-      // Calculate points
-      let newPoints;
-      if (isCorrect) {
-        newPoints = addPoints(WIN_REWARD - ENTRY_COST);
-        resultDiv.classList.add("show", "win");
-        resultDiv.innerHTML = `
-          <div class="quiz-result-message">🎉 Correct!</div>
-          <div class="quiz-result-points">+${WIN_REWARD - ENTRY_COST} Points</div>
-          <div class="quiz-result-points" style="margin-top: 8px; font-size: 0.9rem;">Total: ${newPoints}</div>
-        `;
-      } else {
-        newPoints = subtractPoints(ENTRY_COST);
-        resultDiv.classList.add("show", "lose");
-        resultDiv.innerHTML = `
-          <div class="quiz-result-message">❌ Incorrect</div>
-          <div class="quiz-result-points">-${ENTRY_COST} Points</div>
-          <div class="quiz-result-points" style="margin-top: 8px; font-size: 0.9rem;">Total: ${newPoints}</div>
-        `;
-      }
-
-      // Change submit button to "Play Again" or "Close"
-      setTimeout(() => {
-        submitBtn.textContent = "Play Again";
-        submitBtn.disabled = false;
-        submitBtn.addEventListener("click", startQuiz);
-      }, 1500);
-    });
-
-    cancelBtn.addEventListener("click", () => {
-      modal.classList.remove("active");
-    });
-
-    // Close modal on outside click
-    modal.addEventListener("click", (e) => {
-      if (e.target === modal) {
-        modal.classList.remove("active");
-      }
-    });
-  }
-
-  function getCurrentQuestion() {
-    // Check if Monkey Judge is currently playing
-    if (isMonkeyJudgePlaying()) {
-      return QUIZ_QUESTIONS.find(q => q.videoId === SINGLE_VIDEO_ID);
-    }
-    return null;
-  }
-
-
-  /* =========================================================
-     DETECT MONKEY JUDGE
-     ========================================================= */
-
-  function isMonkeyJudgePlaying() {
-
-    const player =
-      window.rizneyPlayer;
-
-
-    if (
-      player &&
-      typeof player.getVideoData ===
-        "function"
-    ) {
-
-      try {
-
-        const data =
-          player.getVideoData();
-
-        if (
-          data &&
-          data.video_id
-        ) {
-
-          return (
-            String(data.video_id) ===
-            SINGLE_VIDEO_ID
-          );
-        }
-
-      } catch (error) {}
-    }
-
-
-    const nowPlaying =
-      $("#now-playing");
-
-    if (!nowPlaying) {
-      return false;
-    }
-
-
-    return (
-      nowPlaying.textContent.includes(
-        `Song ${SINGLE_TRACK_NUMBER}`
-      )
-    );
-  }
-
-
-  /* =========================================================
-     UPDATE BANNER
-     ========================================================= */
-
-  function updateBanner() {
-
-    const banner =
-      $(`#${BANNER_ID}`);
-
-    if (!banner) {
+    const currentPoints = readPoints();
+    if (currentPoints < ENTRY_COST) {
+      questionText.textContent = `You need ${ENTRY_COST} points to play. You currently have ${currentPoints}.`;
+      optionsWrap.innerHTML = `<div class="ydkt-not-enough">Start with 100 points and try again.</div>`;
+      result.className = 'ydkt-result';
+      result.textContent = '';
+      submit.disabled = true;
+      modal.classList.add('visible');
       return;
     }
 
+    submit.disabled = false;
+    questionText.textContent = QUESTION.prompt;
+    optionsWrap.innerHTML = '';
 
-    const singlesActive =
-      isMonkeyJudgePlaying();
+    QUESTION.answers.forEach((answer, index) => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'ydkt-option';
+      button.textContent = `${String.fromCharCode(65 + index)} — ${answer}`;
+      button.dataset.index = String(index);
+      button.addEventListener('click', () => {
+        optionsWrap.querySelectorAll('.ydkt-option').forEach((option) => option.classList.remove('selected'));
+        button.classList.add('selected');
+      });
+      optionsWrap.appendChild(button);
+    });
 
+    result.className = 'ydkt-result';
+    result.textContent = '';
 
-    if (singlesActive) {
+    submit.onclick = () => {
+      const selected = optionsWrap.querySelector('.ydkt-option.selected');
+      const selectedIndex = selected ? Number(selected.dataset.index) : -1;
+      const isCorrect = selectedIndex === QUESTION.correctIndex;
 
-      banner.style.display =
-        "block";
+      optionsWrap.querySelectorAll('.ydkt-option').forEach((option, index) => {
+        option.classList.remove('selected');
+        if (index === QUESTION.correctIndex) option.classList.add('correct');
+        if (index === selectedIndex && index !== QUESTION.correctIndex) option.classList.add('incorrect');
+      });
 
-
-      /*
-       * We just arrived at the Single.
-       *
-       * Scroll the page up to the
-       * Singles area exactly once.
-       */
-
-      if (!singlesWasActive) {
-
-        singlesWasActive = true;
-
-        window.setTimeout(() => {
-
-          banner.scrollIntoView({
-            behavior: "smooth",
-            block: "start"
-          });
-
-        }, 100);
+      const before = readPoints();
+      let after = before;
+      if (isCorrect) {
+        after = writePoints(before - ENTRY_COST + WIN_REWARD);
+        result.className = 'ydkt-result visible win';
+        result.textContent = `Correct! +${WIN_REWARD} points. Total: ${after}`;
+      } else {
+        after = writePoints(before - ENTRY_COST);
+        result.className = 'ydkt-result visible lose';
+        result.textContent = `Incorrect. -${ENTRY_COST} points. Total: ${after}`;
       }
 
+      submit.disabled = true;
+      setTimeout(() => {
+        modal.classList.remove('visible');
+      }, 1500);
+    };
 
+    modal.classList.add('visible');
+  };
+
+  const syncBanner = () => {
+    const banner = document.getElementById('ydkt-banner');
+    if (!banner) return;
+
+    if (songIsActive()) {
+      banner.classList.add('visible');
     } else {
-
-      /*
-       * The Single is no longer active.
-       *
-       * Reset the flag so the next time
-       * Monkey Judge comes around,
-       * we scroll again.
-       */
-
-      singlesWasActive = false;
-
-      banner.style.display =
-        "none";
+      banner.classList.remove('visible');
     }
-  }
+  };
 
+  const init = () => {
+    injectStyles();
+    buildBanner();
+    buildFloatingButton();
+    buildModal();
+    updatePointsLabels();
+    syncBanner();
 
-  /* =========================================================
-     WATCH THE PLAYER
-     ========================================================= */
+    const observer = new MutationObserver(() => {
+      syncBanner();
+      updatePointsLabels();
+    });
 
-  function startWatching() {
-
-    createBanner();
-    createQuizModal();
-
-    updateBanner();
-
-
-    window.setInterval(
-      updateBanner,
-      500
-    );
-
-    // Add click handler to quiz button
-    const openQuizBtn = $(`#${BANNER_ID} #open-quiz-button`);
-    if (openQuizBtn) {
-      openQuizBtn.addEventListener("click", startQuiz);
+    if (document.body) {
+      observer.observe(document.body, {
+        childList: true,
+        subtree: true,
+        characterData: true
+      });
     }
-  }
 
+    window.addEventListener('load', () => syncBanner());
+    setInterval(syncBanner, 600);
+  };
 
-  /* =========================================================
-     INIT
-     ========================================================= */
-
-  function init() {
-
-    startWatching();
-  }
-
-
-  if (
-    document.readyState ===
-    "loading"
-  ) {
-
-    document.addEventListener(
-      "DOMContentLoaded",
-      init,
-      { once: true }
-    );
-
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init, { once: true });
   } else {
-
     init();
   }
-
 })();
