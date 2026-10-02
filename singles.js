@@ -749,10 +749,10 @@
         line-height: 1.4;
       ">
         ${duel === DELAWARE
-          ? "Pirate Fox has challenged you, ye scurvy sea dog."
+          ? "Pirate Fox has challenged you."
           : duel === YOHO
-            ? "The Pirate Octopus has challenged you, ye scurvy sea dog."
-            : "Captain Black Bear called you a scurvy sea dog."
+            ? "Pirate Possum has challenged you."
+            : "Captain Black Bear has challenged you."
         }<br>
 
         <span style="
@@ -952,27 +952,10 @@
         font-size: 1.1rem;
         font-weight: bold;
         color: #c084fc;
-        margin-bottom: 12px;
       ">
         PAY ATTENTION...<br>
         YOU'RE BEING TESTED.
       </div>
-
-      <p style="
-        font-size: 1.05rem;
-        margin: 15px 0;
-        line-height: 1.5;
-      ">
-        Listen closely to the song!<br>
-
-        <span style="
-          color: #f5d76e;
-          font-style: italic;
-          font-size: 0.95rem;
-        ">
-          The lyrical riposte approaches near the end...
-        </span>
-      </p>
     `;
 
 
@@ -1066,18 +1049,11 @@
         font-weight: bold;
         margin-bottom: 6px;
       ">
-        PIRATE DUEL — QUESTION
+        QUESTION
         ${questionNumber}
         OF
         ${totalQuestions}
       </div>
-
-      <h3 style="
-        color: #c084fc;
-        margin-top: 0;
-      ">
-        ⚔️ SWASHBUCKLING STANDOFF
-      </h3>
 
       <p style="
         font-size: 1.1rem;
@@ -1221,25 +1197,13 @@
           "#51cf66";
 
         feedback.innerHTML = `
-          🎯 <strong>ARRR! CORRECT!</strong><br>
-
+          ✓ CORRECT
           <span style="
             color: #f5d76e;
             font-size: 0.95rem;
           ">
-            🪙 +50 Gold
-            &nbsp;•&nbsp;
-            Booty:
-            <strong>${playerBooty}</strong>
+            &nbsp; +50 Gold
           </span>
-
-          <div style="
-            margin-top: 12px;
-            color: #c084fc;
-            font-size: 0.95rem;
-          ">
-            Prepare yourself for the next question...
-          </div>
         `;
 
 
@@ -1249,7 +1213,7 @@
 
           showQuizState();
 
-        }, 1600);
+        }, 1000);
 
 
         return;
@@ -1338,20 +1302,7 @@
             line-height: 1.5;
             margin-bottom: 12px;
           ">
-            🏆 <strong>YOU SURVIVED THE PIRATE DUEL!</strong><br>
-
-            🎉 <strong>YOU'VE UNLOCKED<br>
-            "POTTY TIME" IN THE PLAYLIST!</strong>
-          </div>
-
-          <div style="
-            color: #f5d76e;
-            font-size: 1rem;
-            margin-bottom: 14px;
-          ">
-            🪙 Booty Secured:
-            <strong>+50 Gold</strong>
-            (Total: ${playerBooty})
+            POTTY TIME UNLOCKED!
           </div>
 
           <button
@@ -1446,22 +1397,7 @@
             line-height: 1.5;
             margin-bottom: 12px;
           ">
-            🏆 <strong>YOU SURVIVED THE PIRATE DUEL!</strong><br>
-
-            🎉 <strong>YOU'VE UNLOCKED<br>
-            "NICE & SLOW" IN THE PLAYLIST!</strong>
-          </div>
-
-          <div style="
-            color: #f5d76e;
-            font-size: 1rem;
-            line-height: 1.5;
-            margin-bottom: 14px;
-          ">
-            🦊 The Pirate Fox approves.<br>
-
-            🪙 Booty Secured:
-            <strong>${playerBooty} Gold</strong>
+            NICE & SLOW UNLOCKED!
           </div>
 
           <button
@@ -1556,22 +1492,7 @@
             line-height: 1.5;
             margin-bottom: 12px;
           ">
-            🏆 <strong>YOU SURVIVED THE PIRATE DUEL!</strong><br>
-
-            🎉 <strong>YOU'VE UNLOCKED<br>
-            "A ROLLING STONE GATHERS NO MAS"!</strong>
-          </div>
-
-          <div style="
-            color: #f5d76e;
-            font-size: 1rem;
-            line-height: 1.5;
-            margin-bottom: 14px;
-          ">
-            🐙 The Pirate Octopus approves.<br>
-
-            🪙 Booty Secured:
-            <strong>${playerBooty} Gold</strong>
+            A ROLLING STONE GATHERS NO MAS UNLOCKED!
           </div>
 
           <button
@@ -1640,21 +1561,7 @@
 
 
       feedback.innerHTML = `
-        <div style="
-          font-size: 1.15rem;
-          line-height: 1.5;
-          margin-bottom: 12px;
-        ">
-          🏆 <strong>YOU SURVIVED THE PIRATE DUEL!</strong>
-        </div>
-
-        <div style="
-          color: #f5d76e;
-          font-size: 1rem;
-        ">
-          🪙 Booty Secured:
-          <strong>${playerBooty} Gold</strong>
-        </div>
+        <strong>DUEL COMPLETE!</strong>
       `;
 
 
@@ -1668,7 +1575,7 @@
           300
         );
 
-      }, 5000);
+      }, 3000);
 
 
       return;
@@ -1688,28 +1595,20 @@
 
 
     feedback.innerHTML = `
-      💥 <strong>WRONG, YE SCURVY DOG!</strong><br>
-
-      <span style="
-        color: #f5d76e;
-        font-size: 0.95rem;
+      <div style="
+        font-size: 1.25rem;
+        font-weight: bold;
       ">
-        The answer was:
-        <strong>
-          ${quiz.options[quiz.correctIndex]}
-        </strong>
-      </span>
+        WALK THE PLANK!
+      </div>
 
-      <br>
-
-      <span style="
+      <div style="
         color: #f5d76e;
-        font-size: 0.95rem;
+        font-size: 1rem;
+        margin-top: 8px;
       ">
-        🌊 They plundered your pockets!
-        Booty:
-        <strong>0 Gold</strong>
-      </span>
+        You lost all your booty.
+      </div>
     `;
 
 
@@ -1723,7 +1622,7 @@
         300
       );
 
-    }, 5000);
+    }, 3000);
   }
 
 
