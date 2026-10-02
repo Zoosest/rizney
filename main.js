@@ -141,7 +141,7 @@
     ["Bottle Shock (PEW)", "Limits", "skunk.png"],
     ["JEWS (Ante Up)", "Fearlessness", "shark.png"],
     ["F*** Resilience", "Rebirth", "butterfly.png"],
-    ["Monkey Judge 🐒⚖", "Articulation", "howler-monkey.png"],
+    ["Monkey Judge", "Articulation", "howler-monkey.png"],
     ["Mask or No Mask (voodoo dolls)", "Display", "peacock.png"],
     ["6 Ways To Sunday", "Demarcation", "scorpion.png"],
     ["Tolerance", "Shedding", "snake.png"],
@@ -814,12 +814,6 @@
       return;
     }
 
-    /*
-      Watch for the song list being rebuilt.
-      When main/index code creates fresh rows,
-      immediately restore any tracks already
-      defeated in Whack-A-Track.
-    */
     const observer =
       new MutationObserver(
         mutations => {
@@ -860,11 +854,6 @@
     restoreRoadworkRows();
   }
 
-  /*
-    This only makes sure the row numbers are
-    available for Whack-A-Track restoration.
-    It does not alter the visible song numbers.
-  */
   function updateSongRowNumbersOnly() {
     const rows = songRows();
 
@@ -988,7 +977,6 @@
     wrapper.id =
       "archive-search-wrapper";
 
-    /* Custom search icon */
     const icon =
       document.createElement("span");
 
@@ -1234,14 +1222,6 @@
 
     rows.forEach(
       (row, index) => {
-        /*
-          Whack-A-Track uses this data attribute
-          to find the correct song row after a win.
-
-          index 0 = Song 1
-          index 1 = Song 2
-          etc.
-        */
         row.dataset.songIndex =
           String(index + 1);
 
@@ -1278,11 +1258,6 @@
           keyword
         );
 
-        /*
-          Make the entire purple song-title area
-          clickable without changing the existing
-          play mechanism.
-        */
         titleElement.setAttribute(
           "role",
           "button"
@@ -1323,10 +1298,6 @@
       }
     );
 
-    /*
-      Re-apply any Whack-A-Track road closures
-      after the row contents are updated.
-    */
     restoreRoadworkRows();
   }
 
@@ -1339,10 +1310,6 @@
 
     rows.forEach(
       (row, index) => {
-        /*
-          Keep the Whack-A-Track row number
-          attached even if the icon already exists.
-        */
         row.dataset.songIndex =
           String(index + 1);
 
@@ -1385,9 +1352,6 @@
       }
     );
 
-    /*
-      Make sure roadwork survives icon updates.
-    */
     restoreRoadworkRows();
   }
 
@@ -1668,11 +1632,6 @@
       return;
     }
 
-    /*
-      If cards already exist when the page loads,
-      consider them open. Otherwise the first press
-      of CARDS will open them.
-    */
     cardsToggleOpen =
       !!cards.querySelector(".card");
 
@@ -1684,10 +1643,6 @@
     button.addEventListener(
       "click",
       () => {
-        /*
-          SECOND PRESS:
-          Close the entire Music Reading section.
-        */
         if (cardsToggleOpen) {
           cardsToggleOpen = false;
 
@@ -1707,12 +1662,6 @@
           return;
         }
 
-        /*
-          FIRST / THIRD / NEXT OPEN PRESS:
-          Show the Music Reading section,
-          then let the existing CARDS code
-          generate the reading.
-        */
         cardsToggleOpen = true;
 
         reading.hidden = false;
@@ -1870,10 +1819,6 @@
           if (!updatingCards) {
             addCardIcons();
 
-            /*
-              Only reposition the page when
-              the CARDS section is actually open.
-            */
             if (cardsToggleOpen) {
               scheduleReadingScroll();
             }
@@ -1905,26 +1850,14 @@
 
     putIcons();
 
-    /*
-      Watch the song list so Whack-A-Track
-      roadwork survives any row rebuild.
-    */
     setupRoadworkWatching();
 
-    /*
-      Set up the CARDS toggle before the
-      MutationObserver begins watching for cards.
-    */
     setupCardsToggle();
 
     setupCardWatching();
 
     addCardIcons();
 
-    /*
-      Final roadwork pass after everything
-      else has initialized.
-    */
     restoreRoadworkRows();
   }
 
