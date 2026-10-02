@@ -39,8 +39,7 @@
     }
 
     .donate,
-    .context,
-    .top-score {
+    .context {
       position:absolute;
       top:7px;
       border:1px solid var(--gold);
@@ -49,6 +48,7 @@
       color:var(--bright-gold);
       background:#160c1c;
       font-size:.68rem;
+      text-decoration:none;
       line-height:1;
     }
 
@@ -59,12 +59,6 @@
     .context {
       left:88px;
       cursor:pointer;
-    }
-
-    .top-score {
-      left:162px;
-      font-family:Georgia,"Times New Roman",serif;
-      text-decoration:none;
     }
 
     /* FINISHING TOUCH: slightly smaller logo, same header height */
@@ -385,8 +379,7 @@
       }
 
       .donate,
-      .context,
-      .top-score {
+      .context {
         top:6px;
         padding:5px 8px;
         font-size:.63rem;
@@ -398,12 +391,6 @@
 
       .context {
         left:75px;
-      }
-
-      .top-score {
-        left:141px;
-        padding:5px 6px;
-        font-size:.58rem;
       }
 
       /* Slightly smaller mobile logo */
@@ -507,10 +494,6 @@
       type="button"
       aria-label="Open Context"
     >✦ Context</button>
-
-    <div class="top-score" id="rizney-scoreboard">
-      Score: <span id="whack-score">0</span>
-    </div>
 
   </section>
 
@@ -881,7 +864,7 @@
       'https://youtu.be/ce0VRgTvjWE',
       'https://youtu.be/cpF7ssgKdiw',
       'https://youtu.be/QfOamOb8M3I',
-      'https://₂Cv-RGZDbP0',
+      'https://youtu.be/iCv-RGZDbP0',
       'https://youtu.be/rHig-mas9do',
       'https://youtu.be/9kPzE3-eTQw',
       'https://youtu.be/OE1R8XS0gQY',
@@ -994,6 +977,10 @@
     let cardPlaylist = null;
     let cardPosition = 0;
 
+    /*
+      Return the real song title from the chronological
+      song row instead of "Song 2", "Song 3", etc.
+    */
     const titleFor = i => {
       if (i === -1) {
         return "MEGA MIX'N'MOJO Intro";
@@ -1184,6 +1171,11 @@
         return;
       }
 
+      /*
+        Normal chronological playback:
+        skip any tracks that have been defeated
+        in Whack-A-Track.
+      */
       let nextIndex =
         currentIndex + 1;
 
@@ -1401,6 +1393,11 @@
 
       introTransitionPending = false;
 
+      /*
+        Proper Fisher-Yates shuffle.
+        Every song has an equal chance of appearing
+        in the six-card reading.
+      */
       const shuffled =
         [...ids.keys()];
 
