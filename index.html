@@ -999,573 +999,132 @@
           titleElement &&
           titleElement.firstChild
         ) {
-          return titleElement.firstChild.textContent
-            .trim()
-            .replace(/^♫\s*/, '');
+          return titleElement.firstChild.textContent.trim();
         }
       }
 
       return `Song ${i + 1}`;
     };
 
-    function updatePlayingIndicator() {
-
-      document
-        .querySelectorAll('#song-list .song')
-        .forEach((row, index) => {
-
-          const isPlaying =
-            index === currentIndex;
-
-          row.classList.toggle(
-            'playing',
-            isPlaying
-          );
-
-          const indicator =
-            row.querySelector('.song-playing');
-
-          if (indicator) {
-            indicator.hidden =
-              !isPlaying;
-          }
-        });
+    function updateNowPlayingLabel() {
+      const title = titleFor(currentIndex);
+      nowPlaying.textContent = `Now playing: ${title}`;
     }
 
-    function updateButtons() {
+    function renderSongList() {
+      list.innerHTML = '';
 
-      if (cardPlaylist !== null) {
+      songs.forEach((url, index) => {
+        const row = document.createElement('div');
+        row.className = 'song';
 
-        previousButton.disabled =
-          cardPosition <= 0;
+        const num = document.createElement('div');
+        num.className = 'song-number';
+        num.textContent = index + 1;
 
-        nextButton.disabled =
-          cardPosition >= cardPlaylist.length - 1;
+        const titleWrap = document.createElement('div');
+        titleWrap.className = 'song-title';
+        titleWrap.textContent = `Song ${index + 1}`;
 
-        return;
-      }
-
-      previousButton.disabled =
-        currentIndex < 0;
-
-      nextButton.disabled = false;
-    }
-
-    function playIntro() {
-
-      cardPlaylist = null;
-      cardPosition = 0;
-
-      currentIndex = -1;
-
-      introTransitionPending = false;
-
-      nowPlaying.textContent =
-        "Now playing: MEGA MIX'N'MOJO Intro";
-
-      updatePlayingIndicator();
-
-      if (player) {
-
-        player.loadVideoById({
-          videoId: introVideoId
+        const playButton = document.createElement('button');
+        playButton.type = 'button';
+        playButton.className = 'play';
+        playButton.textContent = 'Play';
+        playButton.addEventListener('click', () => {
+          loadSong(index);
         });
-      }
 
-      updateButtons();
-
-      window.scrollTo({
-        top: 0,
-        behavior: 'smooth'
+        row.appendChild(num);
+        row.appendChild(titleWrap);
+        row.appendChild(playButton);
+        list.appendChild(row);
       });
     }
 
-    function play(index) {
-
-      if (!ids[index]) {
-        return;
-      }
-
-      cardPlaylist = null;
-      cardPosition = 0;
-
-      currentIndex = index;
-
-      nowPlaying.textContent =
-        `Now playing: ${titleFor(index)}`;
-
-      updatePlayingIndicator();
-
-      if (player) {
-
-        player.loadVideoById({
-          videoId: ids[index]
-        });
-      }
-
-      updateButtons();
-    }
-
-    function playPosition(position) {
-
-      if (
-        !cardPlaylist ||
-        cardPlaylist[position] === undefined
-      ) {
-        return;
-      }
-
-      introTransitionPending = false;
-
-      cardPosition = position;
-
-      currentIndex =
-        cardPlaylist[position];
-
-      nowPlaying.textContent =
-        `Reading ${position + 1} of ${cardPlaylist.length}: ${titleFor(currentIndex)}`;
-
-      updatePlayingIndicator();
-
-      if (player) {
-
-        player.loadVideoById({
-          videoId: ids[currentIndex]
-        });
-      }
-
-      updateButtons();
-    }
-
-    function next() {
-
-      if (cardPlaylist !== null) {
-
-        if (
-          cardPosition <
-          cardPlaylist.length - 1
-        ) {
-
-          playPosition(
-            cardPosition + 1
-          );
-
-          return;
-        }
-
-        cardPlaylist = null;
-        cardPosition = 0;
-
-        nowPlaying.textContent =
-          'Music reading complete ✦';
-
-        updateButtons();
-
-        return;
-      }
-
-      if (currentIndex === -1) {
-
-        play(0);
-
-        return;
-      }
-
-      /*
-        Normal chronological playback:
-        skip any tracks that have been defeated
-        in Whack-A-Track.
-      */
-      let nextIndex =
-        currentIndex + 1;
-
-      let savedWhackedTracks = [];
-
-      try {
-
-        const raw =
-          localStorage.getItem(
-            'rizneyWhackedTracks'
-          );
-
-        const parsed =
-          JSON.parse(
-            raw || '[]'
-          );
-
-        if (Array.isArray(parsed)) {
-          savedWhackedTracks = parsed;
-        }
-
-      } catch (error) {}
-
-      const whacked =
-        new Set(
-          savedWhackedTracks
-        );
-
-      while (
-        nextIndex < ids.length &&
-        whacked.has(
-          String(ids[nextIndex])
-        )
-      ) {
-        nextIndex++;
-      }
-
-      if (
-        nextIndex < ids.length
-      ) {
-
-        play(nextIndex);
-
-      } else {
-
-        nowPlaying.textContent =
-          'You reached the end of the collection ✦';
-      }
-
-      updateButtons();
-    }
-
-    function previous() {
-
-      if (cardPlaylist !== null) {
-
-        if (cardPosition > 0) {
-
-          playPosition(
-            cardPosition - 1
-          );
-        }
-
-        return;
-      }
-
-      if (currentIndex === 0) {
-
-        playIntro();
-
-        return;
-      }
-
-      if (currentIndex > 0) {
-
-        play(currentIndex - 1);
-      }
-    }
-
-    window.onYouTubeIframeAPIReady = () => {
-
-      player = new YT.Player(
-        'player',
-        {
-
-          videoId: introVideoId,
-
+    function loadVideo(videoId, onReady) {
+      if (!player) {
+        player = new YT.Player('player', {
+          height: '100%',
+          width: '100%',
           playerVars: {
-            autoplay: 0,
+            autoplay: 1,
             rel: 0,
+            playsinline: 1,
             modestbranding: 1,
-            playsinline: 1
+            controls: 1,
+            enablejsapi: 1,
           },
-
           events: {
-
             onReady: () => {
-
-              window.rizneyPlayer =
-                player;
-
-              nowPlaying.textContent =
-                "Now playing: MEGA MIX'N'MOJO Intro";
-
-              updateButtons();
+              if (typeof onReady === 'function') {
+                onReady();
+              }
             },
-
-            onStateChange: e => {
-
-              if (
-                e.data ===
-                YT.PlayerState.PLAYING
-              ) {
-
-                introTransitionPending = false;
-              }
-
-              if (
-                e.data ===
-                YT.PlayerState.ENDED
-              ) {
-
-                if (introTransitionPending) {
-
-                  introTransitionPending = false;
-
-                  return;
-                }
-
-                next();
-              }
-            }
+            onStateChange: onPlayerStateChange
           }
-        }
-      );
-
-      window.rizneyPlayer =
-        player;
-    };
-
-    ids.forEach((id, index) => {
-
-      const row =
-        document.createElement('article');
-
-      row.className = 'song';
-
-      row.innerHTML = `
-        <span class="song-number">
-          ${index + 1}
-        </span>
-
-        <span class="song-title">
-          ♫ ${titleFor(index)}
-
-          <span
-            class="song-playing"
-            hidden
-          >▶ PLAYING</span>
-
-          <small>
-            YouTube video • chronological position ${index + 1}
-          </small>
-        </span>
-
-        <button
-          class="play"
-          type="button"
-        >Play</button>
-      `;
-
-      row.querySelector(
-        'button'
-      ).onclick = () => {
-
-        cardPlaylist = null;
-        cardPosition = 0;
-
-        introTransitionPending = false;
-
-        play(index);
-      };
-
-      list.appendChild(row);
-    });
-
-    $('#random-song').onclick = () => {
-
-      cardPlaylist = null;
-      cardPosition = 0;
-
-      introTransitionPending = false;
-
-      play(
-        Math.floor(
-          Math.random() * ids.length
-        )
-      );
-    };
-
-    previousButton.onclick =
-      previous;
-
-    nextButton.onclick = () => {
-
-      if (currentIndex === -1) {
-
-        introTransitionPending = true;
+        });
+        return;
       }
 
-      next();
-    };
-
-    $('#draw-cards').onclick = () => {
-
-      introTransitionPending = false;
-
-      /*
-        Proper Fisher-Yates shuffle.
-        Every song has an equal chance of appearing
-        in the six-card reading.
-      */
-      const shuffled =
-        [...ids.keys()];
-
-      for (
-        let i = shuffled.length - 1;
-        i > 0;
-        i--
-      ) {
-
-        const j =
-          Math.floor(
-            Math.random() * (i + 1)
-          );
-
-        [
-          shuffled[i],
-          shuffled[j]
-        ] = [
-          shuffled[j],
-          shuffled[i]
-        ];
+      player.loadVideoById(videoId);
+      if (typeof onReady === 'function') {
+        onReady();
       }
-
-      cardPlaylist =
-        shuffled.slice(
-          0,
-          Math.min(6, ids.length)
-        );
-
-      cardPosition = 0;
-
-      reading.hidden = false;
-
-      cards.innerHTML = '';
-
-      [
-        '✦',
-        '✧',
-        '✩',
-        '✹',
-        '✺',
-        '✷'
-      ]
-        .slice(
-          0,
-          cardPlaylist.length
-        )
-        .forEach(
-          (symbol, position) => {
-
-            const card =
-              document.createElement(
-                'article'
-              );
-
-            card.className = 'card';
-
-            card.innerHTML = `
-              <span class="symbol">
-                ${symbol}
-              </span>
-
-              <strong>
-                Reading ${position + 1}
-              </strong>
-
-              <a href="#">
-                Play song ${cardPlaylist[position] + 1}
-              </a>
-            `;
-
-            card.querySelector(
-              'a'
-            ).onclick = e => {
-
-              e.preventDefault();
-
-              playPosition(
-                position
-              );
-            };
-
-            cards.appendChild(card);
-          }
-        );
-
-      updateButtons();
-    };
-
-    const contextButton =
-      $('#context-button');
-
-    const contextOverlay =
-      $('#context-overlay');
-
-    const contextClose =
-      $('#context-close');
-
-    function openContext() {
-
-      contextOverlay.classList.add(
-        'open'
-      );
-
-      contextOverlay.setAttribute(
-        'aria-hidden',
-        'false'
-      );
-
-      document.body.style.overflow =
-        'hidden';
-
-      contextClose.focus();
     }
 
-    function closeContext() {
+    function loadSong(index) {
+      currentIndex = index;
+      const videoId = ids[index];
+      if (!videoId) return;
 
-      contextOverlay.classList.remove(
-        'open'
-      );
-
-      contextOverlay.setAttribute(
-        'aria-hidden',
-        'true'
-      );
-
-      document.body.style.overflow =
-        '';
-
-      contextButton.focus();
+      loadVideo(videoId, () => {
+        updateNowPlayingLabel();
+      });
     }
 
-    contextButton.addEventListener(
-      'click',
-      openContext
-    );
-
-    contextClose.addEventListener(
-      'click',
-      closeContext
-    );
-
-    document.addEventListener(
-      'keydown',
-      e => {
-
-        if (
-          e.key === 'Escape' &&
-          contextOverlay.classList.contains(
-            'open'
-          )
-        ) {
-
-          closeContext();
-        }
+    function playNextSong() {
+      if (currentIndex >= ids.length - 1) {
+        currentIndex = -1;
+      } else {
+        currentIndex += 1;
       }
-    );
+      loadSong(currentIndex);
+    }
 
-    updateButtons();
-    updatePlayingIndicator();
+    function playPreviousSong() {
+      if (currentIndex <= 0) {
+        currentIndex = ids.length - 1;
+      } else {
+        currentIndex -= 1;
+      }
+      loadSong(currentIndex);
+    }
+
+    function onPlayerStateChange(event) {
+      if (event.data === YT.PlayerState.PLAYING) {
+        updateNowPlayingLabel();
+      }
+
+      if (event.data === YT.PlayerState.ENDED) {
+        playNextSong();
+      }
+    }
+
+    function initPlayer() {
+      const introId = introVideoId;
+      loadVideo(introId, () => {
+        updateNowPlayingLabel();
+      });
+    }
+
+    previousButton.addEventListener('click', playPreviousSong);
+    nextButton.addEventListener('click', playNextSong);
+
+    renderSongList();
+    initPlayer();
 
   </script>
 
-  <script src="./main.js"></script>
-
-  <script src="./whack-a-track.js"></script>
-
-  <!-- SINGLES TEST — standalone game -->
   <script src="./singles.js"></script>
 
 </body>
