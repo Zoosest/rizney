@@ -1,3 +1,4 @@
+
 /* =========================================================
    RIZNEY MUSIC ARCHIVE
    Animal icons + song titles + keywords + Music Reading cards
@@ -944,8 +945,12 @@
       return false;
     }
 
+    /*
+      songIndex is the visible song number.
+      SONG_INFO is zero-indexed.
+    */
     const info =
-      SONG_INFO[songIndex];
+      SONG_INFO[songIndex - 1];
 
     return (
       info &&
@@ -961,8 +966,12 @@
       return false;
     }
 
+    /*
+      songNumber is the visible song number.
+      SONG_INFO is zero-indexed.
+    */
     const info =
-      SONG_INFO[songNumber];
+      SONG_INFO[songNumber - 1];
 
     return (
       info &&
