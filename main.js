@@ -22,6 +22,14 @@
     "rizneyWhackedTracks";
 
   /*
+    Pirate Duel unlocks POTTY TIME.
+    The pirate game sets this to "true"
+    after the correct answer is given.
+  */
+  const POTTY_TIME_UNLOCK_KEY =
+    "pottyTimeUnlocked";
+
+  /*
     Song information is kept in chronological order.
     The first entry [index 0] is your intro track, followed by your animal-icon songs.
   */
@@ -877,6 +885,61 @@
   }
 
   /* =========================================================
+     POTTY TIME UNLOCK
+     ========================================================= */
+
+  function isPottyTimeUnlocked() {
+    return (
+      localStorage.getItem(
+        POTTY_TIME_UNLOCK_KEY
+      ) === "true"
+    );
+  }
+
+  function isPottyTimeRow(row) {
+    if (!row) {
+      return false;
+    }
+
+    const songIndex =
+      Number(
+        row.dataset.songIndex
+      );
+
+    if (
+      !Number.isInteger(songIndex) ||
+      songIndex < 1
+    ) {
+      return false;
+    }
+
+    const info =
+      SONG_INFO[songIndex];
+
+    return (
+      info &&
+      info[0] === "POTTY TIME"
+    );
+  }
+
+  function isPottyTimeSongNumber(songNumber) {
+    if (
+      !Number.isInteger(songNumber) ||
+      songNumber < 1
+    ) {
+      return false;
+    }
+
+    const info =
+      SONG_INFO[songNumber];
+
+    return (
+      info &&
+      info[0] === "POTTY TIME"
+    );
+  }
+
+  /* =========================================================
      HELPERS
      ========================================================= */
 
@@ -954,7 +1017,22 @@
   function playSongFromRow(row) {
     if (!row) return;
 
-    const playButton = row.querySelector(".play");
+    /*
+      🔒 POTTY TIME LOCK
+
+      POTTY TIME cannot be played until
+      the Monkey Judge pirate duel has
+      been successfully completed.
+    */
+    if (
+      isPottyTimeRow(row) &&
+      !isPottyTimeUnlocked()
+    ) {
+      return;
+    }
+
+    const playButton =
+      row.querySelector(".play");
 
     if (playButton) {
       playButton.click();
@@ -1429,6 +1507,22 @@
 
     if (!link) return;
 
+    const songIndex =
+      getCardSongIndex(card);
+
+    /*
+      🔒 POTTY TIME LOCK
+
+      Music Reading cards must obey the same
+      unlock rule as the normal song rows.
+    */
+    if (
+      isPottyTimeSongNumber(songIndex) &&
+      !isPottyTimeUnlocked()
+    ) {
+      return;
+    }
+
     if (
       typeof link.onclick ===
       "function"
@@ -1440,9 +1534,6 @@
 
       return;
     }
-
-    const songIndex =
-      getCardSongIndex(card);
 
     if (
       songIndex >= 0 &&
