@@ -1,5 +1,5 @@
 /* =========================================================
-   "YOU DON'T KNOW TRACK" - AUTOMATIC END-OF-SONG TRIGGER
+   "YOU DON'T KNOW TRACK" - WITH AUTO-SKIP TO NEXT TRACK
    ========================================================= */
 
 (() => {
@@ -108,6 +108,17 @@
     }
   }
 
+  // Advance to the next track in your playlist
+  function skipToNextTrack() {
+    if (window.rizneyPlayer && typeof window.rizneyPlayer.nextVideo === "function") {
+      try {
+        window.rizneyPlayer.nextVideo();
+      } catch (e) {
+        console.log("Could not skip to next video:", e);
+      }
+    }
+  }
+
   // State 2: "Pay attention" mode after clicking Yes
   function showListeningState() {
     const wrapper = document.getElementById(CONTAINER_ID);
@@ -182,6 +193,11 @@
       feedback.style.color = "#ff6b6b";
       feedback.textContent = `❌ Not quite! The correct answer was: ${QUIZ.options[QUIZ.correctIndex]}`;
     }
+
+    // Wait 2.5 seconds so they can read the result, then skip to the next track
+    setTimeout(() => {
+      skipToNextTrack();
+    }, 2500);
   }
 
   // Monitor song status and playback time
@@ -205,12 +221,10 @@
     const isPlayingTarget = videoMatch || text.includes(TARGET_TITLE) || text.includes(TARGET_VIDEO_ID);
 
     if (isPlayingTarget) {
-      // If song just started, show prompt
       if (currentState === "hidden") {
         showPromptState();
       }
 
-      // If user clicked "Yes" and we are in listening mode, check the song progress
       if (currentState === "listening" && window.rizneyPlayer) {
         try {
           if (
@@ -220,7 +234,6 @@
             const currentTime = window.rizneyPlayer.getCurrentTime();
             const duration = window.rizneyPlayer.getDuration();
 
-            // When the song gets within the last 3 seconds, trigger the quiz!
             if (duration > 0 && (duration - currentTime <= 3)) {
               showQuizState();
             }
@@ -229,7 +242,6 @@
       }
 
     } else {
-      // If song changes away from Monkey Judge, reset everything
       if (currentState !== "hidden") {
         wrapper.style.display = "none";
         currentState = "hidden";
