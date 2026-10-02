@@ -1,5 +1,5 @@
 /* =========================================================
-   "YOU DON'T KNOW TRACK" - WITH AUDIO STOP AT THE END
+   "YOU DON'T KNOW TRACK" - AUTOMATIC END-OF-SONG TRIGGER
    ========================================================= */
 
 (() => {
@@ -58,7 +58,6 @@
     const wrapper = document.getElementById(CONTAINER_ID);
     if (!wrapper) return;
     currentState = "prompt";
-    wrapper.style.display = "none"; // Hide initially so it doesn't flash if hidden by logic, wait let's keep block
     wrapper.style.display = "block";
 
     wrapper.innerHTML = `
@@ -123,24 +122,7 @@
         Pay attention to the song!<br>
         <span style="color: #f5d76e; font-style: italic; font-size: 0.95rem;">The question is coming up near the end...</span>
       </p>
-      <div style="margin-top: 15px;">
-        <button id="test-trigger-btn" style="
-          padding: 6px 14px;
-          background: #4a355e;
-          color: #f5d76e;
-          border: 1px solid #d4af37;
-          border-radius: 4px;
-          cursor: pointer;
-          font-size: 0.85rem;
-        ">🧪 [Test] Trigger Question Now</button>
-      </div>
     `;
-
-    // Handy manual test button so you can test the quiz transition instantly right now!
-    document.getElementById("test-trigger-btn").onclick = () => {
-      stopSong();
-      showQuizState();
-    };
   }
 
   // State 3: The actual multiple choice quiz
@@ -149,7 +131,6 @@
     if (!wrapper) return;
     currentState = "quiz";
 
-    // Ensure the song is stopped when the quiz appears
     stopSong();
 
     const optionsHtml = QUIZ.options.map((opt, index) => {
@@ -203,7 +184,7 @@
     }
   }
 
-  // Monitor song status
+  // Monitor song status and playback time
   function checkSongStatus() {
     const wrapper = document.getElementById(CONTAINER_ID);
     if (!wrapper) return;
@@ -224,11 +205,31 @@
     const isPlayingTarget = videoMatch || text.includes(TARGET_TITLE) || text.includes(TARGET_VIDEO_ID);
 
     if (isPlayingTarget) {
+      // If song just started, show prompt
       if (currentState === "hidden") {
         showPromptState();
       }
+
+      // If user clicked "Yes" and we are in listening mode, check the song progress
+      if (currentState === "listening" && window.rizneyPlayer) {
+        try {
+          if (
+            typeof window.rizneyPlayer.getCurrentTime === "function" &&
+            typeof window.rizneyPlayer.getDuration === "function"
+          ) {
+            const currentTime = window.rizneyPlayer.getCurrentTime();
+            const duration = window.rizneyPlayer.getDuration();
+
+            // When the song gets within the last 3 seconds, trigger the quiz!
+            if (duration > 0 && (duration - currentTime <= 3)) {
+              showQuizState();
+            }
+          }
+        } catch (e) {}
+      }
+
     } else {
-      // If song changes away from Monkey Judge, reset
+      // If song changes away from Monkey Judge, reset everything
       if (currentState !== "hidden") {
         wrapper.style.display = "none";
         currentState = "hidden";
