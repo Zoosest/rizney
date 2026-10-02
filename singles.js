@@ -19,25 +19,15 @@
   const BANNER_ID = "singles-banner";
   const STORAGE_KEY = "singles_arcade_score";
 
-  const $ = selector =>
-    document.querySelector(selector);
-
+  const $ = selector => document.querySelector(selector);
 
   /* =========================================================
-     SCORE & QUARTER SYSTEM (LOCAL STORAGE)
+     SCORE SYSTEM (LOCAL STORAGE)
      ========================================================= */
 
   function getScore() {
     const saved = localStorage.getItem(STORAGE_KEY);
     return saved !== null ? parseInt(saved, 10) : 0;
-  }
-
-  function updateScore(change) {
-    const current = getScore();
-    const newScore = current + change;
-    localStorage.setItem(STORAGE_KEY, newScore);
-    renderScoreDisplay();
-    return newScore;
   }
 
   function renderScoreDisplay() {
@@ -55,52 +45,35 @@
     scoreEl.textContent = `SCORE: ${getScore()}`;
   }
 
-
   /* =========================================================
      CREATE BANNER
      ========================================================= */
 
   function createBanner() {
+    const existing = $(`#${BANNER_ID}`);
+    if (existing) return existing;
 
-    const existing =
-      $(`#${BANNER_ID}`);
-
-    if (existing) {
-      return existing;
-    }
-
-    const banner =
-      document.createElement("section");
-
-    banner.id =
-      BANNER_ID;
-
-    banner.setAttribute(
-      "aria-label",
-      "Singles"
-    );
+    const banner = document.createElement("section");
+    banner.id = BANNER_ID;
+    banner.setAttribute("aria-label", "Singles Arcade Banner");
 
     banner.innerHTML = `
       <div class="singles-banner-main">
         YOU DON'T KNOW TRACK
       </div>
-
       <div class="singles-banner-label">
-        🎤 SINGLES
+        🎤 SINGLES MODE ACTIVE
       </div>
     `;
 
-
-    const style =
-      document.createElement("style");
-
+    const style = document.createElement("style");
     style.textContent = `
       #${BANNER_ID} {
-        display: none;
+        display: none; /* Hidden by default until Monkey Judge plays */
         width: 100%;
         box-sizing: border-box;
         margin: 0;
-        padding: 10px 12px;
+        padding: 8px 12px;
         text-align: center;
         color: #f5d76e;
         background: #120b18;
@@ -109,177 +82,99 @@
         font-family: Georgia, "Times New Roman", serif;
         box-shadow: 0 4px 14px rgba(0,0,0,.45);
         
-        /* Make the Singles banner sticky right under your toolbar */
+        /* Sticky anchor right under your main toolbar */
         position: sticky;
-        top: 48px; /* Adjust this number if your toolbar height is taller/shorter */
-        z-index: 80;
+        top: 50px; /* Adjust if your toolbar height differs slightly */
+        z-index: 999;
       }
 
       #${BANNER_ID} .singles-banner-main {
-        font-size: 1rem;
+        font-size: 0.95rem;
         font-weight: bold;
         letter-spacing: .12em;
       }
 
       #${BANNER_ID} .singles-banner-label {
-        margin-top: 3px;
+        margin-top: 2px;
         color: #c084fc;
-        font-size: .7rem;
+        font-size: .65rem;
         letter-spacing: .16em;
       }
 
       #${BANNER_ID}-score {
-        margin-top: 6px;
+        margin-top: 4px;
         color: #f5d76e;
-        font-size: .85rem;
+        font-size: 0.8rem;
         letter-spacing: .1em;
         font-weight: bold;
       }
-
-      @media (max-width: 500px) {
-        #${BANNER_ID} {
-          padding: 8px 10px;
-          top: 40px;
-        }
-
-        #${BANNER_ID} .singles-banner-main {
-          font-size: .85rem;
-        }
-      }
     `;
-
     document.head.appendChild(style);
 
+    // Find the sticky toolbar or header to place the banner right below it
+    const toolbar = $(".controls") \vert{}\vert{} $("header") || document.body.firstElementChild;
 
-    const controls =
-      $(".controls");
-
-    if (controls) {
-
-      controls.insertAdjacentElement(
-        "afterend",
-        banner
-      );
-
+    if (toolbar && toolbar !== document.body) {
+      toolbar.insertAdjacentElement("afterend", banner);
     } else {
-
-      document.body.prepend(
-        banner
-      );
+      document.body.prepend(banner);
     }
 
     renderScoreDisplay();
-
     return banner;
   }
-
 
   /* =========================================================
      DETECT MONKEY JUDGE
      ========================================================= */
 
   function isMonkeyJudgePlaying() {
+    const player = window.rizneyPlayer;
 
-    const player =
-      window.rizneyPlayer;
-
-    if (
-      player &&
-      typeof player.getVideoData ===
-        "function"
-    ) {
-
+    if (player && typeof player.getVideoData === "function") {
       try {
-
-        const data =
-          player.getVideoData();
-
-        if (
-          data &&
-          data.video_id
-        ) {
-          const isMatch = String(data.video_id) === SINGLE_VIDEO_ID;
-          console.log("[Singles] YouTube Player Video ID:", data.video_id, "Match:", isMatch);
-          return isMatch;
+        const data = player.getVideoData();
+        if (data && data.video_id) {
+          return String(data.video_id) === SINGLE_VIDEO_ID;
         }
-
       } catch (error) {}
     }
 
+    const nowPlaying = $("#now-playing");
+    if (!nowPlaying) return false;
 
-    const nowPlaying =
-      $("#now-playing");
-
-    if (!nowPlaying) {
-      return false;
-    }
-
-    const textMatch = nowPlaying.textContent.includes(`Song ${SINGLE_TRACK_NUMBER}`);
-    console.log("[Singles] #now-playing text:", nowPlaying.textContent, "Match:", textMatch);
-    
-    return textMatch;
+    return nowPlaying.textContent.includes(`Song ${SINGLE_TRACK_NUMBER}`);
   }
 
-
   /* =========================================================
-     UPDATE BANNER
+     UPDATE BANNER VISIBILITY (IN-PLACE, NO SCROLL)
      ========================================================= */
 
   function updateBanner() {
+    const banner = createBanner(); // Ensures it exists in the DOM
+    if (!banner) return;
 
-    const banner =
-      $(`#${BANNER_ID}`);
+    const singlesActive = isMonkeyJudgePlaying();
 
-    if (!banner) {
-      return;
-    }
-
-    const singlesActive =
-      isMonkeyJudgePlaying();
-
-    if (singlesActive) {
-      banner.style.display = "block";
-    } else {
-      banner.style.display = "none";
+    // Toggle display without triggering any scroll behaviors
+    const targetDisplay = singlesActive ? "block" : "none";
+    if (banner.style.display !== targetDisplay) {
+      banner.style.display = targetDisplay;
     }
   }
-
-
-  /* =========================================================
-     WATCH THE PLAYER
-     ========================================================= */
-
-  function startWatching() {
-
-    createBanner();
-
-    updateBanner();
-
-    window.setInterval(
-      updateBanner,
-      500
-    );
-  }
-
 
   /* =========================================================
      INIT
      ========================================================= */
 
   function init() {
-    startWatching();
+    createBanner();
+    updateBanner();
+    window.setInterval(updateBanner, 500);
   }
 
-
-  if (
-    document.readyState ===
-    "loading"
-  ) {
-    document.addEventListener(
-      "DOMContentLoaded",
-      init,
-      { once: true }
-    );
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", init, { once: true });
   } else {
     init();
   }
