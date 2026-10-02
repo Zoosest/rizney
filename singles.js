@@ -1,5 +1,5 @@
 /* =========================================================
-   "YOU DON'T KNOW TRACK" - DELAYED FLOW
+   "YOU DON'T KNOW TRACK" - WITH VOICE CLIP
    ========================================================= */
 
 (() => {
@@ -8,6 +8,9 @@
   const TARGET_VIDEO_ID = "SHhsdD5viWs";
   const TARGET_TITLE = "Monkey Judge";
   const CONTAINER_ID = "simple-quiz-container";
+  
+  // Path to your voice asset (adjust path if needed, e.g., "./assets/..." or "/assets/...")
+  const AUDIO_PATH = "./assets/you-dont-know-track.mp3";
 
   const QUIZ = {
     question: "Fill in the blank: 'Monkey judge, monkey jury, ____.'",
@@ -20,7 +23,6 @@
     correctIndex: 0
   };
 
-  // State tracker so we don't reset the prompt while the song is playing
   let currentState = "hidden"; // "hidden", "prompt", "listening", "quiz"
 
   function injectContainer() {
@@ -77,7 +79,24 @@
       ">Yes!</button>
     `;
 
-    document.getElementById("start-quiz-optin").onclick = showListeningState;
+    // Handle clicking Yes: play audio and switch to listening state
+    document.getElementById("start-quiz-optin").onclick = () => {
+      playVoiceClip();
+      showListeningState();
+    };
+  }
+
+  // Play your custom voice mp3
+  function playVoiceClip() {
+    try {
+      const audio = new Audio(AUDIO_PATH);
+      audio.volume = 1.0;
+      audio.play().catch(err => {
+        console.log("Audio play blocked or file path issue:", err);
+      });
+    } catch (e) {
+      console.log("Could not initialize audio:", e);
+    }
   }
 
   // State 2: "Pay attention" mode after clicking Yes
@@ -95,9 +114,6 @@
         <span style="color: #f5d76e; font-style: italic; font-size: 0.95rem;">The question is coming up near the end...</span>
       </p>
     `;
-
-    // Later on, when you're ready to trigger the actual question at the end of the song,
-    // you can call showQuizState()! For now, this holds the screen in the listening phase.
   }
 
   // State 3: The actual multiple choice quiz
@@ -178,12 +194,10 @@
     const isPlayingTarget = videoMatch || text.includes(TARGET_TITLE) || text.includes(TARGET_VIDEO_ID);
 
     if (isPlayingTarget) {
-      // If the song just started and we haven't shown anything yet, show the prompt
       if (currentState === "hidden") {
         showPromptState();
       }
     } else {
-      // If the song changed or stopped, hide it and reset state
       wrapper.style.display = "none";
       currentState = "hidden";
     }
