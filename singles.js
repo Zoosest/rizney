@@ -5,65 +5,111 @@
 (() => {
   "use strict";
 
-  const TARGET_VIDEO_ID = "SHhsdD5viWs";
-  const TARGET_TITLE = "Monkey Judge";
+  // =========================================================
+  // PIRATE DUEL CONFIGURATIONS
+  // =========================================================
+
+  const MONKEY_JUDGE = {
+    videoId: "SHhsdD5viWs",
+    title: "Monkey Judge",
+    image: "./assets/black-bear.png",
+    imageAlt: "Captain Black Bear",
+
+    quiz: [
+      {
+        question:
+          "Complete the pirate's lyric line: 'Monkey judge, monkey jury, ____.'",
+
+        options: [
+          "Everyone in such a hurry",
+          "Monkeys are always so dirty",
+          "Everything is getting blurry",
+          "Getting so worried"
+        ],
+
+        correctIndex: 0
+      },
+
+      {
+        question:
+          "What did the monkey steal?",
+
+        options: [
+          "Her keys",
+          "Her money",
+          "Her hat",
+          "Her case"
+        ],
+
+        correctIndex: 2
+      },
+
+      {
+        question:
+          "What is the name of the Monkey Judge?",
+
+        options: [
+          "Bubbles",
+          "Matt",
+          "Tango",
+          "Tom"
+        ],
+
+        correctIndex: 2
+      }
+    ],
+
+    unlocksPottyTime: true
+  };
+
+  // =========================================================
+  // DELAWARE (UNDER THE SEA)
+  // =========================================================
+
+  const DELAWARE = {
+    // IMPORTANT:
+    // Replace this with the actual YouTube video ID
+    // for "Delaware (Under the Sea)".
+    videoId: "",
+
+    title: "Delaware (Under the Sea)",
+
+    image: "./assets/pirate-fox.png",
+    imageAlt: "Pirate Fox",
+
+    quiz: [
+      {
+        question:
+          "What's the capital of Delaware?",
+
+        options: [
+          "Wilmington",
+          "Dover",
+          "Newark",
+          "Rehoboth Beach"
+        ],
+
+        correctIndex: 1
+      }
+    ],
+
+    unlocksPottyTime: false
+  };
+
   const CONTAINER_ID = "simple-quiz-container";
 
-  const AUDIO_PATH = "./assets/You-dont-know-track.mp3";
-
-  // Player booty stash
-  let playerBooty = 0;
+  const AUDIO_PATH =
+    "./assets/You-dont-know-track.mp3";
 
   // =========================================================
-  // THREE QUESTION PIRATE QUIZ
+  // CURRENT DUEL
   // =========================================================
 
-  const QUIZ = [
-    {
-      question:
-        "Complete the pirate's lyric line: 'Monkey judge, monkey jury, ____.'",
+  let activeDuel = null;
 
-      options: [
-        "Everyone in such a hurry",
-        "Monkeys are always so dirty",
-        "Everything is getting blurry",
-        "Getting so worried"
-      ],
-
-      correctIndex: 0
-    },
-
-    {
-      question:
-        "What did the monkey steal?",
-
-      options: [
-        "Her keys",
-        "Her money",
-        "Her hat",
-        "Her case"
-      ],
-
-      correctIndex: 2
-    },
-
-    {
-      question:
-        "What is the name of the Monkey Judge?",
-
-      options: [
-        "Bubbles",
-        "Matt",
-        "Tango",
-        "Tom"
-      ],
-
-      correctIndex: 2
-    }
-  ];
-
-  // Current question number
   let currentQuestionIndex = 0;
+
+  let playerBooty = 0;
 
   let currentState = "hidden";
   // "hidden", "prompt", "dismissed", "listening", "quiz"
@@ -82,6 +128,7 @@
     if (document.getElementById(CONTAINER_ID)) return;
 
     const wrapper = document.createElement("div");
+
     wrapper.id = CONTAINER_ID;
 
     wrapper.style.cssText = `
@@ -118,6 +165,7 @@
       "translateX(-50%) translateY(0)";
 
     wrapper.style.opacity = "1";
+
     wrapper.style.pointerEvents = "auto";
   }
 
@@ -131,6 +179,7 @@
       "translateX(-50%) translateY(150%)";
 
     wrapper.style.opacity = "0";
+
     wrapper.style.pointerEvents = "none";
   }
 
@@ -157,6 +206,7 @@
       console.log(
         "Could not find POTTY TIME in the playlist."
       );
+
       return;
     }
 
@@ -207,12 +257,18 @@
     currentState = "prompt";
 
     /*
-      Start the three-question quiz from Question 1
+      Start the selected duel from Question 1
       every time a new duel begins.
     */
     currentQuestionIndex = 0;
+
     playerBooty = 0;
+
     pottyTimeChosen = false;
+
+    const duel = activeDuel;
+
+    if (!duel) return;
 
     wrapper.innerHTML = `
       <div style="
@@ -228,8 +284,8 @@
         align-items: center;
       ">
         <img
-          src="./assets/black-bear.png"
-          alt="Captain Black Bear"
+          src="${duel.image}"
+          alt="${duel.imageAlt}"
           style="
             width: 100%;
             height: auto;
@@ -453,18 +509,24 @@
 
     if (!wrapper) return;
 
+    if (!activeDuel) return;
+
     currentState = "quiz";
 
     stopSong();
 
     const quiz =
-      QUIZ[currentQuestionIndex];
+      activeDuel.quiz[
+        currentQuestionIndex
+      ];
+
+    if (!quiz) return;
 
     const questionNumber =
       currentQuestionIndex + 1;
 
     const totalQuestions =
-      QUIZ.length;
+      activeDuel.quiz.length;
 
     const optionsHtml =
       quiz.options
@@ -606,8 +668,12 @@
       b.disabled = true;
     });
 
+    if (!activeDuel) return;
+
     const quiz =
-      QUIZ[currentQuestionIndex];
+      activeDuel.quiz[
+        currentQuestionIndex
+      ];
 
     // =======================================================
     // CORRECT ANSWER
@@ -626,7 +692,7 @@
       */
       if (
         currentQuestionIndex <
-        QUIZ.length - 1
+        activeDuel.quiz.length - 1
       ) {
 
         feedback.style.color =
@@ -665,27 +731,110 @@
       }
 
       // =====================================================
-      // ALL THREE QUESTIONS COMPLETE!
+      // ALL QUESTIONS COMPLETE
       // =====================================================
 
       /*
-        🏴‍☠️ POTTY TIME UNLOCKED!
+        Monkey Judge keeps its existing
+        POTTY TIME unlock.
       */
-      localStorage.setItem(
-        "pottyTimeUnlocked",
-        "true"
-      );
+      if (activeDuel.unlocksPottyTime) {
 
-      /*
-        🔔 Tell main.js immediately.
-      */
-      window.dispatchEvent(
-        new CustomEvent(
-          "pottyTimeUnlocked"
-        )
-      );
+        localStorage.setItem(
+          "pottyTimeUnlocked",
+          "true"
+        );
 
-      pottyTimeChosen = false;
+        /*
+          Tell main.js immediately.
+        */
+        window.dispatchEvent(
+          new CustomEvent(
+            "pottyTimeUnlocked"
+          )
+        );
+
+        pottyTimeChosen = false;
+
+        feedback.style.color =
+          "#51cf66";
+
+        feedback.innerHTML = `
+          <div style="
+            font-size: 1.15rem;
+            line-height: 1.5;
+            margin-bottom: 12px;
+          ">
+            🏆 <strong>YOU SURVIVED THE PIRATE DUEL!</strong><br>
+
+            🎉 <strong>YOU'VE UNLOCKED<br>
+            "POTTY TIME" IN THE PLAYLIST!</strong>
+          </div>
+
+          <div style="
+            color: #f5d76e;
+            font-size: 1rem;
+            margin-bottom: 14px;
+          ">
+            🪙 Booty Secured:
+            <strong>+50 Gold</strong>
+            (Total: ${playerBooty})
+          </div>
+
+          <button
+            id="play-potty-time"
+            style="
+              padding: 11px 22px;
+              background: #c084fc;
+              color: #120b18;
+              border: none;
+              border-radius: 5px;
+              font-weight: bold;
+              cursor: pointer;
+              font-family: Georgia, serif;
+              font-size: 1rem;
+              box-shadow: 0 3px 10px rgba(0,0,0,0.4);
+            "
+          >
+            🚽 PLAY POTTY TIME
+          </button>
+        `;
+
+        const pottyButton =
+          document.getElementById(
+            "play-potty-time"
+          );
+
+        if (pottyButton) {
+          pottyButton.onclick =
+            playPottyTime;
+        }
+
+        /*
+          Wait five seconds unless the player
+          chooses PLAY POTTY TIME.
+        */
+        setTimeout(() => {
+
+          if (pottyTimeChosen) {
+            return;
+          }
+
+          hideContainer();
+
+          setTimeout(
+            skipToNextTrack,
+            300
+          );
+
+        }, 5000);
+
+        return;
+      }
+
+      // =====================================================
+      // DELAWARE TEST VICTORY
+      // =====================================================
 
       feedback.style.color =
         "#51cf66";
@@ -696,60 +845,35 @@
           line-height: 1.5;
           margin-bottom: 12px;
         ">
-          🏆 <strong>YOU SURVIVED THE PIRATE DUEL!</strong><br>
-
-          🎉 <strong>YOU'VE UNLOCKED<br>
-          "POTTY TIME" IN THE PLAYLIST!</strong>
+          🏆 <strong>ARRR! CORRECT!</strong><br>
+          🦊 <strong>THE PIRATE FOX APPROVES.</strong>
         </div>
 
         <div style="
           color: #f5d76e;
           font-size: 1rem;
-          margin-bottom: 14px;
         ">
           🪙 Booty Secured:
           <strong>+50 Gold</strong>
           (Total: ${playerBooty})
         </div>
 
-        <button
-          id="play-potty-time"
-          style="
-            padding: 11px 22px;
-            background: #c084fc;
-            color: #120b18;
-            border: none;
-            border-radius: 5px;
-            font-weight: bold;
-            cursor: pointer;
-            font-family: Georgia, serif;
-            font-size: 1rem;
-            box-shadow: 0 3px 10px rgba(0,0,0,0.4);
-          "
-        >
-          🚽 PLAY POTTY TIME
-        </button>
+        <div style="
+          margin-top: 12px;
+          color: #c084fc;
+          font-size: 0.9rem;
+        ">
+          More questions coming...
+        </div>
       `;
 
-      const pottyButton =
-        document.getElementById(
-          "play-potty-time"
-        );
-
-      if (pottyButton) {
-        pottyButton.onclick =
-          playPottyTime;
-      }
-
       /*
-        Wait five seconds unless the player
-        chooses PLAY POTTY TIME.
+        For now, Delaware simply closes
+        after the test victory.
+        We will add Questions 2 and 3
+        before giving this duel its final reward.
       */
       setTimeout(() => {
-
-        if (pottyTimeChosen) {
-          return;
-        }
 
         hideContainer();
 
@@ -812,22 +936,10 @@
   }
 
   // =========================================================
-  // MONITOR SONG STATUS
+  // IDENTIFY WHICH DUEL IS PLAYING
   // =========================================================
 
-  function checkSongStatus() {
-
-    const nowPlaying =
-      document.querySelector(
-        "#now-playing"
-      );
-
-    const text =
-      nowPlaying
-        ? nowPlaying.textContent
-        : "";
-
-    let videoMatch = false;
+  function getActiveDuel() {
 
     if (
       window.rizneyPlayer &&
@@ -840,23 +952,99 @@
         const data =
           window.rizneyPlayer.getVideoData();
 
-        if (
-          data &&
-          String(data.video_id) ===
-            TARGET_VIDEO_ID
-        ) {
-          videoMatch = true;
+        if (data) {
+
+          const videoId =
+            String(data.video_id || "");
+
+          if (
+            videoId ===
+            MONKEY_JUDGE.videoId
+          ) {
+            return MONKEY_JUDGE;
+          }
+
+          /*
+            Delaware video ID will be added
+            once we have it.
+          */
+          if (
+            DELAWARE.videoId &&
+            videoId ===
+            DELAWARE.videoId
+          ) {
+            return DELAWARE;
+          }
         }
 
       } catch (e) {}
     }
 
-    const isPlayingTarget =
-      videoMatch ||
-      text.includes(TARGET_TITLE) ||
-      text.includes(TARGET_VIDEO_ID);
+    /*
+      Fall back to the visible Now Playing text.
+    */
+    const nowPlaying =
+      document.querySelector(
+        "#now-playing"
+      );
 
-    if (isPlayingTarget) {
+    const text =
+      nowPlaying
+        ? nowPlaying.textContent
+        : "";
+
+    if (
+      text.includes(
+        MONKEY_JUDGE.title
+      ) ||
+      text.includes(
+        MONKEY_JUDGE.videoId
+      )
+    ) {
+      return MONKEY_JUDGE;
+    }
+
+    if (
+      text.includes(
+        DELAWARE.title
+      )
+    ) {
+      return DELAWARE;
+    }
+
+    return null;
+  }
+
+  // =========================================================
+  // MONITOR SONG STATUS
+  // =========================================================
+
+  function checkSongStatus() {
+
+    const duel =
+      getActiveDuel();
+
+    if (duel) {
+
+      /*
+        If we just entered a new duel,
+        reset the state and use that duel.
+      */
+      if (
+        activeDuel !== duel
+      ) {
+
+        activeDuel = duel;
+
+        currentState =
+          "hidden";
+
+        currentQuestionIndex =
+          0;
+
+        playerBooty =
+          0;
+      }
 
       if (
         currentState ===
@@ -904,6 +1092,10 @@
 
     } else {
 
+      /*
+        No pirate duel song is playing.
+        Reset everything.
+      */
       if (
         currentState !==
         "hidden"
@@ -914,6 +1106,9 @@
         currentState =
           "hidden";
       }
+
+      activeDuel =
+        null;
     }
   }
 
