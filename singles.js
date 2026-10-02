@@ -187,6 +187,32 @@
         ? nowPlaying.textContent
         : "";
 
+
+    /*
+      =======================================================
+      COMPLETED DUELS
+      =======================================================
+
+      Once a duel has been successfully completed,
+      it will never appear again for that song.
+    */
+
+    const monkeyJudgeCompleted =
+      localStorage.getItem(
+        "monkeyJudgeCompleted"
+      ) === "true";
+
+    const delawareCompleted =
+      localStorage.getItem(
+        "delawareCompleted"
+      ) === "true";
+
+    const yohoCompleted =
+      localStorage.getItem(
+        "yohoCompleted"
+      ) === "true";
+
+
     /*
       Check YouTube video ID first.
     */
@@ -207,11 +233,17 @@
           String(data.video_id) ===
             MONKEY_JUDGE.videoId
         ) {
-          return MONKEY_JUDGE;
+
+          if (!monkeyJudgeCompleted) {
+            return MONKEY_JUDGE;
+          }
+
+          return null;
         }
 
       } catch (e) {}
     }
+
 
     /*
       Fall back to title matching.
@@ -222,29 +254,48 @@
     const lowerText =
       text.toLowerCase();
 
+
     if (
       lowerText.includes(
         MONKEY_JUDGE.title.toLowerCase()
       )
     ) {
-      return MONKEY_JUDGE;
+
+      if (!monkeyJudgeCompleted) {
+        return MONKEY_JUDGE;
+      }
+
+      return null;
     }
+
 
     if (
       lowerText.includes(
         DELAWARE.title.toLowerCase()
       )
     ) {
-      return DELAWARE;
+
+      if (!delawareCompleted) {
+        return DELAWARE;
+      }
+
+      return null;
     }
+
 
     if (
       lowerText.includes(
         YOHO.title.toLowerCase()
       )
     ) {
-      return YOHO;
+
+      if (!yohoCompleted) {
+        return YOHO;
+      }
+
+      return null;
     }
+
 
     return null;
   }
@@ -290,27 +341,11 @@
   */
 
 
-  /*
-    Keeps track of whether the player chose
-    to play POTTY TIME from the victory screen.
-  */
-
   let pottyTimeChosen = false;
 
 
-  /*
-    Keeps track of whether the player chose
-    to play NICE & SLOW from the victory screen.
-  */
-
   let niceAndSlowChosen = false;
 
-
-  /*
-    Keeps track of whether the player chose
-    to play A ROLLING STONE GATHERS NO MAS
-    from the victory screen.
-  */
 
   let rollingStoneChosen = false;
 
@@ -445,20 +480,11 @@
     pottyTimeChosen =
       true;
 
-    /*
-      Scroll POTTY TIME into view first.
-    */
-
     pottyRow.scrollIntoView({
       behavior: "smooth",
       block: "center"
     });
 
-
-    /*
-      Give the scroll a moment to begin,
-      then use the existing row-play system.
-    */
 
     setTimeout(() => {
 
@@ -533,20 +559,11 @@
     niceAndSlowChosen =
       true;
 
-    /*
-      Scroll NICE & SLOW into view first.
-    */
-
     niceAndSlowRow.scrollIntoView({
       behavior: "smooth",
       block: "center"
     });
 
-
-    /*
-      Give the scroll a moment to begin,
-      then use the existing row-play system.
-    */
 
     setTimeout(() => {
 
@@ -621,21 +638,11 @@
     rollingStoneChosen =
       true;
 
-    /*
-      Scroll A ROLLING STONE GATHERS NO MAS
-      into view first.
-    */
-
     rollingStoneRow.scrollIntoView({
       behavior: "smooth",
       block: "center"
     });
 
-
-    /*
-      Give the scroll a moment to begin,
-      then use the existing row-play system.
-    */
 
     setTimeout(() => {
 
@@ -685,11 +692,6 @@
     currentState =
       "prompt";
 
-
-    /*
-      Start the quiz from Question 1
-      every time a new duel begins.
-    */
 
     currentQuestionIndex =
       0;
@@ -1259,6 +1261,49 @@
       // =====================================================
 
       /*
+        Mark this duel as permanently completed.
+
+        Once this is true, getActiveDuel()
+        will no longer return this duel.
+      */
+
+      if (
+        duel === MONKEY_JUDGE
+      ) {
+
+        localStorage.setItem(
+          "monkeyJudgeCompleted",
+          "true"
+        );
+
+      }
+
+
+      if (
+        duel === DELAWARE
+      ) {
+
+        localStorage.setItem(
+          "delawareCompleted",
+          "true"
+        );
+
+      }
+
+
+      if (
+        duel === YOHO
+      ) {
+
+        localStorage.setItem(
+          "yohoCompleted",
+          "true"
+        );
+
+      }
+
+
+      /*
         ONLY MONKEY JUDGE unlocks POTTY TIME.
       */
 
@@ -1271,10 +1316,6 @@
           "true"
         );
 
-
-        /*
-          Tell main.js immediately.
-        */
 
         window.dispatchEvent(
           new CustomEvent(
@@ -1346,11 +1387,6 @@
         }
 
 
-        /*
-          Wait five seconds unless the player
-          chooses PLAY POTTY TIME.
-        */
-
         setTimeout(() => {
 
           if (
@@ -1383,20 +1419,11 @@
         duel === DELAWARE
       ) {
 
-        /*
-          Unlock Nice & Slow in main.js.
-        */
-
         localStorage.setItem(
           "niceAndSlowUnlocked",
           "true"
         );
 
-
-        /*
-          Tell main.js immediately so the
-          locked playlist row updates.
-        */
 
         window.dispatchEvent(
           new CustomEvent(
@@ -1470,11 +1497,6 @@
         }
 
 
-        /*
-          Wait five seconds unless the player
-          chooses PLAY NICE & SLOW.
-        */
-
         setTimeout(() => {
 
           if (
@@ -1507,21 +1529,11 @@
         duel === YOHO
       ) {
 
-        /*
-          Unlock Song #215:
-          A Rolling Stone Gathers NO MAS
-        */
-
         localStorage.setItem(
           "rollingStoneUnlocked",
           "true"
         );
 
-
-        /*
-          Tell main.js immediately so the
-          locked playlist row updates.
-        */
 
         window.dispatchEvent(
           new CustomEvent(
@@ -1594,11 +1606,6 @@
             playRollingStone;
         }
 
-
-        /*
-          Wait five seconds unless the player
-          chooses PLAY.
-        */
 
         setTimeout(() => {
 
@@ -1705,10 +1712,6 @@
       </span>
     `;
 
-
-    /*
-      Wrong answer ends the duel.
-    */
 
     setTimeout(() => {
 
