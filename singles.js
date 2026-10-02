@@ -1,5 +1,5 @@
 /* =========================================================
-   "YOU DON'T KNOW TRACK" - WITH ANIMATION & DISMISS BUTTON
+   "YOU DON'T KNOW TRACK" - WITH HEADER SCOREBOARD
    ========================================================= */
 
 (() => {
@@ -8,6 +8,7 @@
   const TARGET_VIDEO_ID = "SHhsdD5viWs";
   const TARGET_TITLE = "Monkey Judge";
   const CONTAINER_ID = "simple-quiz-container";
+  const SCORE_STORAGE_KEY = "ydkt_player_score";
   
   const AUDIO_PATH = "./assets/You-dont-know-track.mp3";
 
@@ -24,12 +25,65 @@
 
   let currentState = "hidden"; // "hidden", "prompt", "dismissed", "listening", "quiz"
 
+  // Initialize or retrieve score (starts at 100 if none exists)
+  function getScore() {
+    let score = localStorage.getItem(SCORE_STORAGE_KEY);
+    if (score === null) {
+      score = 100;
+      localStorage.setItem(SCORE_STORAGE_KEY, score);
+    }
+    return parseInt(score, 10);
+  }
+
+  function updateScore(delta) {
+    let currentScore = getScore();
+    currentScore += delta;
+    localStorage.setItem(SCORE_STORAGE_KEY, currentScore);
+    renderScoreboard();
+  }
+
+  // Create or update the scoreboard in your header
+  function renderScoreboard() {
+    let scoreEl = document.getElementById("ydkt-score-display");
+    
+    if (!scoreEl) {
+      scoreEl = document.createElement("div");
+      scoreEl.id = "ydkt-score-display";
+      scoreEl.style.cssText = `
+        font-family: Georgia, serif;
+        font-size: 0.95rem;
+        color: #f5d76e;
+        background: #1a1420;
+        border: 1px solid #d4af37;
+        padding: 6px 14px;
+        border-radius: 6px;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+      `;
+
+      // Try to insert it into a header element, otherwise stick it top-right of the body
+      const headerAnchor = document.querySelector("header") || document.body.firstElementChild;
+      if (headerAnchor) {
+        headerAnchor.appendChild(scoreEl);
+      } else {
+        scoreEl.style.position = "fixed";
+        scoreEl.style.top = "15px";
+        scoreEl.style.right = "15px";
+        scoreEl.style.zIndex = "99999";
+        document.body.appendChild(scoreEl);
+      }
+    }
+
+    scoreEl.innerHTML = `🏆 Score: <strong style="color: #c084fc;">${getScore()}</strong>`;
+  }
+
   function injectContainer() {
     if (document.getElementById(CONTAINER_ID)) return;
 
     const wrapper = document.createElement("div");
     wrapper.id = CONTAINER_ID;
-    // Styled for smooth slide-up animation using transform and opacity
     wrapper.style.cssText = `
       position: fixed;
       bottom: 25px;
@@ -54,7 +108,6 @@
     document.body.appendChild(wrapper);
   }
 
-  // Helper to show the container with the slide-up animation
   function showContainer() {
     const wrapper = document.getElementById(CONTAINER_ID);
     if (!wrapper) return;
@@ -63,7 +116,6 @@
     wrapper.style.pointerEvents = "auto";
   }
 
-  // Helper to hide the container with a slide-down animation
   function hideContainer() {
     const wrapper = document.getElementById(CONTAINER_ID);
     if (!wrapper) return;
@@ -121,7 +173,6 @@
     };
   }
 
-  // Play your custom voice mp3
   function playVoiceClip() {
     try {
       const audio = new Audio(AUDIO_PATH);
@@ -134,7 +185,6 @@
     }
   }
 
-  // Stop the YouTube music player
   function stopSong() {
     if (window.rizneyPlayer && typeof window.rizneyPlayer.pauseVideo === "function") {
       try {
@@ -145,7 +195,6 @@
     }
   }
 
-  // Trigger next track exactly like your toolbar button
   function skipToNextTrack() {
     const toolbarNextBtn = document.querySelector(".controls button:last-child, .controls [data-action='next'], .controls .next-btn, button[title*='Next'], button[aria-label*='Next']");
     
@@ -160,7 +209,6 @@
     }
   }
 
-  // State 2: "Pay attention" mode after clicking Yes
   function showListeningState() {
     const wrapper = document.getElementById(CONTAINER_ID);
     if (!wrapper) return;
@@ -178,7 +226,6 @@
     showContainer();
   }
 
-  // State 3: The actual multiple choice quiz
   function showQuizState() {
     const wrapper = document.getElementById(CONTAINER_ID);
     if (!wrapper) return;
@@ -232,20 +279,20 @@
 
     if (selectedIndex === QUIZ.correctIndex) {
       feedback.style.color = "#51cf66";
-      feedback.textContent = "🎉 Correct! Great job!";
+      feedback.textContent = "🎉 Correct! +25 Points!";
+      updateScore(25);
     } else {
       feedback.style.color = "#ff6b6b";
-      feedback.textContent = `❌ Not quite! The correct answer was: ${QUIZ.options[QUIZ.correctIndex]}`;
+      feedback.textContent = `❌ Not quite (-25 pts). Correct: ${QUIZ.options[QUIZ.correctIndex]}`;
+      updateScore(-25);
     }
 
-    // Wait 2.5 seconds to read feedback, slide box down, then trigger the next track
     setTimeout(() => {
       hideContainer();
-      setTimeout(skipToNextTrack, 300); // slight delay to let slide-down finish before track skips
+      setTimeout(skipToNextTrack, 300);
     }, 2500);
   }
 
-  // Monitor song status and playback time
   function checkSongStatus() {
     const nowPlaying = document.querySelector("#now-playing");
     const text = nowPlaying ? nowPlaying.textContent : "";
@@ -263,12 +310,10 @@
     const isPlayingTarget = videoMatch || text.includes(TARGET_TITLE) || text.includes(TARGET_VIDEO_ID);
 
     if (isPlayingTarget) {
-      // If song just started and we haven't shown or dismissed it yet, show prompt
       if (currentState === "hidden") {
         showPromptState();
       }
 
-      // If user clicked "Yes" and we are in listening mode, check progress
       if (currentState === "listening" && window.rizneyPlayer) {
         try {
           if (
@@ -286,7 +331,6 @@
       }
 
     } else {
-      // If song changes away from Monkey Judge, reset everything back to hidden
       if (currentState !== "hidden") {
         hideContainer();
         currentState = "hidden";
@@ -295,6 +339,7 @@
   }
 
   function init() {
+    renderScoreboard(); // Render the score in the header immediately on load
     injectContainer();
     setInterval(checkSongStatus, 1000);
   }
