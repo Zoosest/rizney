@@ -999,134 +999,571 @@
           titleElement &&
           titleElement.firstChild
         ) {
-          return titleElement.firstChild.textContent.trim();
+          return titleElement.firstChild.textContent
+            .trim()
+            .replace(/^♫\s*/, '');
         }
       }
 
       return `Song ${i + 1}`;
     };
 
-    function updateNowPlayingLabel() {
-      const title = titleFor(currentIndex);
-      nowPlaying.textContent = `Now playing: ${title}`;
-    }
+    function updatePlayingIndicator() {
 
-    function renderSongList() {
-      list.innerHTML = '';
+      document
+        .querySelectorAll('#song-list .song')
+        .forEach((row, index) => {
 
-      songs.forEach((url, index) => {
-        const row = document.createElement('div');
-        row.className = 'song';
+          const isPlaying =
+            index === currentIndex;
 
-        const num = document.createElement('div');
-        num.className = 'song-number';
-        num.textContent = index + 1;
+          row.classList.toggle(
+            'playing',
+            isPlaying
+          );
 
-        const titleWrap = document.createElement('div');
-        titleWrap.className = 'song-title';
-        titleWrap.textContent = `Song ${index + 1}`;
+          const indicator =
+            row.querySelector('.song-playing');
 
-        const playButton = document.createElement('button');
-        playButton.type = 'button';
-        playButton.className = 'play';
-        playButton.textContent = 'Play';
-        playButton.addEventListener('click', () => {
-          loadSong(index);
-        });
-
-        row.appendChild(num);
-        row.appendChild(titleWrap);
-        row.appendChild(playButton);
-        list.appendChild(row);
-      });
-    }
-
-    function loadVideo(videoId, onReady) {
-      if (!player) {
-        player = new YT.Player('player', {
-          height: '100%',
-          width: '100%',
-          playerVars: {
-            autoplay: 1,
-            rel: 0,
-            playsinline: 1,
-            modestbranding: 1,
-            controls: 1,
-            enablejsapi: 1,
-          },
-          events: {
-            onReady: () => {
-              if (typeof onReady === 'function') {
-                onReady();
-              }
-            },
-            onStateChange: onPlayerStateChange
+          if (indicator) {
+            indicator.hidden =
+              !isPlaying;
           }
         });
+    }
+
+    function updateButtons() {
+
+      if (cardPlaylist !== null) {
+
+        previousButton.disabled =
+          cardPosition <= 0;
+
+        nextButton.disabled =
+          cardPosition >= cardPlaylist.length - 1;
+
         return;
       }
 
-      player.loadVideoById(videoId);
-      if (typeof onReady === 'function') {
-        onReady();
-      }
+      previousButton.disabled =
+        currentIndex < 0;
+
+      nextButton.disabled = false;
     }
 
-    function loadSong(index) {
+    function playIntro() {
+
+      cardPlaylist = null;
+      cardPosition = 0;
+
+      currentIndex = -1;
+
+      introTransitionPending = false;
+
+      nowPlaying.textContent =
+        "Now playing: MEGA MIX'N'MOJO Intro";
+
+      updatePlayingIndicator();
+
+      if (player) {
+
+        player.loadVideoById({
+          videoId: introVideoId
+        });
+      }
+
+      updateButtons();
+
+      window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+      });
+    }
+
+    function play(index) {
+
+      if (!ids[index]) {
+        return;
+      }
+
+      cardPlaylist = null;
+      cardPosition = 0;
+
       currentIndex = index;
-      const videoId = ids[index];
-      if (!videoId) return;
 
-      loadVideo(videoId, () => {
-        updateNowPlayingLabel();
-      });
+      nowPlaying.textContent =
+        `Now playing: ${titleFor(index)}`;
+
+      updatePlayingIndicator();
+
+      if (player) {
+
+        player.loadVideoById({
+          videoId: ids[index]
+        });
+      }
+
+      updateButtons();
     }
 
-    function playNextSong() {
-      if (currentIndex >= ids.length - 1) {
-        currentIndex = -1;
+    function playPosition(position) {
+
+      if (
+        !cardPlaylist ||
+        cardPlaylist[position] === undefined
+      ) {
+        return;
+      }
+
+      introTransitionPending = false;
+
+      cardPosition = position;
+
+      currentIndex =
+        cardPlaylist[position];
+
+      nowPlaying.textContent =
+        `Reading ${position + 1} of ${cardPlaylist.length}: ${titleFor(currentIndex)}`;
+
+      updatePlayingIndicator();
+
+      if (player) {
+
+        player.loadVideoById({
+          videoId: ids[currentIndex]
+        });
+      }
+
+      updateButtons();
+    }
+
+    function next() {
+
+      if (cardPlaylist !== null) {
+
+        if (
+          cardPosition <
+          cardPlaylist.length - 1
+        ) {
+
+          playPosition(
+            cardPosition + 1
+          );
+
+          return;
+        }
+
+        cardPlaylist = null;
+        cardPosition = 0;
+
+        nowPlaying.textContent =
+          'Music reading complete ✦';
+
+        updateButtons();
+
+        return;
+      }
+
+      if (currentIndex === -1) {
+
+        play(0);
+
+        return;
+      }
+
+      /*
+        Normal chronological playback:
+        skip any tracks that have been defeated
+        in Whack-A-Track.
+      */
+      let nextIndex =
+        currentIndex + 1;
+
+      let savedWhackedTracks = [];
+
+      try {
+
+        const raw =
+          localStorage.getItem(
+            'rizneyWhackedTracks'
+          );
+
+        const parsed =
+          JSON.parse(
+            raw || '[]'
+          );
+
+        if (Array.isArray(parsed)) {
+          savedWhackedTracks = parsed;
+        }
+
+      } catch (error) {}
+
+      const whacked =
+        new Set(
+          savedWhackedTracks
+        );
+
+      while (
+        nextIndex < ids.length &&
+        whacked.has(
+          String(ids[nextIndex])
+        )
+      ) {
+        nextIndex++;
+      }
+
+      if (
+        nextIndex < ids.length
+      ) {
+
+        play(nextIndex);
+
       } else {
-        currentIndex += 1;
-      }
-      loadSong(currentIndex);
-    }
 
-    function playPreviousSong() {
-      if (currentIndex <= 0) {
-        currentIndex = ids.length - 1;
-      } else {
-        currentIndex -= 1;
-      }
-      loadSong(currentIndex);
-    }
-
-    function onPlayerStateChange(event) {
-      if (event.data === YT.PlayerState.PLAYING) {
-        updateNowPlayingLabel();
+        nowPlaying.textContent =
+          'You reached the end of the collection ✦';
       }
 
-      if (event.data === YT.PlayerState.ENDED) {
-        playNextSong();
+      updateButtons();
+    }
+
+    function previous() {
+
+      if (cardPlaylist !== null) {
+
+        if (cardPosition > 0) {
+
+          playPosition(
+            cardPosition - 1
+          );
+        }
+
+        return;
+      }
+
+      if (currentIndex === 0) {
+
+        playIntro();
+
+        return;
+      }
+
+      if (currentIndex > 0) {
+
+        play(currentIndex - 1);
       }
     }
 
-    function initPlayer() {
-      const introId = introVideoId;
-      loadVideo(introId, () => {
-        updateNowPlayingLabel();
-      });
+    window.onYouTubeIframeAPIReady = () => {
+
+      player = new YT.Player(
+        'player',
+        {
+
+          videoId: introVideoId,
+
+          playerVars: {
+            autoplay: 0,
+            rel: 0,
+            modestbranding: 1,
+            playsinline: 1
+          },
+
+          events: {
+
+            onReady: () => {
+
+              window.rizneyPlayer =
+                player;
+
+              nowPlaying.textContent =
+                "Now playing: MEGA MIX'N'MOJO Intro";
+
+              updateButtons();
+            },
+
+            onStateChange: e => {
+
+              if (
+                e.data ===
+                YT.PlayerState.PLAYING
+              ) {
+
+                introTransitionPending = false;
+              }
+
+              if (
+                e.data ===
+                YT.PlayerState.ENDED
+              ) {
+
+                if (introTransitionPending) {
+
+                  introTransitionPending = false;
+
+                  return;
+                }
+
+                next();
+              }
+            }
+          }
+        }
+      );
+
+      window.rizneyPlayer =
+        player;
+    };
+
+    ids.forEach((id, index) => {
+
+      const row =
+        document.createElement('article');
+
+      row.className = 'song';
+
+      row.innerHTML = `
+        <span class="song-number">
+          ${index + 1}
+        </span>
+
+        <span class="song-title">
+          ♫ ${titleFor(index)}
+
+          <span
+            class="song-playing"
+            hidden
+          >▶ PLAYING</span>
+
+          <small>
+            YouTube video • chronological position ${index + 1}
+          </small>
+        </span>
+
+        <button
+          class="play"
+          type="button"
+        >Play</button>
+      `;
+
+      row.querySelector(
+        'button'
+      ).onclick = () => {
+
+        cardPlaylist = null;
+        cardPosition = 0;
+
+        introTransitionPending = false;
+
+        play(index);
+      };
+
+      list.appendChild(row);
+    });
+
+    $('#random-song').onclick = () => {
+
+      cardPlaylist = null;
+      cardPosition = 0;
+
+      introTransitionPending = false;
+
+      play(
+        Math.floor(
+          Math.random() * ids.length
+        )
+      );
+    };
+
+    previousButton.onclick =
+      previous;
+
+    nextButton.onclick = () => {
+
+      if (currentIndex === -1) {
+
+        introTransitionPending = true;
+      }
+
+      next();
+    };
+
+    $('#draw-cards').onclick = () => {
+
+      introTransitionPending = false;
+
+      /*
+        Proper Fisher-Yates shuffle.
+        Every song has an equal chance of appearing
+        in the six-card reading.
+      */
+      const shuffled =
+        [...ids.keys()];
+
+      for (
+        let i = shuffled.length - 1;
+        i > 0;
+        i--
+      ) {
+
+        const j =
+          Math.floor(
+            Math.random() * (i + 1)
+          );
+
+        [
+          shuffled[i],
+          shuffled[j]
+        ] = [
+          shuffled[j],
+          shuffled[i]
+        ];
+      }
+
+      cardPlaylist =
+        shuffled.slice(
+          0,
+          Math.min(6, ids.length)
+        );
+
+      cardPosition = 0;
+
+      reading.hidden = false;
+
+      cards.innerHTML = '';
+
+      [
+        '✦',
+        '✧',
+        '✩',
+        '✹',
+        '✺',
+        '✷'
+      ]
+        .slice(
+          0,
+          cardPlaylist.length
+        )
+        .forEach(
+          (symbol, position) => {
+
+            const card =
+              document.createElement(
+                'article'
+              );
+
+            card.className = 'card';
+
+            card.innerHTML = `
+              <span class="symbol">
+                ${symbol}
+              </span>
+
+              <strong>
+                Reading ${position + 1}
+              </strong>
+
+              <a href="#">
+                Play song ${cardPlaylist[position] + 1}
+              </a>
+            `;
+
+            card.querySelector(
+              'a'
+            ).onclick = e => {
+
+              e.preventDefault();
+
+              playPosition(
+                position
+              );
+            };
+
+            cards.appendChild(card);
+          }
+        );
+
+      updateButtons();
+    };
+
+    const contextButton =
+      $('#context-button');
+
+    const contextOverlay =
+      $('#context-overlay');
+
+    const contextClose =
+      $('#context-close');
+
+    function openContext() {
+
+      contextOverlay.classList.add(
+        'open'
+      );
+
+      contextOverlay.setAttribute(
+        'aria-hidden',
+        'false'
+      );
+
+      document.body.style.overflow =
+        'hidden';
+
+      contextClose.focus();
     }
 
-    previousButton.addEventListener('click', playPreviousSong);
-    nextButton.addEventListener('click', playNextSong);
+    function closeContext() {
 
-    renderSongList();
-    initPlayer();
+      contextOverlay.classList.remove(
+        'open'
+      );
+
+      contextOverlay.setAttribute(
+        'aria-hidden',
+        'true'
+      );
+
+      document.body.style.overflow =
+        '';
+
+      contextButton.focus();
+    }
+
+    contextButton.addEventListener(
+      'click',
+      openContext
+    );
+
+    contextClose.addEventListener(
+      'click',
+      closeContext
+    );
+
+    document.addEventListener(
+      'keydown',
+      e => {
+
+        if (
+          e.key === 'Escape' &&
+          contextOverlay.classList.contains(
+            'open'
+          )
+        ) {
+
+          closeContext();
+        }
+      }
+    );
+
+    updateButtons();
+    updatePlayingIndicator();
 
   </script>
 
+  <script src="./main.js"></script>
+
   <script src="./whack-a-track.js"></script>
-  <script src="./singles.js"></script>
 
 </body>
 </html>
