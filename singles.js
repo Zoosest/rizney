@@ -235,6 +235,14 @@
   let pottyTimeChosen = false;
 
 
+  /*
+    Keeps track of whether the player chose
+    to play NICE & SLOW from the victory screen.
+  */
+
+  let niceAndSlowChosen = false;
+
+
   // =========================================================
   // CONTAINER
   // =========================================================
@@ -413,6 +421,94 @@
 
 
   // =========================================================
+  // NICE & SLOW PLAY BUTTON
+  // =========================================================
+
+  function playNiceAndSlow() {
+
+    const rows =
+      Array.from(
+        document.querySelectorAll(
+          "#song-list .song"
+        )
+      );
+
+    const niceAndSlowRow =
+      rows.find(row => {
+
+        const title =
+          row.querySelector(
+            ".song-title"
+          );
+
+        return (
+          title &&
+          title.textContent.includes(
+            "Nice & Slow"
+          )
+        );
+      });
+
+    if (!niceAndSlowRow) {
+
+      console.log(
+        "Could not find Nice & Slow in the playlist."
+      );
+
+      return;
+    }
+
+    niceAndSlowChosen =
+      true;
+
+    /*
+      Scroll NICE & SLOW into view first.
+    */
+
+    niceAndSlowRow.scrollIntoView({
+      behavior: "smooth",
+      block: "center"
+    });
+
+
+    /*
+      Give the scroll a moment to begin,
+      then use the existing row-play system.
+    */
+
+    setTimeout(() => {
+
+      const title =
+        niceAndSlowRow.querySelector(
+          ".song-title"
+        );
+
+      if (title) {
+
+        title.click();
+
+        return;
+      }
+
+
+      const playButton =
+        niceAndSlowRow.querySelector(
+          ".play"
+        );
+
+      if (playButton) {
+
+        playButton.click();
+      }
+
+    }, 350);
+
+
+    hideContainer();
+  }
+
+
+  // =========================================================
   // STATE 1 — INITIAL PROMPT
   // =========================================================
 
@@ -441,6 +537,9 @@
       0;
 
     pottyTimeChosen =
+      false;
+
+    niceAndSlowChosen =
       false;
 
 
@@ -1140,6 +1239,10 @@
         );
 
 
+        niceAndSlowChosen =
+          false;
+
+
         feedback.style.color =
           "#51cf66";
 
@@ -1150,30 +1253,70 @@
             line-height: 1.5;
             margin-bottom: 12px;
           ">
-            🏆 <strong>YOU SURVIVED THE PIRATE DUEL!</strong>
+            🏆 <strong>YOU SURVIVED THE PIRATE DUEL!</strong><br>
+
+            🎉 <strong>YOU'VE UNLOCKED<br>
+            "NICE & SLOW" IN THE PLAYLIST!</strong>
           </div>
 
           <div style="
             color: #f5d76e;
             font-size: 1rem;
             line-height: 1.5;
+            margin-bottom: 14px;
           ">
             🦊 The Pirate Fox approves.<br>
 
             🪙 Booty Secured:
-            <strong>${playerBooty} Gold</strong><br>
-
-            🐌 <strong>NICE & SLOW HAS BEEN UNLOCKED!</strong>
+            <strong>${playerBooty} Gold</strong>
           </div>
+
+          <button
+            id="play-nice-and-slow"
+            style="
+              padding: 11px 22px;
+              background: #c084fc;
+              color: #120b18;
+              border: none;
+              border-radius: 5px;
+              font-weight: bold;
+              cursor: pointer;
+              font-family: Georgia, serif;
+              font-size: 1rem;
+              box-shadow: 0 3px 10px rgba(0,0,0,0.4);
+            "
+          >
+            🐌 PLAY NICE & SLOW
+          </button>
         `;
 
 
+        const niceAndSlowButton =
+          document.getElementById(
+            "play-nice-and-slow"
+          );
+
+
+        if (niceAndSlowButton) {
+
+          niceAndSlowButton.onclick =
+            playNiceAndSlow;
+        }
+
+
         /*
-          Give the player five seconds to see
-          the victory message, then continue.
+          Wait five seconds unless the player
+          chooses PLAY NICE & SLOW.
         */
 
         setTimeout(() => {
+
+          if (
+            niceAndSlowChosen
+          ) {
+            return;
+          }
+
 
           hideContainer();
 
