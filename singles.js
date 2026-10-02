@@ -32,6 +32,7 @@
 
     const wrapper = document.createElement("div");
     wrapper.id = CONTAINER_ID;
+
     // Styled for smooth slide-up animation using transform and opacity
     wrapper.style.cssText = `
       position: fixed;
@@ -61,15 +62,17 @@
   function showContainer() {
     const wrapper = document.getElementById(CONTAINER_ID);
     if (!wrapper) return;
+
     wrapper.style.transform = "translateX(-50%) translateY(0)";
     wrapper.style.opacity = "1";
     wrapper.style.pointerEvents = "auto";
   } 
 
-  // Helper to hide the container with a slide-down animation
+  // Helper to hide the container with the slide-down animation
   function hideContainer() {
     const wrapper = document.getElementById(CONTAINER_ID);
     if (!wrapper) return;
+
     wrapper.style.transform = "translateX(-50%) translateY(150%)";
     wrapper.style.opacity = "0";
     wrapper.style.pointerEvents = "none";
@@ -79,6 +82,7 @@
   function showPromptState() {
     const wrapper = document.getElementById(CONTAINER_ID);
     if (!wrapper) return;
+
     currentState = "prompt"; 
 
     wrapper.innerHTML = `
@@ -115,6 +119,7 @@
           font-family: Georgia, serif;
           font-size: 1rem;
         ">En Garde!</button>
+
         <button id="dismiss-quiz-optin" style="
           padding: 10px 18px;
           background: transparent;
@@ -146,6 +151,7 @@
     try {
       const audio = new Audio(AUDIO_PATH);
       audio.volume = 1.0;
+
       audio.play().catch(err => {
         console.log("Audio play blocked or file path issue:", err);
       });
@@ -156,7 +162,10 @@
 
   // Stop the YouTube music player
   function stopSong() {
-    if (window.rizneyPlayer && typeof window.rizneyPlayer.pauseVideo === "function") {
+    if (
+      window.rizneyPlayer &&
+      typeof window.rizneyPlayer.pauseVideo === "function"
+    ) {
       try {
         window.rizneyPlayer.pauseVideo();
       } catch (e) {
@@ -167,11 +176,17 @@
 
   // Trigger next track exactly like your toolbar button
   function skipToNextTrack() {
-    const toolbarNextBtn = document.querySelector(".controls button:last-child, .controls [data-action='next'], .controls .next-btn, button[title*='Next'], button[aria-label*='Next']");
+    const toolbarNextBtn = document.querySelector(
+      ".controls button:last-child, .controls [data-action='next'], .controls .next-btn, button[title*='Next'], button[aria-label*='Next']"
+    );
     
     if (toolbarNextBtn) {
       toolbarNextBtn.click();
-    } else if (window.rizneyPlayer && typeof window.rizneyPlayer.nextVideo === "function") {
+
+    } else if (
+      window.rizneyPlayer &&
+      typeof window.rizneyPlayer.nextVideo === "function"
+    ) {
       try {
         window.rizneyPlayer.nextVideo();
       } catch (e) {
@@ -184,17 +199,22 @@
   function showListeningState() {
     const wrapper = document.getElementById(CONTAINER_ID);
     if (!wrapper) return;
+
     currentState = "listening"; 
 
     wrapper.innerHTML = `
       <div style="font-size: 1.1rem; font-weight: bold; color: #c084fc; margin-bottom: 12px;">
         🗡️ DRAW YOUR BLADE...
       </div>
+
       <p style="font-size: 1.05rem; margin: 15px 0; line-height: 1.5;">
         Listen closely to the song!<br>
-        <span style="color: #f5d76e; font-style: italic; font-size: 0.95rem;">The lyrical riposte approaches near the end...</span>
+        <span style="color: #f5d76e; font-style: italic; font-size: 0.95rem;">
+          The lyrical riposte approaches near the end...
+        </span>
       </p>
     `;
+
     showContainer();
   } 
 
@@ -202,12 +222,14 @@
   function showQuizState() {
     const wrapper = document.getElementById(CONTAINER_ID);
     if (!wrapper) return;
+
     currentState = "quiz"; 
 
     stopSong(); 
 
     const optionsHtml = QUIZ.options.map((opt, index) => {
       const letter = String.fromCharCode(65 + index);
+
       return `
         <button class="quiz-opt-btn" data-index="${index}" style="
           padding: 10px;
@@ -224,90 +246,203 @@
     }).join(""); 
 
     wrapper.innerHTML = `
-      <h3 style="color: #c084fc; margin-top: 0;">⚔️ SWASHBUCKLING STANDOFF</h3>
-      <p style="font-size: 1.1rem; margin: 15px 0;">${QUIZ.question}</p>
-      <div id="quiz-options-list" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px;">
+      <h3 style="color: #c084fc; margin-top: 0;">
+        ⚔️ SWASHBUCKLING STANDOFF
+      </h3>
+
+      <p style="font-size: 1.1rem; margin: 15px 0;">
+        ${QUIZ.question}
+      </p>
+
+      <div id="quiz-options-list" style="
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        margin-bottom: 15px;
+      ">
         ${optionsHtml}
       </div>
-      <div id="quiz-feedback" style="font-weight: bold; font-size: 1.05rem; min-height: 36px; line-height: 1.4;"></div>
+
+      <div id="quiz-feedback" style="
+        font-weight: bold;
+        font-size: 1.05rem;
+        min-height: 36px;
+        line-height: 1.4;
+      "></div>
     `; 
 
     showContainer(); 
 
     const buttons = wrapper.querySelectorAll(".quiz-opt-btn");
+
     buttons.forEach(btn => {
-      btn.onmouseover = () => { if (!btn.disabled) btn.style.background = "#2a1f35"; };
-      btn.onmouseout = () => { if (!btn.disabled) btn.style.background = "#0f0a13"; };
+      btn.onmouseover = () => {
+        if (!btn.disabled) {
+          btn.style.background = "#2a1f35";
+        }
+      };
+
+      btn.onmouseout = () => {
+        if (!btn.disabled) {
+          btn.style.background = "#0f0a13";
+        }
+      };
       
       btn.onclick = () => {
-        const selectedIndex = parseInt(btn.dataset.index, 10);
+        const selectedIndex = parseInt(
+          btn.dataset.index,
+          10
+        );
+
         handleAnswer(selectedIndex, buttons);
       };
     });
   } 
 
   function handleAnswer(selectedIndex, buttons) {
-    const feedback = document.getElementById("quiz-feedback");
-    buttons.forEach(b => b.disabled = true); 
+    const feedback =
+      document.getElementById("quiz-feedback");
+
+    buttons.forEach(b => {
+      b.disabled = true;
+    }); 
 
     if (selectedIndex === QUIZ.correctIndex) {
-      playerBooty += 50; // Add plunder
+
+      /*
+        🏴‍☠️ POTTY TIME UNLOCKED!
+
+        Save the unlock in localStorage so the main
+        site can see it.
+      */
+      localStorage.setItem(
+        "pottyTimeUnlocked",
+        "true"
+      );
+
+      /*
+        🔔 Tell main.js immediately.
+
+        localStorage does not fire the normal "storage"
+        event when the change happens in this same page.
+      */
+      window.dispatchEvent(
+        new CustomEvent("pottyTimeUnlocked")
+      );
+
+      playerBooty += 50;
+
       feedback.style.color = "#51cf66";
-      feedback.innerHTML = `⚔️ Touche! Flawless comeback!<br><span style="color: #f5d76e; font-size: 1rem;">🪙 Booty Secured: <strong>+50 Gold</strong> (Total: ${playerBooty})</span>`;
+
+      feedback.innerHTML = `
+        ⚔️ Touche! Flawless comeback!<br>
+        <span style="color: #f5d76e; font-size: 1rem;">
+          🪙 Booty Secured:
+          <strong>+50 Gold</strong>
+          (Total: ${playerBooty})
+        </span>
+      `;
+
     } else {
-      playerBooty = 0; // Wiped clean
+
+      playerBooty = 0;
+
       feedback.style.color = "#ff6b6b";
-      feedback.innerHTML = `💥 Oof! You stumbled: "${QUIZ.options[QUIZ.correctIndex]}"<br><span style="color: #f5d76e; font-size: 0.95rem;">🌊 Argh! They plundered your pockets! Booty: <strong>0 Gold</strong></span>`;
+
+      feedback.innerHTML = `
+        💥 Oof! You stumbled:
+        "${QUIZ.options[QUIZ.correctIndex]}"<br>
+        <span style="color: #f5d76e; font-size: 0.95rem;">
+          🌊 Argh! They plundered your pockets!
+          Booty: <strong>0 Gold</strong>
+        </span>
+      `;
     } 
 
     // Wait 3 seconds to read feedback, slide box down, then trigger the next track
     setTimeout(() => {
       hideContainer();
-      setTimeout(skipToNextTrack, 300); // slight delay to let slide-down finish before track skips
+
+      setTimeout(
+        skipToNextTrack,
+        300
+      );
+
     }, 3000);
   } 
 
   // Monitor song status and playback time
   function checkSongStatus() {
-    const nowPlaying = document.querySelector("#now-playing");
-    const text = nowPlaying ? nowPlaying.textContent : ""; 
+    const nowPlaying =
+      document.querySelector("#now-playing");
+
+    const text =
+      nowPlaying ? nowPlaying.textContent : ""; 
 
     let videoMatch = false;
-    if (window.rizneyPlayer && typeof window.rizneyPlayer.getVideoData === "function") {
+
+    if (
+      window.rizneyPlayer &&
+      typeof window.rizneyPlayer.getVideoData === "function"
+    ) {
       try {
-        const data = window.rizneyPlayer.getVideoData();
-        if (data && String(data.video_id) === TARGET_VIDEO_ID) {
+        const data =
+          window.rizneyPlayer.getVideoData();
+
+        if (
+          data &&
+          String(data.video_id) === TARGET_VIDEO_ID
+        ) {
           videoMatch = true;
         }
+
       } catch (e) {}
     } 
 
-    const isPlayingTarget = videoMatch || text.includes(TARGET_TITLE) || text.includes(TARGET_VIDEO_ID); 
+    const isPlayingTarget =
+      videoMatch ||
+      text.includes(TARGET_TITLE) ||
+      text.includes(TARGET_VIDEO_ID); 
 
     if (isPlayingTarget) {
+
       // If song just started and we haven't shown or dismissed it yet, show prompt
       if (currentState === "hidden") {
         showPromptState();
       } 
 
       // If user clicked "Yes" and we are in listening mode, check progress
-      if (currentState === "listening" && window.rizneyPlayer) {
+      if (
+        currentState === "listening" &&
+        window.rizneyPlayer
+      ) {
         try {
+
           if (
             typeof window.rizneyPlayer.getCurrentTime === "function" &&
             typeof window.rizneyPlayer.getDuration === "function"
           ) {
-            const currentTime = window.rizneyPlayer.getCurrentTime();
-            const duration = window.rizneyPlayer.getDuration(); 
 
-            if (duration > 0 && (duration - currentTime <= 3)) {
+            const currentTime =
+              window.rizneyPlayer.getCurrentTime();
+
+            const duration =
+              window.rizneyPlayer.getDuration(); 
+
+            if (
+              duration > 0 &&
+              (duration - currentTime <= 3)
+            ) {
               showQuizState();
             }
+
           }
+
         } catch (e) {}
       } 
 
     } else {
+
       // If song changes away from Monkey Judge, reset everything back to hidden
       if (currentState !== "hidden") {
         hideContainer();
@@ -322,7 +457,10 @@
   } 
 
   if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", init);
+    document.addEventListener(
+      "DOMContentLoaded",
+      init
+    );
   } else {
     init();
   } 
