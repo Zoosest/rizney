@@ -1,5 +1,5 @@
 /* =========================================================
-   "YOU DON'T KNOW TRACK" - WITH VOICE CLIP
+   "YOU DON'T KNOW TRACK" - WITH AUDIO STOP AT THE END
    ========================================================= */
 
 (() => {
@@ -9,7 +9,6 @@
   const TARGET_TITLE = "Monkey Judge";
   const CONTAINER_ID = "simple-quiz-container";
   
-  // Updated with capital Y in You-dont-know-track.mp3
   const AUDIO_PATH = "./assets/You-dont-know-track.mp3";
 
   const QUIZ = {
@@ -59,6 +58,7 @@
     const wrapper = document.getElementById(CONTAINER_ID);
     if (!wrapper) return;
     currentState = "prompt";
+    wrapper.style.display = "none"; // Hide initially so it doesn't flash if hidden by logic, wait let's keep block
     wrapper.style.display = "block";
 
     wrapper.innerHTML = `
@@ -79,7 +79,6 @@
       ">Yes!</button>
     `;
 
-    // Handle clicking Yes: play audio and switch to listening state
     document.getElementById("start-quiz-optin").onclick = () => {
       playVoiceClip();
       showListeningState();
@@ -99,6 +98,17 @@
     }
   }
 
+  // Stop the YouTube music player
+  function stopSong() {
+    if (window.rizneyPlayer && typeof window.rizneyPlayer.pauseVideo === "function") {
+      try {
+        window.rizneyPlayer.pauseVideo();
+      } catch (e) {
+        console.log("Could not pause player:", e);
+      }
+    }
+  }
+
   // State 2: "Pay attention" mode after clicking Yes
   function showListeningState() {
     const wrapper = document.getElementById(CONTAINER_ID);
@@ -113,7 +123,24 @@
         Pay attention to the song!<br>
         <span style="color: #f5d76e; font-style: italic; font-size: 0.95rem;">The question is coming up near the end...</span>
       </p>
+      <div style="margin-top: 15px;">
+        <button id="test-trigger-btn" style="
+          padding: 6px 14px;
+          background: #4a355e;
+          color: #f5d76e;
+          border: 1px solid #d4af37;
+          border-radius: 4px;
+          cursor: pointer;
+          font-size: 0.85rem;
+        ">🧪 [Test] Trigger Question Now</button>
+      </div>
     `;
+
+    // Handy manual test button so you can test the quiz transition instantly right now!
+    document.getElementById("test-trigger-btn").onclick = () => {
+      stopSong();
+      showQuizState();
+    };
   }
 
   // State 3: The actual multiple choice quiz
@@ -121,6 +148,9 @@
     const wrapper = document.getElementById(CONTAINER_ID);
     if (!wrapper) return;
     currentState = "quiz";
+
+    // Ensure the song is stopped when the quiz appears
+    stopSong();
 
     const optionsHtml = QUIZ.options.map((opt, index) => {
       const letter = String.fromCharCode(65 + index);
@@ -198,8 +228,11 @@
         showPromptState();
       }
     } else {
-      wrapper.style.display = "none";
-      currentState = "hidden";
+      // If song changes away from Monkey Judge, reset
+      if (currentState !== "hidden") {
+        wrapper.style.display = "none";
+        currentState = "hidden";
+      }
     }
   }
 
