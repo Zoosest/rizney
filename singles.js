@@ -35,73 +35,7 @@
   const $ = selector =>
     document.querySelector(selector);
 
-  const $$ = selector =>
-    document.querySelectorAll(selector);
-
-
-  /* =========================================================
-     QUIZ QUESTIONS DATABASE
-     ========================================================= */
-
-  const QUIZ_QUESTIONS = [
-    {
-      id: 1,
-      song: "Monkey Judge 🐒⚖",
-      trackNumber: 114,
-      videoId: "SHhsdD5viWs",
-      question: "Fill in the blank: 'Monkey judge, monkey jury, ____.'",
-      options: [
-        "Everyone in such a hurry",
-        "Monkeys are always so dirty",
-        "Everything is getting blurry",
-        "Getting so worried"
-      ],
-      correctAnswer: 0
-    }
-    // Add more songs here in the future:
-    // {
-    //   id: 2,
-    //   song: "Song Title",
-    //   trackNumber: 115,
-    //   videoId: "xxxxx",
-    //   question: "Question text",
-    //   options: ["A", "B", "C", "D"],
-    //   correctAnswer: 0
-    // }
-  ];
-
-
-  /* =========================================================
-     POINTS MANAGEMENT
-     ========================================================= */
-
-  function getPlayerPoints() {
-    const stored = localStorage.getItem(POINTS_STORAGE_KEY);
-    if (stored === null) {
-      localStorage.setItem(POINTS_STORAGE_KEY, STARTING_POINTS);
-      return STARTING_POINTS;
-    }
-    return parseInt(stored, 10);
-  }
-
-  function setPlayerPoints(points) {
-    const newPoints = Math.max(0, points);
-    localStorage.setItem(POINTS_STORAGE_KEY, newPoints);
-    updatePointsDisplay();
-    return newPoints;
-  }
-
-  function addPoints(amount) {
-    const current = getPlayerPoints();
-    return setPlayerPoints(current + amount);
-  }
-
-  function subtractPoints(amount) {
-    return addPoints(-amount);
-  }
-
-  function updatePointsDisplay() {
-    const displays = $$(`#${BANNER_ID} .points-display`);
+  const $$ = selector =>     document.querySelectorAll(selector);     /* =========================================================      QUIZ QUESTIONS DATABASE      ========================================================= */    const QUIZ_QUESTIONS = [     {       id: 1,       song: "Monkey Judge 🐒⚖",       trackNumber: 114,       videoId: "SHhsdD5viWs",       question: "Fill in the blank: 'Monkey judge, monkey jury, ____.'",       options: [         "Everyone in such a hurry",         "Monkeys are always so dirty",         "Everything is getting blurry",         "Getting so worried"       ],       correctAnswer: 0     }   ];     /* =========================================================      POINTS MANAGEMENT      ========================================================= */    function getPlayerPoints() {     const stored = localStorage.getItem(POINTS_STORAGE_KEY);     if (stored === null) {       localStorage.setItem(POINTS_STORAGE_KEY, STARTING_POINTS);       return STARTING_POINTS;     }     return parseInt(stored, 10);   }    function setPlayerPoints(points) {     const newPoints = Math.max(0, points);     localStorage.setItem(POINTS_STORAGE_KEY, newPoints);     updatePointsDisplay();     return newPoints;   }    function addPoints(amount) {     const current = getPlayerPoints();     return setPlayerPoints(current + amount);   }    function subtractPoints(amount) {     return addPoints(-amount);   }    function updatePointsDisplay() {     const displays = $$(`#${BANNER_ID} .points-display`);
     const points = getPlayerPoints();
     displays.forEach(display => {
       display.textContent = `Points: ${points}`;
@@ -145,7 +79,7 @@
       </div>
 
       <div class="singles-banner-controls">
-        <button class="quiz-button" id="open-quiz-button">
+        <button class="quiz-button" id="open-quiz-button" type="button">
           ❓ Test Your Knowledge
         </button>
         <span class="points-display">Points: ${currentPoints}</span>
@@ -267,6 +201,13 @@
         banner
       );
     }
+
+    // Use event delegation so button clicks are never missed
+    banner.addEventListener("click", (e) => {
+      if (e.target.closest("#open-quiz-button")) {
+        startQuiz();
+      }
+    });
 
     return banner;
   }
@@ -573,7 +514,7 @@
       .map((option, index) => {
         const letter = String.fromCharCode(65 + index);
         return `
-          <button class="quiz-option" data-index="${index}" onclick="event.stopPropagation()">
+          <button class="quiz-option" data-index="${index}" type="button" onclick="event.stopPropagation()">
             <strong>${letter}</strong> — ${option}
           </button>
         `;
@@ -600,10 +541,10 @@
         <div class="quiz-result"></div>
 
         <div class="quiz-button-group">
-          <button class="quiz-action-button" id="submit-answer-btn" disabled>
+          <button class="quiz-action-button" id="submit-answer-btn" type="button" disabled>
             Submit Answer
           </button>
-          <button class="quiz-action-button cancel" id="cancel-quiz-btn">
+          <button class="quiz-action-button cancel" id="cancel-quiz-btn" type="button">
             Cancel
           </button>
         </div>
@@ -675,7 +616,7 @@
       setTimeout(() => {
         submitBtn.textContent = "Play Again";
         submitBtn.disabled = false;
-        submitBtn.addEventListener("click", startQuiz);
+        submitBtn.onclick = startQuiz;
       }, 1500);
     });
 
@@ -725,11 +666,9 @@
           data &&
           data.video_id
         ) {
-
-          return (
-            String(data.video_id) ===
-            SINGLE_VIDEO_ID
-          );
+          if (String(data.video_id) === SINGLE_VIDEO_ID) {
+            return true;
+          }
         }
 
       } catch (error) {}
@@ -743,11 +682,11 @@
       return false;
     }
 
-
+    const text = nowPlaying.textContent;
     return (
-      nowPlaying.textContent.includes(
-        `Song ${SINGLE_TRACK_NUMBER}`
-      )
+      text.includes(`Song ${SINGLE_TRACK_NUMBER}`) ||
+      text.includes("Monkey Judge") ||
+      text.includes(SINGLE_VIDEO_ID)
     );
   }
 
@@ -832,12 +771,6 @@
       updateBanner,
       500
     );
-
-    // Add click handler to quiz button
-    const openQuizBtn = $(`#${BANNER_ID} #open-quiz-button`);
-    if (openQuizBtn) {
-      openQuizBtn.addEventListener("click", startQuiz);
-    }
   }
 
 
