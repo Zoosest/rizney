@@ -67,12 +67,8 @@
   // =========================================================
 
   const DELAWARE = {
-    // IMPORTANT:
-    // Replace this with the actual YouTube video ID
-    // for "Delaware (Under the Sea)".
     videoId: "",
-
-    title: "Delaware (Under the Sea)",
+    title: "Delaware (Under The Sea)",
 
     image: "./assets/pirate-fox.png",
     imageAlt: "Pirate Fox",
@@ -96,7 +92,8 @@
     unlocksPottyTime: false
   };
 
-  const CONTAINER_ID = "simple-quiz-container";
+  const CONTAINER_ID =
+    "simple-quiz-container";
 
   const AUDIO_PATH =
     "./assets/You-dont-know-track.mp3";
@@ -114,10 +111,6 @@
   let currentState = "hidden";
   // "hidden", "prompt", "dismissed", "listening", "quiz"
 
-  /*
-    Keeps track of whether the player chose
-    to play POTTY TIME from the victory screen.
-  */
   let pottyTimeChosen = false;
 
   // =========================================================
@@ -125,11 +118,19 @@
   // =========================================================
 
   function injectContainer() {
-    if (document.getElementById(CONTAINER_ID)) return;
+    if (
+      document.getElementById(
+        CONTAINER_ID
+      )
+    ) {
+      return;
+    }
 
-    const wrapper = document.createElement("div");
+    const wrapper =
+      document.createElement("div");
 
-    wrapper.id = CONTAINER_ID;
+    wrapper.id =
+      CONTAINER_ID;
 
     wrapper.style.cssText = `
       position: fixed;
@@ -152,35 +153,45 @@
       transition: transform 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s ease;
     `;
 
-    document.body.appendChild(wrapper);
+    document.body.appendChild(
+      wrapper
+    );
   }
 
   function showContainer() {
     const wrapper =
-      document.getElementById(CONTAINER_ID);
+      document.getElementById(
+        CONTAINER_ID
+      );
 
     if (!wrapper) return;
 
     wrapper.style.transform =
       "translateX(-50%) translateY(0)";
 
-    wrapper.style.opacity = "1";
+    wrapper.style.opacity =
+      "1";
 
-    wrapper.style.pointerEvents = "auto";
+    wrapper.style.pointerEvents =
+      "auto";
   }
 
   function hideContainer() {
     const wrapper =
-      document.getElementById(CONTAINER_ID);
+      document.getElementById(
+        CONTAINER_ID
+      );
 
     if (!wrapper) return;
 
     wrapper.style.transform =
       "translateX(-50%) translateY(150%)";
 
-    wrapper.style.opacity = "0";
+    wrapper.style.opacity =
+      "0";
 
-    wrapper.style.pointerEvents = "none";
+    wrapper.style.pointerEvents =
+      "none";
   }
 
   // =========================================================
@@ -188,19 +199,27 @@
   // =========================================================
 
   function playPottyTime() {
-    const rows = Array.from(
-      document.querySelectorAll("#song-list .song")
-    );
-
-    const pottyRow = rows.find(row => {
-      const title =
-        row.querySelector(".song-title");
-
-      return (
-        title &&
-        title.textContent.includes("POTTY TIME")
+    const rows =
+      Array.from(
+        document.querySelectorAll(
+          "#song-list .song"
+        )
       );
-    });
+
+    const pottyRow =
+      rows.find(row => {
+        const title =
+          row.querySelector(
+            ".song-title"
+          );
+
+        return (
+          title &&
+          title.textContent.includes(
+            "POTTY TIME"
+          )
+        );
+      });
 
     if (!pottyRow) {
       console.log(
@@ -212,21 +231,16 @@
 
     pottyTimeChosen = true;
 
-    /*
-      Scroll POTTY TIME into view first.
-    */
     pottyRow.scrollIntoView({
       behavior: "smooth",
       block: "center"
     });
 
-    /*
-      Give the scroll a moment to begin,
-      then use the existing row-play system.
-    */
     setTimeout(() => {
       const title =
-        pottyRow.querySelector(".song-title");
+        pottyRow.querySelector(
+          ".song-title"
+        );
 
       if (title) {
         title.click();
@@ -234,7 +248,9 @@
       }
 
       const playButton =
-        pottyRow.querySelector(".play");
+        pottyRow.querySelector(
+          ".play"
+        );
 
       if (playButton) {
         playButton.click();
@@ -250,23 +266,26 @@
 
   function showPromptState() {
     const wrapper =
-      document.getElementById(CONTAINER_ID);
+      document.getElementById(
+        CONTAINER_ID
+      );
 
     if (!wrapper) return;
 
-    currentState = "prompt";
+    currentState =
+      "prompt";
 
-    /*
-      Start the selected duel from Question 1
-      every time a new duel begins.
-    */
-    currentQuestionIndex = 0;
+    currentQuestionIndex =
+      0;
 
-    playerBooty = 0;
+    playerBooty =
+      0;
 
-    pottyTimeChosen = false;
+    pottyTimeChosen =
+      false;
 
-    const duel = activeDuel;
+    const duel =
+      activeDuel;
 
     if (!duel) return;
 
@@ -369,7 +388,9 @@
     document.getElementById(
       "dismiss-quiz-optin"
     ).onclick = () => {
-      currentState = "dismissed";
+      currentState =
+        "dismissed";
+
       hideContainer();
     };
   }
@@ -383,7 +404,8 @@
       const audio =
         new Audio(AUDIO_PATH);
 
-      audio.volume = 1.0;
+      audio.volume =
+        1.0;
 
       audio.play().catch(err => {
         console.log(
@@ -464,7 +486,8 @@
 
     if (!wrapper) return;
 
-    currentState = "listening";
+    currentState =
+      "listening";
 
     wrapper.innerHTML = `
       <div style="
@@ -511,7 +534,8 @@
 
     if (!activeDuel) return;
 
-    currentState = "quiz";
+    currentState =
+      "quiz";
 
     stopSong();
 
@@ -531,6 +555,7 @@
     const optionsHtml =
       quiz.options
         .map((opt, index) => {
+
           const letter =
             String.fromCharCode(
               65 + index
@@ -738,23 +763,23 @@
         Monkey Judge keeps its existing
         POTTY TIME unlock.
       */
-      if (activeDuel.unlocksPottyTime) {
+      if (
+        activeDuel.unlocksPottyTime
+      ) {
 
         localStorage.setItem(
           "pottyTimeUnlocked",
           "true"
         );
 
-        /*
-          Tell main.js immediately.
-        */
         window.dispatchEvent(
           new CustomEvent(
             "pottyTimeUnlocked"
           )
         );
 
-        pottyTimeChosen = false;
+        pottyTimeChosen =
+          false;
 
         feedback.style.color =
           "#51cf66";
@@ -810,10 +835,6 @@
             playPottyTime;
         }
 
-        /*
-          Wait five seconds unless the player
-          chooses PLAY POTTY TIME.
-        */
         setTimeout(() => {
 
           if (pottyTimeChosen) {
@@ -867,12 +888,6 @@
         </div>
       `;
 
-      /*
-        For now, Delaware simply closes
-        after the test victory.
-        We will add Questions 2 and 3
-        before giving this duel its final reward.
-      */
       setTimeout(() => {
 
         hideContainer();
@@ -920,9 +935,6 @@
       </span>
     `;
 
-    /*
-      Wrong answer ends the duel.
-    */
     setTimeout(() => {
 
       hideContainer();
@@ -955,7 +967,9 @@
         if (data) {
 
           const videoId =
-            String(data.video_id || "");
+            String(
+              data.video_id || ""
+            );
 
           if (
             videoId ===
@@ -964,10 +978,6 @@
             return MONKEY_JUDGE;
           }
 
-          /*
-            Delaware video ID will be added
-            once we have it.
-          */
           if (
             DELAWARE.videoId &&
             videoId ===
@@ -994,19 +1004,16 @@
         : "";
 
     if (
-      text.includes(
-        MONKEY_JUDGE.title
-      ) ||
-      text.includes(
-        MONKEY_JUDGE.videoId
+      text.toLowerCase().includes(
+        MONKEY_JUDGE.title.toLowerCase()
       )
     ) {
       return MONKEY_JUDGE;
     }
 
     if (
-      text.includes(
-        DELAWARE.title
+      text.toLowerCase().includes(
+        DELAWARE.title.toLowerCase()
       )
     ) {
       return DELAWARE;
@@ -1034,7 +1041,8 @@
         activeDuel !== duel
       ) {
 
-        activeDuel = duel;
+        activeDuel =
+          duel;
 
         currentState =
           "hidden";
@@ -1092,10 +1100,6 @@
 
     } else {
 
-      /*
-        No pirate duel song is playing.
-        Reset everything.
-      */
       if (
         currentState !==
         "hidden"
