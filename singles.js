@@ -25,7 +25,13 @@
     correctIndex: 0
   }; 
 
-  let currentState = "hidden"; // "hidden", "prompt", "dismissed", "listening", "quiz" 
+  let currentState = "hidden"; // "hidden", "prompt", "dismissed", "listening", "quiz"
+
+  /*
+    Keeps track of whether the player chose
+    to play POTTY TIME from the victory screen.
+  */
+  let pottyTimeChosen = false;
 
   function injectContainer() {
     if (document.getElementById(CONTAINER_ID)) return; 
@@ -33,7 +39,6 @@
     const wrapper = document.createElement("div");
     wrapper.id = CONTAINER_ID;
 
-    // Styled for smooth slide-up animation using transform and opacity
     wrapper.style.cssText = `
       position: fixed;
       bottom: 25px;
@@ -58,7 +63,6 @@
     document.body.appendChild(wrapper);
   } 
 
-  // Helper to show the container with the slide-up animation
   function showContainer() {
     const wrapper = document.getElementById(CONTAINER_ID);
     if (!wrapper) return;
@@ -68,7 +72,6 @@
     wrapper.style.pointerEvents = "auto";
   } 
 
-  // Helper to hide the container with the slide-down animation
   function hideContainer() {
     const wrapper = document.getElementById(CONTAINER_ID);
     if (!wrapper) return;
@@ -78,7 +81,67 @@
     wrapper.style.pointerEvents = "none";
   } 
 
-  // State 1: The initial opt-in banner with full uncropped Captain Black Bear
+  // =========================================================
+  // POTTY TIME PLAY BUTTON
+  // =========================================================
+
+  function playPottyTime() {
+    pottyTimeChosen = true;
+
+    const rows = Array.from(
+      document.querySelectorAll("#song-list .song")
+    );
+
+    const pottyRow = rows.find(row => {
+      const title = row.querySelector(".song-title");
+
+      return (
+        title &&
+        title.textContent.includes("POTTY TIME")
+      );
+    });
+
+    if (!pottyRow) {
+      console.log("Could not find POTTY TIME in the playlist.");
+      return;
+    }
+
+    /*
+      Scroll POTTY TIME into view first.
+    */
+    pottyRow.scrollIntoView({
+      behavior: "smooth",
+      block: "center"
+    });
+
+    /*
+      Give the scroll a moment to begin,
+      then use the existing row-play system.
+    */
+    setTimeout(() => {
+      const title =
+        pottyRow.querySelector(".song-title");
+
+      if (title) {
+        title.click();
+        return;
+      }
+
+      const playButton =
+        pottyRow.querySelector(".play");
+
+      if (playButton) {
+        playButton.click();
+      }
+    }, 350);
+
+    hideContainer();
+  }
+
+  // =========================================================
+  // STATE 1 — INITIAL PROMPT
+  // =========================================================
+
   function showPromptState() {
     const wrapper = document.getElementById(CONTAINER_ID);
     if (!wrapper) return;
@@ -90,7 +153,6 @@
         ⚔️ PIRATE DUEL CHALLENGE: Monkey Judge
       </div>
       
-      <!-- Full box image container using contain so nothing gets cut off -->
       <div style="width: 100%; max-height: 260px; overflow: hidden; border-radius: 6px; border: 1px solid #d4af37; margin-bottom: 15px; background: #0c0810; display: flex; justify-content: center; align-items: center;">
         <img src="./assets/black-bear.png" alt="Captain Black Bear" style="
           width: 100%;
@@ -146,21 +208,33 @@
     };
   } 
 
-  // Play your custom voice mp3
+  // =========================================================
+  // VOICE CLIP
+  // =========================================================
+
   function playVoiceClip() {
     try {
       const audio = new Audio(AUDIO_PATH);
       audio.volume = 1.0;
 
       audio.play().catch(err => {
-        console.log("Audio play blocked or file path issue:", err);
+        console.log(
+          "Audio play blocked or file path issue:",
+          err
+        );
       });
     } catch (e) {
-      console.log("Could not initialize audio:", e);
+      console.log(
+        "Could not initialize audio:",
+        e
+      );
     }
   } 
 
-  // Stop the YouTube music player
+  // =========================================================
+  // STOP YOUTUBE
+  // =========================================================
+
   function stopSong() {
     if (
       window.rizneyPlayer &&
@@ -169,16 +243,23 @@
       try {
         window.rizneyPlayer.pauseVideo();
       } catch (e) {
-        console.log("Could not pause player:", e);
+        console.log(
+          "Could not pause player:",
+          e
+        );
       }
     }
   } 
 
-  // Trigger next track exactly like your toolbar button
+  // =========================================================
+  // NEXT TRACK
+  // =========================================================
+
   function skipToNextTrack() {
-    const toolbarNextBtn = document.querySelector(
-      ".controls button:last-child, .controls [data-action='next'], .controls .next-btn, button[title*='Next'], button[aria-label*='Next']"
-    );
+    const toolbarNextBtn =
+      document.querySelector(
+        ".controls button:last-child, .controls [data-action='next'], .controls .next-btn, button[title*='Next'], button[aria-label*='Next']"
+      );
     
     if (toolbarNextBtn) {
       toolbarNextBtn.click();
@@ -190,14 +271,24 @@
       try {
         window.rizneyPlayer.nextVideo();
       } catch (e) {
-        console.log("Could not skip to next video:", e);
+        console.log(
+          "Could not skip to next video:",
+          e
+        );
       }
     }
   } 
 
-  // State 2: "Pay attention" mode after clicking Yes
+  // =========================================================
+  // STATE 2 — LISTENING
+  // =========================================================
+
   function showListeningState() {
-    const wrapper = document.getElementById(CONTAINER_ID);
+    const wrapper =
+      document.getElementById(
+        CONTAINER_ID
+      );
+
     if (!wrapper) return;
 
     currentState = "listening"; 
@@ -218,32 +309,45 @@
     showContainer();
   } 
 
-  // State 3: The actual multiple choice quiz
+  // =========================================================
+  // STATE 3 — QUIZ
+  // =========================================================
+
   function showQuizState() {
-    const wrapper = document.getElementById(CONTAINER_ID);
+    const wrapper =
+      document.getElementById(
+        CONTAINER_ID
+      );
+
     if (!wrapper) return;
 
     currentState = "quiz"; 
 
     stopSong(); 
 
-    const optionsHtml = QUIZ.options.map((opt, index) => {
-      const letter = String.fromCharCode(65 + index);
+    const optionsHtml =
+      QUIZ.options
+        .map((opt, index) => {
+          const letter =
+            String.fromCharCode(
+              65 + index
+            );
 
-      return `
-        <button class="quiz-opt-btn" data-index="${index}" style="
-          padding: 10px;
-          background: #0f0a13;
-          border: 1px solid #c084fc;
-          color: #f5d76e;
-          border-radius: 4px;
-          cursor: pointer;
-          text-align: left;
-          font-family: Georgia, serif;
-          font-size: 1rem;
-        ">${letter}. ${opt}</button>
-      `;
-    }).join(""); 
+          return `
+            <button class="quiz-opt-btn" data-index="${index}" style="
+              padding: 10px;
+              background: #0f0a13;
+              border: 1px solid #c084fc;
+              color: #f5d76e;
+              border-radius: 4px;
+              cursor: pointer;
+              text-align: left;
+              font-family: Georgia, serif;
+              font-size: 1rem;
+            ">${letter}. ${opt}</button>
+          `;
+        })
+        .join(""); 
 
     wrapper.innerHTML = `
       <h3 style="color: #c084fc; margin-top: 0;">
@@ -273,47 +377,65 @@
 
     showContainer(); 
 
-    const buttons = wrapper.querySelectorAll(".quiz-opt-btn");
+    const buttons =
+      wrapper.querySelectorAll(
+        ".quiz-opt-btn"
+      );
 
     buttons.forEach(btn => {
       btn.onmouseover = () => {
         if (!btn.disabled) {
-          btn.style.background = "#2a1f35";
+          btn.style.background =
+            "#2a1f35";
         }
       };
 
       btn.onmouseout = () => {
         if (!btn.disabled) {
-          btn.style.background = "#0f0a13";
+          btn.style.background =
+            "#0f0a13";
         }
       };
       
       btn.onclick = () => {
-        const selectedIndex = parseInt(
-          btn.dataset.index,
-          10
-        );
+        const selectedIndex =
+          parseInt(
+            btn.dataset.index,
+            10
+          );
 
-        handleAnswer(selectedIndex, buttons);
+        handleAnswer(
+          selectedIndex,
+          buttons
+        );
       };
     });
   } 
 
-  function handleAnswer(selectedIndex, buttons) {
+  // =========================================================
+  // HANDLE ANSWER
+  // =========================================================
+
+  function handleAnswer(
+    selectedIndex,
+    buttons
+  ) {
     const feedback =
-      document.getElementById("quiz-feedback");
+      document.getElementById(
+        "quiz-feedback"
+      );
 
     buttons.forEach(b => {
       b.disabled = true;
     }); 
 
-    if (selectedIndex === QUIZ.correctIndex) {
+    if (
+      selectedIndex ===
+      QUIZ.correctIndex
+    ) {
 
       /*
         🏴‍☠️ POTTY TIME UNLOCKED!
-
-        Save the unlock in localStorage so the main
-        site can see it.
       */
       localStorage.setItem(
         "pottyTimeUnlocked",
@@ -322,36 +444,77 @@
 
       /*
         🔔 Tell main.js immediately.
-
-        localStorage does not fire the normal "storage"
-        event when the change happens in this same page.
       */
       window.dispatchEvent(
-        new CustomEvent("pottyTimeUnlocked")
+        new CustomEvent(
+          "pottyTimeUnlocked"
+        )
       );
 
       playerBooty += 50;
 
-      feedback.style.color = "#51cf66";
+      pottyTimeChosen = false;
+
+      feedback.style.color =
+        "#51cf66";
 
       feedback.innerHTML = `
-        ⚔️ Touche! Flawless comeback!<br>
-        <span style="color: #f5d76e; font-size: 1rem;">
+        <div style="
+          font-size: 1.15rem;
+          line-height: 1.5;
+          margin-bottom: 12px;
+        ">
+          🎉 <strong>YOU'VE UNLOCKED<br>
+          "POTTY TIME" IN THE PLAYLIST!</strong>
+        </div>
+
+        <div style="
+          color: #f5d76e;
+          font-size: 1rem;
+          margin-bottom: 14px;
+        ">
           🪙 Booty Secured:
           <strong>+50 Gold</strong>
           (Total: ${playerBooty})
-        </span>
+        </div>
+
+        <button id="play-potty-time" style="
+          padding: 11px 22px;
+          background: #c084fc;
+          color: #120b18;
+          border: none;
+          border-radius: 5px;
+          font-weight: bold;
+          cursor: pointer;
+          font-family: Georgia, serif;
+          font-size: 1rem;
+          box-shadow: 0 3px 10px rgba(0,0,0,0.4);
+        ">
+          🚽 PLAY POTTY TIME
+        </button>
       `;
+
+      const pottyButton =
+        document.getElementById(
+          "play-potty-time"
+        );
+
+      if (pottyButton) {
+        pottyButton.onclick =
+          playPottyTime;
+      }
 
     } else {
 
       playerBooty = 0;
 
-      feedback.style.color = "#ff6b6b";
+      feedback.style.color =
+        "#ff6b6b";
 
       feedback.innerHTML = `
         💥 Oof! You stumbled:
         "${QUIZ.options[QUIZ.correctIndex]}"<br>
+
         <span style="color: #f5d76e; font-size: 0.95rem;">
           🌊 Argh! They plundered your pockets!
           Booty: <strong>0 Gold</strong>
@@ -359,8 +522,20 @@
       `;
     } 
 
-    // Wait 3 seconds to read feedback, slide box down, then trigger the next track
+    /*
+      Give the player a few seconds to read
+      the victory message.
+
+      If they choose PLAY POTTY TIME,
+      that button takes over and the automatic
+      next-track action is cancelled.
+    */
     setTimeout(() => {
+
+      if (pottyTimeChosen) {
+        return;
+      }
+
       hideContainer();
 
       setTimeout(
@@ -368,22 +543,30 @@
         300
       );
 
-    }, 3000);
+    }, 5000);
   } 
 
-  // Monitor song status and playback time
+  // =========================================================
+  // MONITOR SONG STATUS
+  // =========================================================
+
   function checkSongStatus() {
     const nowPlaying =
-      document.querySelector("#now-playing");
+      document.querySelector(
+        "#now-playing"
+      );
 
     const text =
-      nowPlaying ? nowPlaying.textContent : ""; 
+      nowPlaying
+        ? nowPlaying.textContent
+        : ""; 
 
     let videoMatch = false;
 
     if (
       window.rizneyPlayer &&
-      typeof window.rizneyPlayer.getVideoData === "function"
+      typeof window.rizneyPlayer.getVideoData ===
+        "function"
     ) {
       try {
         const data =
@@ -391,7 +574,8 @@
 
         if (
           data &&
-          String(data.video_id) === TARGET_VIDEO_ID
+          String(data.video_id) ===
+            TARGET_VIDEO_ID
         ) {
           videoMatch = true;
         }
@@ -406,32 +590,40 @@
 
     if (isPlayingTarget) {
 
-      // If song just started and we haven't shown or dismissed it yet, show prompt
-      if (currentState === "hidden") {
+      if (
+        currentState ===
+        "hidden"
+      ) {
         showPromptState();
       } 
 
-      // If user clicked "Yes" and we are in listening mode, check progress
       if (
-        currentState === "listening" &&
+        currentState ===
+          "listening" &&
         window.rizneyPlayer
       ) {
         try {
 
           if (
-            typeof window.rizneyPlayer.getCurrentTime === "function" &&
-            typeof window.rizneyPlayer.getDuration === "function"
+            typeof window.rizneyPlayer.getCurrentTime ===
+              "function" &&
+            typeof window.rizneyPlayer.getDuration ===
+              "function"
           ) {
 
             const currentTime =
-              window.rizneyPlayer.getCurrentTime();
+              window.rizneyPlayer
+                .getCurrentTime();
 
             const duration =
-              window.rizneyPlayer.getDuration(); 
+              window.rizneyPlayer
+                .getDuration(); 
 
             if (
               duration > 0 &&
-              (duration - currentTime <= 3)
+              duration -
+                currentTime <=
+                3
             ) {
               showQuizState();
             }
@@ -443,20 +635,33 @@
 
     } else {
 
-      // If song changes away from Monkey Judge, reset everything back to hidden
-      if (currentState !== "hidden") {
+      if (
+        currentState !==
+        "hidden"
+      ) {
         hideContainer();
-        currentState = "hidden";
+        currentState =
+          "hidden";
       }
     }
   } 
 
+  // =========================================================
+  // INITIALIZATION
+  // =========================================================
+
   function init() {
     injectContainer();
-    setInterval(checkSongStatus, 1000);
+    setInterval(
+      checkSongStatus,
+      1000
+    );
   } 
 
-  if (document.readyState === "loading") {
+  if (
+    document.readyState ===
+    "loading"
+  ) {
     document.addEventListener(
       "DOMContentLoaded",
       init
