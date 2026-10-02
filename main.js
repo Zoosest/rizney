@@ -36,6 +36,13 @@
     "niceAndSlowUnlocked";
 
   /*
+    YOHO Pirate Duel unlocks
+    A ROLLING STONE GATHERS NO MAS.
+  */
+  const ROLLING_STONE_UNLOCK_KEY =
+    "rollingStoneUnlocked";
+
+  /*
     Song information is kept in chronological order.
     The first entry [index 0] is your intro track, followed by your animal-icon songs.
   */
@@ -595,6 +602,36 @@
         cursor: not-allowed;
       }
 
+      /*
+        =======================================================
+        🔒 A ROLLING STONE GATHERS NO MAS — LOCKED VISUAL
+        =======================================================
+      */
+
+      #song-list .song.rizney-rolling-stone-locked .song-title,
+      #song-list .song.rizney-rolling-stone-locked .song-title small {
+        color: rgba(180, 180, 180, 0.45) !important;
+      }
+
+      #song-list .song.rizney-rolling-stone-locked .song-number {
+        color: rgba(180, 180, 180, 0.4) !important;
+      }
+
+      #song-list .song.rizney-rolling-stone-locked .animal-button {
+        opacity: 0.35;
+        filter: grayscale(1);
+      }
+
+      #song-list .song.rizney-rolling-stone-locked {
+        cursor: not-allowed;
+      }
+
+      #song-list .song.rizney-rolling-stone-locked .song-title,
+      #song-list .song.rizney-rolling-stone-locked .animal-button,
+      #song-list .song.rizney-rolling-stone-locked .song-number {
+        cursor: not-allowed;
+      }
+
       #cards {
         display: grid;
         grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -913,6 +950,7 @@
                 restoreRoadworkRows();
                 updatePottyTimeLock();
                 updateNiceAndSlowLock();
+                updateRollingStoneLock();
               }
             );
           }
@@ -1111,6 +1149,78 @@
   }
 
   /* =========================================================
+     A ROLLING STONE GATHERS NO MAS UNLOCK
+     ========================================================= */
+
+  function isRollingStoneUnlocked() {
+    return (
+      localStorage.getItem(
+        ROLLING_STONE_UNLOCK_KEY
+      ) === "true"
+    );
+  }
+
+  function isRollingStoneRow(row) {
+    if (!row) {
+      return false;
+    }
+
+    const songIndex =
+      Number(
+        row.dataset.songIndex
+      );
+
+    if (
+      !Number.isInteger(songIndex) ||
+      songIndex < 1
+    ) {
+      return false;
+    }
+
+    const info =
+      SONG_INFO[songIndex];
+
+    return (
+      info &&
+      info[0] ===
+        "A Rolling Stone Gathers NO MAS"
+    );
+  }
+
+  function isRollingStoneSongNumber(songNumber) {
+    if (
+      !Number.isInteger(songNumber) ||
+      songNumber < 1
+    ) {
+      return false;
+    }
+
+    const info =
+      SONG_INFO[songNumber];
+
+    return (
+      info &&
+      info[0] ===
+        "A Rolling Stone Gathers NO MAS"
+    );
+  }
+
+  function updateRollingStoneLock() {
+    const rows = songRows();
+
+    rows.forEach(row => {
+      if (!isRollingStoneRow(row)) {
+        return;
+      }
+
+      row.classList.toggle(
+        "rizney-rolling-stone-locked",
+        !isRollingStoneUnlocked()
+      );
+    });
+  }
+
+  /* =========================================================
      HELPERS
      ========================================================= */
 
@@ -1187,6 +1297,30 @@
 
   function playSongFromRow(row) {
     if (!row) return;
+
+    /*
+      🔒 A ROLLING STONE GATHERS NO MAS LOCK
+
+      This song cannot be played until
+      the YOHO Pirate Duel has been
+      successfully completed.
+    */
+    if (
+      isRollingStoneRow(row) &&
+      !isRollingStoneUnlocked()
+    ) {
+      row.classList.add(
+        "rizney-rolling-stone-locked"
+      );
+
+      return;
+    }
+
+    if (isRollingStoneRow(row)) {
+      row.classList.remove(
+        "rizney-rolling-stone-locked"
+      );
+    }
 
     /*
       🔒 NICE & SLOW LOCK
@@ -1595,6 +1729,7 @@
     restoreRoadworkRows();
     updatePottyTimeLock();
     updateNiceAndSlowLock();
+    updateRollingStoneLock();
   }
 
   /* =========================================================
@@ -1651,6 +1786,7 @@
     restoreRoadworkRows();
     updatePottyTimeLock();
     updateNiceAndSlowLock();
+    updateRollingStoneLock();
   }
 
   /* =========================================================
@@ -1716,6 +1852,19 @@
     if (
       isNiceAndSlowSongNumber(songIndex) &&
       !isNiceAndSlowUnlocked()
+    ) {
+      return;
+    }
+
+    /*
+      🔒 A ROLLING STONE GATHERS NO MAS LOCK
+
+      Music Reading cards must obey the same
+      unlock rule as the normal song rows.
+    */
+    if (
+      isRollingStoneSongNumber(songIndex) &&
+      !isRollingStoneUnlocked()
     ) {
       return;
     }
@@ -2187,6 +2336,16 @@
       updateNiceAndSlowLock
     );
 
+    /*
+      YOHO Pirate Duel tells main.js
+      immediately when A Rolling Stone
+      Gathers NO MAS is unlocked.
+    */
+    window.addEventListener(
+      "rollingStoneUnlocked",
+      updateRollingStoneLock
+    );
+
     setupCardsToggle();
 
     setupCardWatching();
@@ -2198,6 +2357,8 @@
     updatePottyTimeLock();
 
     updateNiceAndSlowLock();
+
+    updateRollingStoneLock();
   }
 
   if (
