@@ -2120,4 +2120,258 @@
           cardsToggleOpen = false;
 
           cardPlaylist = null;
-         
+          cardPosition = 0;
+
+          reading.hidden = true;
+
+          cards.style.display =
+            "none";
+
+          button.setAttribute(
+            "aria-expanded",
+            "false"
+          );
+
+          return;
+        }
+
+        cardsToggleOpen = true;
+
+        reading.hidden = false;
+
+        button.setAttribute(
+          "aria-expanded",
+          "true"
+        );
+
+        requestAnimationFrame(
+          () => {
+            if (!cardsToggleOpen) {
+              return;
+            }
+
+            cards.style.display =
+              "grid";
+
+            addCardIcons();
+            scheduleReadingScroll();
+          }
+        );
+      }
+    );
+  }
+
+  /* =========================================================
+     MUSIC READING POSITIONING
+     ========================================================= */
+
+  let scrollScheduled = false;
+
+  function positionReading() {
+    const reading =
+      document.getElementById(
+        "reading"
+      );
+
+    if (!reading) return;
+
+    const cards =
+      document.getElementById(
+        "cards"
+      );
+
+    if (
+      cards &&
+      !cardsToggleOpen
+    ) {
+      return;
+    }
+
+    const readingRect =
+      reading.getBoundingClientRect();
+
+    const readingDocumentTop =
+      window.scrollY +
+      readingRect.top;
+
+    const readingHeight =
+      readingRect.height;
+
+    const viewportHeight =
+      window.innerHeight;
+
+    const dock =
+      document.querySelector(
+        ".player-dock"
+      );
+
+    const dockHeight =
+      dock
+        ? dock.getBoundingClientRect()
+            .height
+        : 0;
+
+    const usableHeight =
+      viewportHeight -
+      dockHeight;
+
+    const targetY =
+      readingDocumentTop -
+      dockHeight -
+      (usableHeight -
+        readingHeight) /
+        2;
+
+    window.scrollTo({
+      top: Math.max(
+        0,
+        targetY
+      ),
+      behavior: "smooth"
+    });
+  }
+
+  function scheduleReadingScroll() {
+    if (scrollScheduled) {
+      return;
+    }
+
+    scrollScheduled = true;
+
+    requestAnimationFrame(
+      () => {
+        scrollScheduled = false;
+
+        requestAnimationFrame(
+          () => {
+            addCardIcons();
+
+            if (cardsToggleOpen) {
+              positionReading();
+            }
+          }
+        );
+      }
+    );
+  }
+
+  /* =========================================================
+     WATCH FOR NEW MUSIC READING CARDS
+     ========================================================= */
+
+  function setupCardWatching() {
+    const cards =
+      document.getElementById(
+        "cards"
+      );
+
+    if (!cards) return;
+
+    const observer =
+      new MutationObserver(
+        mutations => {
+          let newCards = false;
+
+          for (
+            const mutation of mutations
+          ) {
+            if (
+              mutation.type ===
+                "childList" &&
+              mutation.addedNodes.length
+            ) {
+              newCards = true;
+              break;
+            }
+          }
+
+          if (!newCards) {
+            return;
+          }
+
+          if (!updatingCards) {
+            addCardIcons();
+
+            if (cardsToggleOpen) {
+              scheduleReadingScroll();
+            }
+          }
+        }
+      );
+
+    observer.observe(
+      cards,
+      {
+        childList: true,
+        subtree: true
+      }
+    );
+
+    addCardIcons();
+  }
+
+  /* =========================================================
+     INITIALIZATION
+     ========================================================= */
+
+  function init() {
+    addStyles();
+
+    setupSearch();
+
+    updateSongRows();
+
+    putIcons();
+
+    setupRoadworkWatching();
+
+    setupPottyTimeLockWatching();
+
+    /*
+      Delaware Pirate Duel tells main.js
+      immediately when Nice & Slow is unlocked.
+    */
+    window.addEventListener(
+      "niceAndSlowUnlocked",
+      updateNiceAndSlowLock
+    );
+
+    /*
+      YOHO Pirate Duel tells main.js
+      immediately when A Rolling Stone
+      Gathers NO MAS is unlocked.
+    */
+    window.addEventListener(
+      "rollingStoneUnlocked",
+      updateRollingStoneLock
+    );
+
+    setupCardsToggle();
+
+    setupCardWatching();
+
+    addCardIcons();
+
+    restoreRoadworkRows();
+
+    updatePottyTimeLock();
+
+    updateNiceAndSlowLock();
+
+    updateRollingStoneLock();
+  }
+
+  if (
+    document.readyState ===
+    "loading"
+  ) {
+    document.addEventListener(
+      "DOMContentLoaded",
+      init,
+      { once: true }
+    );
+  } else {
+    init();
+  }
+
+})();
