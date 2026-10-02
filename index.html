@@ -31,19 +31,35 @@
       font-family:Georgia,"Times New Roman",serif;
     }
 
+    /* Header updated to a vertical flex container with padding */
     .top-area {
       position:relative;
-      padding:0;
-      min-height:79px;
+      padding:14px 12px 10px;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      gap:10px;
       text-align:center;
     }
 
+    /* Top row holding donate, context buttons, and logo */
+    .top-controls-row {
+      width:100%;
+      max-width:900px;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+    }
+
+    .top-controls-left {
+      display:flex;
+      gap:8px;
+      align-items:center;
+    }
+
     .donate,
-    .context,
-    .top-score,
-    #ydkt-score-display {
-      position:absolute;
-      top:7px;
+    .context {
+      position:static;
       border:1px solid var(--gold);
       border-radius:999px;
       padding:5px 9px;
@@ -53,37 +69,35 @@
       line-height:1;
     }
 
-    .donate {
-      left:10px;
-    }
-
     .context {
-      left:88px;
       cursor:pointer;
     }
 
-    /* Scoreboard integrated cleanly into header flow */
+    /* Scoreboard centered at the bottom of the header with padding */
     #ydkt-score-display {
-      left:162px;
+      position:static;
+      border:1px solid var(--gold);
+      border-radius:999px;
+      padding:6px 14px;
+      color:var(--bright-gold);
+      background:#160c1c;
+      font-size:.72rem;
+      line-height:1;
       font-family:Georgia,"Times New Roman",serif;
       text-decoration:none;
       display:inline-flex;
       align-items:center;
-      gap:4px;
+      gap:6px;
       box-shadow:none;
-      margin:0;
+      margin:2px 0 0;
     }
 
     .logo-img {
-      position:absolute;
-      top:1px;
-      right:0;
-      left:auto;
-      transform:none;
-      width:125px;
-      height:68px;
+      position:static;
+      width:110px;
+      height:56px;
       object-fit:contain;
-      object-position:right top;
+      object-position:right center;
     }
 
     h1,
@@ -382,40 +396,24 @@
 
     @media(max-width:500px) {
       .top-area {
-        padding:0;
-        min-height:72px;
+        padding:10px 8px 8px;
+        gap:8px;
       }
 
       .donate,
-      .context,
-      #ydkt-score-display {
-        top:6px;
+      .context {
         padding:5px 8px;
         font-size:.63rem;
       }
 
-      .donate {
-        left:8px;
-      }
-
-      .context {
-        left:75px;
-      }
-
       #ydkt-score-display {
-        left:141px;
-        padding:5px 6px;
-        font-size:.58rem;
+        padding:5px 10px;
+        font-size:.63rem;
       }
 
       .logo-img {
-        top:1px;
-        right:0;
-        left:auto;
-        transform:none;
-        width:108px;
-        height:62px;
-        object-position:right top;
+        width:95px;
+        height:50px;
       }
 
       h1 {
@@ -489,27 +487,31 @@
 
   <section class="top-area">
 
-    <img
-      src="./assets/rizney.png"
-      alt="Rizney"
-      class="logo-img"
-    />
+    <div class="top-controls-row">
+      <div class="top-controls-left">
+        <a
+          class="donate"
+          href="https://venmo.com/u/YOUR_VENMO_USERNAME"
+          target="_blank"
+          rel="noopener"
+        >♥ Donate</a>
 
-    <a
-      class="donate"
-      href="https://venmo.com/u/YOUR_VENMO_USERNAME"
-      target="_blank"
-      rel="noopener"
-    >♥ Donate</a>
+        <button
+          class="context"
+          id="context-button"
+          type="button"
+          aria-label="Open Context"
+        >✦ Context</button>
+      </div>
 
-    <button
-      class="context"
-      id="context-button"
-      type="button"
-      aria-label="Open Context"
-    >✦ Context</button>
+      <img
+        src="./assets/rizney.png"
+        alt="Rizney"
+        class="logo-img"
+      />
+    </div>
 
-    <!-- Scoreboard cleanly placed in the top header section -->
+    <!-- Scoreboard centered at the bottom of the header -->
     <div id="ydkt-score-display">
       🏆 Score: <strong style="color: #c084fc;">100</strong>
     </div>
