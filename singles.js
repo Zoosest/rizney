@@ -1,5 +1,5 @@
 /* =========================================================
-   "YOU DON'T KNOW TRACK" - PIRATE DUEL EDITION
+   "YOU DON'T KNOW TRACK" - PIRATE DUEL EDITION (WITH BOOTY)
    ========================================================= */ 
 
 (() => {
@@ -10,6 +10,9 @@
   const CONTAINER_ID = "simple-quiz-container";
   
   const AUDIO_PATH = "./assets/You-dont-know-track.mp3"; 
+
+  // Player booty stash
+  let playerBooty = 0;
 
   const QUIZ = {
     question: "Complete the pirate's lyric line: 'Monkey judge, monkey jury, ____.'",
@@ -82,7 +85,7 @@
       <div style="font-size: 1.1rem; font-weight: bold; color: #c084fc; margin-bottom: 12px;">
         ⚔️ PIRATE DUEL CHALLENGE: Monkey Judge
       </div>
-      <p style="margin-bottom: 15px;">A challenger approaches! Will you cross swords and match wits?</p>
+      <p style="margin-bottom: 15px;">A challenger approaches! Will you cross swords and match wits for the booty?</p>
       <div style="display: flex; gap: 12px; justify-content: center; align-items: center;">
         <button id="start-quiz-optin" style="
           padding: 10px 24px;
@@ -209,7 +212,7 @@
       <div id="quiz-options-list" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px;">
         ${optionsHtml}
       </div>
-      <div id="quiz-feedback" style="font-weight: bold; font-size: 1.1rem; min-height: 24px;"></div>
+      <div id="quiz-feedback" style="font-weight: bold; font-size: 1.05rem; min-height: 36px; line-height: 1.4;"></div>
     `; 
 
     showContainer(); 
@@ -231,18 +234,20 @@
     buttons.forEach(b => b.disabled = true); 
 
     if (selectedIndex === QUIZ.correctIndex) {
+      playerBooty += 50; // Add plunder
       feedback.style.color = "#51cf66";
-      feedback.textContent = "⚔️ Touche! Flawless comeback!";
+      feedback.innerHTML = `⚔️ Touche! Flawless comeback!<br><span style="color: #f5d76e; font-size: 1rem;">🪙 Booty Secured: <strong>+50 Gold</strong> (Total: ${playerBooty})</span>`;
     } else {
+      playerBooty = 0; // Wiped clean
       feedback.style.color = "#ff6b6b";
-      feedback.textContent = `💥 Oof! You stumbled: "${QUIZ.options[QUIZ.correctIndex]}"`;
+      feedback.innerHTML = `💥 Oof! You stumbled: "${QUIZ.options[QUIZ.correctIndex]}"<br><span style="color: #f5d76e; font-size: 0.95rem;">🌊 Argh! They plundered your pockets! Booty: <strong>0 Gold</strong></span>`;
     } 
 
-    // Wait 2.5 seconds to read feedback, slide box down, then trigger the next track
+    // Wait 3 seconds to read feedback, slide box down, then trigger the next track
     setTimeout(() => {
       hideContainer();
       setTimeout(skipToNextTrack, 300); // slight delay to let slide-down finish before track skips
-    }, 2500);
+    }, 3000);
   } 
 
   // Monitor song status and playback time
