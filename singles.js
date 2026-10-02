@@ -6,7 +6,7 @@
   "use strict";
 
   // =========================================================
-  // PIRATE DUEL CONFIGURATIONS
+  // DUEL DEFINITIONS
   // =========================================================
 
   const MONKEY_JUDGE = {
@@ -62,15 +62,11 @@
     unlocksPottyTime: true
   };
 
-  // =========================================================
-  // DELAWARE (UNDER THE SEA)
-  // =========================================================
 
   const DELAWARE = {
     videoId: "",
     title: "Delaware (Under The Sea)",
-
-    image: "./assets/pirate-fox.png",
+    image: "./assets/fox-pirate.png",
     imageAlt: "Pirate Fox",
 
     quiz: [
@@ -92,32 +88,131 @@
     unlocksPottyTime: false
   };
 
+
+  // =========================================================
+  // ACTIVE DUEL
+  // =========================================================
+
+  let activeDuel = null;
+
+  function getActiveDuel() {
+
+    const nowPlaying =
+      document.querySelector("#now-playing");
+
+    const text =
+      nowPlaying
+        ? nowPlaying.textContent
+        : "";
+
+    /*
+      Check YouTube video ID first.
+    */
+    if (
+      window.rizneyPlayer &&
+      typeof window.rizneyPlayer.getVideoData ===
+        "function"
+    ) {
+
+      try {
+
+        const data =
+          window.rizneyPlayer.getVideoData();
+
+        if (
+          data &&
+          String(data.video_id) ===
+            MONKEY_JUDGE.videoId
+        ) {
+          return MONKEY_JUDGE;
+        }
+
+      } catch (e) {}
+    }
+
+    /*
+      Fall back to title matching.
+      Case-insensitive so capitalization
+      differences won't break the trigger.
+    */
+
+    const lowerText =
+      text.toLowerCase();
+
+    if (
+      lowerText.includes(
+        MONKEY_JUDGE.title.toLowerCase()
+      )
+    ) {
+      return MONKEY_JUDGE;
+    }
+
+    if (
+      lowerText.includes(
+        DELAWARE.title.toLowerCase()
+      )
+    ) {
+      return DELAWARE;
+    }
+
+    return null;
+  }
+
+
+  // =========================================================
+  // CONSTANTS
+  // =========================================================
+
   const CONTAINER_ID =
     "simple-quiz-container";
 
   const AUDIO_PATH =
     "./assets/You-dont-know-track.mp3";
 
-  // =========================================================
-  // CURRENT DUEL
-  // =========================================================
 
-  let activeDuel = null;
-
-  let currentQuestionIndex = 0;
+  // =========================================================
+  // PLAYER BOOTY
+  // =========================================================
 
   let playerBooty = 0;
 
+
+  // =========================================================
+  // CURRENT QUESTION
+  // =========================================================
+
+  let currentQuestionIndex = 0;
+
+
+  // =========================================================
+  // STATE
+  // =========================================================
+
   let currentState = "hidden";
-  // "hidden", "prompt", "dismissed", "listening", "quiz"
+
+  /*
+    "hidden"
+    "prompt"
+    "dismissed"
+    "listening"
+    "quiz"
+  */
+
+
+  /*
+    Keeps track of whether the player chose
+    to play POTTY TIME from the victory screen.
+  */
 
   let pottyTimeChosen = false;
+
 
   // =========================================================
   // CONTAINER
   // =========================================================
 
   function injectContainer() {
+
     if (
       document.getElementById(
         CONTAINER_ID
@@ -150,7 +245,9 @@
       box-shadow: 0 8px 30px rgba(0,0,0,0.8);
       text-align: center;
       z-index: 99999;
-      transition: transform 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s ease;
+      transition:
+        transform 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275),
+        opacity 0.3s ease;
     `;
 
     document.body.appendChild(
@@ -158,7 +255,9 @@
     );
   }
 
+
   function showContainer() {
+
     const wrapper =
       document.getElementById(
         CONTAINER_ID
@@ -176,7 +275,9 @@
       "auto";
   }
 
+
   function hideContainer() {
+
     const wrapper =
       document.getElementById(
         CONTAINER_ID
@@ -194,11 +295,13 @@
       "none";
   }
 
+
   // =========================================================
   // POTTY TIME PLAY BUTTON
   // =========================================================
 
   function playPottyTime() {
+
     const rows =
       Array.from(
         document.querySelectorAll(
@@ -208,6 +311,7 @@
 
     const pottyRow =
       rows.find(row => {
+
         const title =
           row.querySelector(
             ".song-title"
@@ -222,6 +326,7 @@
       });
 
     if (!pottyRow) {
+
       console.log(
         "Could not find POTTY TIME in the playlist."
       );
@@ -229,23 +334,38 @@
       return;
     }
 
-    pottyTimeChosen = true;
+    pottyTimeChosen =
+      true;
+
+    /*
+      Scroll POTTY TIME into view first.
+    */
 
     pottyRow.scrollIntoView({
       behavior: "smooth",
       block: "center"
     });
 
+
+    /*
+      Give the scroll a moment to begin,
+      then use the existing row-play system.
+    */
+
     setTimeout(() => {
+
       const title =
         pottyRow.querySelector(
           ".song-title"
         );
 
       if (title) {
+
         title.click();
+
         return;
       }
+
 
       const playButton =
         pottyRow.querySelector(
@@ -253,18 +373,23 @@
         );
 
       if (playButton) {
+
         playButton.click();
       }
+
     }, 350);
+
 
     hideContainer();
   }
+
 
   // =========================================================
   // STATE 1 — INITIAL PROMPT
   // =========================================================
 
   function showPromptState() {
+
     const wrapper =
       document.getElementById(
         CONTAINER_ID
@@ -275,6 +400,12 @@
     currentState =
       "prompt";
 
+
+    /*
+      Start the quiz from Question 1
+      every time a new duel begins.
+    */
+
     currentQuestionIndex =
       0;
 
@@ -284,10 +415,11 @@
     pottyTimeChosen =
       false;
 
-    const duel =
-      activeDuel;
 
-    if (!duel) return;
+    const duel =
+      activeDuel ||
+      MONKEY_JUDGE;
+
 
     wrapper.innerHTML = `
       <div style="
@@ -323,7 +455,10 @@
         margin-bottom: 15px;
         line-height: 1.4;
       ">
-        Captain Black Bear called you a scurvy sea dog.<br>
+        ${duel === DELAWARE
+          ? "Pirate Fox has challenged you, ye scurvy sea dog."
+          : "Captain Black Bear called you a scurvy sea dog."
+        }<br>
 
         <span style="
           color: #c084fc;
@@ -376,18 +511,24 @@
       </div>
     `;
 
+
     showContainer();
+
 
     document.getElementById(
       "start-quiz-optin"
     ).onclick = () => {
+
       playVoiceClip();
+
       showListeningState();
     };
+
 
     document.getElementById(
       "dismiss-quiz-optin"
     ).onclick = () => {
+
       currentState =
         "dismissed";
 
@@ -395,26 +536,34 @@
     };
   }
 
+
   // =========================================================
   // VOICE CLIP
   // =========================================================
 
   function playVoiceClip() {
+
     try {
+
       const audio =
-        new Audio(AUDIO_PATH);
+        new Audio(
+          AUDIO_PATH
+        );
 
       audio.volume =
         1.0;
 
       audio.play().catch(err => {
+
         console.log(
           "Audio play blocked or file path issue:",
           err
         );
+
       });
 
     } catch (e) {
+
       console.log(
         "Could not initialize audio:",
         e
@@ -422,20 +571,25 @@
     }
   }
 
+
   // =========================================================
   // STOP YOUTUBE
   // =========================================================
 
   function stopSong() {
+
     if (
       window.rizneyPlayer &&
       typeof window.rizneyPlayer.pauseVideo ===
         "function"
     ) {
+
       try {
+
         window.rizneyPlayer.pauseVideo();
 
       } catch (e) {
+
         console.log(
           "Could not pause player:",
           e
@@ -444,17 +598,20 @@
     }
   }
 
+
   // =========================================================
   // NEXT TRACK
   // =========================================================
 
   function skipToNextTrack() {
+
     const toolbarNextBtn =
       document.querySelector(
         ".controls button:last-child, .controls [data-action='next'], .controls .next-btn, button[title*='Next'], button[aria-label*='Next']"
       );
 
     if (toolbarNextBtn) {
+
       toolbarNextBtn.click();
 
     } else if (
@@ -462,10 +619,13 @@
       typeof window.rizneyPlayer.nextVideo ===
         "function"
     ) {
+
       try {
+
         window.rizneyPlayer.nextVideo();
 
       } catch (e) {
+
         console.log(
           "Could not skip to next video:",
           e
@@ -474,11 +634,13 @@
     }
   }
 
+
   // =========================================================
   // STATE 2 — LISTENING
   // =========================================================
 
   function showListeningState() {
+
     const wrapper =
       document.getElementById(
         CONTAINER_ID
@@ -488,6 +650,7 @@
 
     currentState =
       "listening";
+
 
     wrapper.innerHTML = `
       <div style="
@@ -517,14 +680,17 @@
       </p>
     `;
 
+
     showContainer();
   }
+
 
   // =========================================================
   // STATE 3 — QUIZ
   // =========================================================
 
   function showQuizState() {
+
     const wrapper =
       document.getElementById(
         CONTAINER_ID
@@ -532,56 +698,71 @@
 
     if (!wrapper) return;
 
-    if (!activeDuel) return;
-
     currentState =
       "quiz";
 
+
     stopSong();
 
+
+    const duel =
+      activeDuel ||
+      MONKEY_JUDGE;
+
+
     const quiz =
-      activeDuel.quiz[
+      duel.quiz[
         currentQuestionIndex
       ];
 
-    if (!quiz) return;
+
+    if (!quiz) {
+
+      return;
+    }
+
 
     const questionNumber =
       currentQuestionIndex + 1;
 
+
     const totalQuestions =
-      activeDuel.quiz.length;
+      duel.quiz.length;
+
 
     const optionsHtml =
       quiz.options
-        .map((opt, index) => {
+        .map(
+          (opt, index) => {
 
-          const letter =
-            String.fromCharCode(
-              65 + index
-            );
+            const letter =
+              String.fromCharCode(
+                65 + index
+              );
 
-          return `
-            <button
-              class="quiz-opt-btn"
-              data-index="${index}"
-              style="
-                padding: 10px;
-                background: #0f0a13;
-                border: 1px solid #c084fc;
-                color: #f5d76e;
-                border-radius: 4px;
-                cursor: pointer;
-                text-align: left;
-                font-family: Georgia, serif;
-                font-size: 1rem;
-              "
-            >
-              ${letter}. ${opt}
-            </button>
-          `;
-        })
+            return `
+              <button
+                class="quiz-opt-btn"
+                data-index="${index}"
+                style="
+                  padding: 10px;
+                  background: #0f0a13;
+                  border: 1px solid #c084fc;
+                  color: #f5d76e;
+                  border-radius: 4px;
+                  cursor: pointer;
+                  text-align: left;
+                  font-family: Georgia, serif;
+                  font-size: 1rem;
+                "
+              >
+                ${letter}. ${opt}
+              </button>
+            `;
+          }
+        )
         .join("");
+
 
     wrapper.innerHTML = `
       <div style="
@@ -633,28 +814,37 @@
       ></div>
     `;
 
+
     showContainer();
+
 
     const buttons =
       wrapper.querySelectorAll(
         ".quiz-opt-btn"
       );
 
+
     buttons.forEach(btn => {
 
       btn.onmouseover = () => {
+
         if (!btn.disabled) {
+
           btn.style.background =
             "#2a1f35";
         }
       };
 
+
       btn.onmouseout = () => {
+
         if (!btn.disabled) {
+
           btn.style.background =
             "#0f0a13";
         }
       };
+
 
       btn.onclick = () => {
 
@@ -664,6 +854,7 @@
             10
           );
 
+
         handleAnswer(
           selectedIndex,
           buttons
@@ -672,6 +863,7 @@
 
     });
   }
+
 
   // =========================================================
   // HANDLE ANSWER
@@ -689,16 +881,24 @@
 
     if (!feedback) return;
 
+
     buttons.forEach(b => {
-      b.disabled = true;
+
+      b.disabled =
+        true;
     });
 
-    if (!activeDuel) return;
+
+    const duel =
+      activeDuel ||
+      MONKEY_JUDGE;
+
 
     const quiz =
-      activeDuel.quiz[
+      duel.quiz[
         currentQuestionIndex
       ];
+
 
     // =======================================================
     // CORRECT ANSWER
@@ -711,13 +911,15 @@
 
       playerBooty += 50;
 
+
       /*
         If there are still questions remaining,
         move to the next question.
       */
+
       if (
         currentQuestionIndex <
-        activeDuel.quiz.length - 1
+        duel.quiz.length - 1
       ) {
 
         feedback.style.color =
@@ -732,7 +934,8 @@
           ">
             🪙 +50 Gold
             &nbsp;•&nbsp;
-            Booty: <strong>${playerBooty}</strong>
+            Booty:
+            <strong>${playerBooty}</strong>
           </span>
 
           <div style="
@@ -744,6 +947,7 @@
           </div>
         `;
 
+
         setTimeout(() => {
 
           currentQuestionIndex++;
@@ -752,19 +956,21 @@
 
         }, 1600);
 
+
         return;
       }
 
+
       // =====================================================
-      // ALL QUESTIONS COMPLETE
+      // DUEL COMPLETE
       // =====================================================
 
       /*
-        Monkey Judge keeps its existing
-        POTTY TIME unlock.
+        ONLY MONKEY JUDGE unlocks POTTY TIME.
       */
+
       if (
-        activeDuel.unlocksPottyTime
+        duel.unlocksPottyTime
       ) {
 
         localStorage.setItem(
@@ -772,17 +978,25 @@
           "true"
         );
 
+
+        /*
+          Tell main.js immediately.
+        */
+
         window.dispatchEvent(
           new CustomEvent(
             "pottyTimeUnlocked"
           )
         );
 
+
         pottyTimeChosen =
           false;
 
+
         feedback.style.color =
           "#51cf66";
+
 
         feedback.innerHTML = `
           <div style="
@@ -825,23 +1039,36 @@
           </button>
         `;
 
+
         const pottyButton =
           document.getElementById(
             "play-potty-time"
           );
 
+
         if (pottyButton) {
+
           pottyButton.onclick =
             playPottyTime;
         }
 
+
+        /*
+          Wait five seconds unless the player
+          chooses PLAY POTTY TIME.
+        */
+
         setTimeout(() => {
 
-          if (pottyTimeChosen) {
+          if (
+            pottyTimeChosen
+          ) {
             return;
           }
 
+
           hideContainer();
+
 
           setTimeout(
             skipToNextTrack,
@@ -850,15 +1077,18 @@
 
         }, 5000);
 
+
         return;
       }
 
+
       // =====================================================
-      // DELAWARE TEST VICTORY
+      // DELAWARE / NON-UNLOCKING VICTORY
       // =====================================================
 
       feedback.style.color =
         "#51cf66";
+
 
       feedback.innerHTML = `
         <div style="
@@ -866,31 +1096,24 @@
           line-height: 1.5;
           margin-bottom: 12px;
         ">
-          🏆 <strong>ARRR! CORRECT!</strong><br>
-          🦊 <strong>THE PIRATE FOX APPROVES.</strong>
+          🏆 <strong>YOU SURVIVED THE PIRATE DUEL!</strong>
         </div>
 
         <div style="
           color: #f5d76e;
           font-size: 1rem;
         ">
+          🦊 The Pirate Fox approves.<br>
           🪙 Booty Secured:
           <strong>+50 Gold</strong>
-          (Total: ${playerBooty})
-        </div>
-
-        <div style="
-          margin-top: 12px;
-          color: #c084fc;
-          font-size: 0.9rem;
-        ">
-          More questions coming...
         </div>
       `;
+
 
       setTimeout(() => {
 
         hideContainer();
+
 
         setTimeout(
           skipToNextTrack,
@@ -899,17 +1122,22 @@
 
       }, 5000);
 
+
       return;
     }
+
 
     // =======================================================
     // WRONG ANSWER
     // =======================================================
 
-    playerBooty = 0;
+    playerBooty =
+      0;
+
 
     feedback.style.color =
       "#ff6b6b";
+
 
     feedback.innerHTML = `
       💥 <strong>WRONG, YE SCURVY DOG!</strong><br>
@@ -931,13 +1159,20 @@
         font-size: 0.95rem;
       ">
         🌊 They plundered your pockets!
-        Booty: <strong>0 Gold</strong>
+        Booty:
+        <strong>0 Gold</strong>
       </span>
     `;
+
+
+    /*
+      Wrong answer ends the duel.
+    */
 
     setTimeout(() => {
 
       hideContainer();
+
 
       setTimeout(
         skipToNextTrack,
@@ -947,80 +1182,6 @@
     }, 5000);
   }
 
-  // =========================================================
-  // IDENTIFY WHICH DUEL IS PLAYING
-  // =========================================================
-
-  function getActiveDuel() {
-
-    if (
-      window.rizneyPlayer &&
-      typeof window.rizneyPlayer.getVideoData ===
-        "function"
-    ) {
-
-      try {
-
-        const data =
-          window.rizneyPlayer.getVideoData();
-
-        if (data) {
-
-          const videoId =
-            String(
-              data.video_id || ""
-            );
-
-          if (
-            videoId ===
-            MONKEY_JUDGE.videoId
-          ) {
-            return MONKEY_JUDGE;
-          }
-
-          if (
-            DELAWARE.videoId &&
-            videoId ===
-            DELAWARE.videoId
-          ) {
-            return DELAWARE;
-          }
-        }
-
-      } catch (e) {}
-    }
-
-    /*
-      Fall back to the visible Now Playing text.
-    */
-    const nowPlaying =
-      document.querySelector(
-        "#now-playing"
-      );
-
-    const text =
-      nowPlaying
-        ? nowPlaying.textContent
-        : "";
-
-    if (
-      text.toLowerCase().includes(
-        MONKEY_JUDGE.title.toLowerCase()
-      )
-    ) {
-      return MONKEY_JUDGE;
-    }
-
-    if (
-      text.toLowerCase().includes(
-        DELAWARE.title.toLowerCase()
-      )
-    ) {
-      return DELAWARE;
-    }
-
-    return null;
-  }
 
   // =========================================================
   // MONITOR SONG STATUS
@@ -1031,12 +1192,14 @@
     const duel =
       getActiveDuel();
 
+
     if (duel) {
 
       /*
-        If we just entered a new duel,
-        reset the state and use that duel.
+        If this is a NEW duel,
+        remember which duel is active.
       */
+
       if (
         activeDuel !== duel
       ) {
@@ -1046,20 +1209,17 @@
 
         currentState =
           "hidden";
-
-        currentQuestionIndex =
-          0;
-
-        playerBooty =
-          0;
       }
+
 
       if (
         currentState ===
         "hidden"
       ) {
+
         showPromptState();
       }
+
 
       if (
         currentState ===
@@ -1080,9 +1240,11 @@
               window.rizneyPlayer
                 .getCurrentTime();
 
+
             const duration =
               window.rizneyPlayer
                 .getDuration();
+
 
             if (
               duration > 0 &&
@@ -1098,6 +1260,7 @@
         } catch (e) {}
       }
 
+
     } else {
 
       if (
@@ -1111,10 +1274,12 @@
           "hidden";
       }
 
+
       activeDuel =
         null;
     }
   }
+
 
   // =========================================================
   // INITIALIZATION
@@ -1124,11 +1289,13 @@
 
     injectContainer();
 
+
     setInterval(
       checkSongStatus,
       1000
     );
   }
+
 
   if (
     document.readyState ===
