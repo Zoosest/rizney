@@ -9,8 +9,8 @@
   const TARGET_TITLE = "Monkey Judge";
   const CONTAINER_ID = "simple-quiz-container";
   
-  // Path to your voice asset (adjust path if needed, e.g., "./assets/..." or "/assets/...")
-  const AUDIO_PATH = "./assets/you-dont-know-track.mp3";
+  // Updated with capital Y in You-dont-know-track.mp3
+  const AUDIO_PATH = "./assets/You-dont-know-track.mp3";
 
   const QUIZ = {
     question: "Fill in the blank: 'Monkey judge, monkey jury, ____.'",
