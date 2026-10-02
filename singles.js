@@ -677,6 +677,21 @@
 
 
   // =========================================================
+  // CONTINUE ALBUM
+  // =========================================================
+
+  function continueAlbum() {
+
+    hideContainer();
+
+    setTimeout(
+      skipToNextTrack,
+      300
+    );
+  }
+
+
+  // =========================================================
   // STATE 1 — INITIAL PROMPT
   // =========================================================
 
@@ -1305,23 +1320,47 @@
             POTTY TIME UNLOCKED!
           </div>
 
-          <button
-            id="play-potty-time"
-            style="
-              padding: 11px 22px;
-              background: #c084fc;
-              color: #120b18;
-              border: none;
-              border-radius: 5px;
-              font-weight: bold;
-              cursor: pointer;
-              font-family: Georgia, serif;
-              font-size: 1rem;
-              box-shadow: 0 3px 10px rgba(0,0,0,0.4);
-            "
-          >
-            🚽 PLAY POTTY TIME
-          </button>
+          <div style="
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+          ">
+            <button
+              id="play-potty-time"
+              style="
+                padding: 11px 22px;
+                background: #c084fc;
+                color: #120b18;
+                border: none;
+                border-radius: 5px;
+                font-weight: bold;
+                cursor: pointer;
+                font-family: Georgia, serif;
+                font-size: 1rem;
+                box-shadow: 0 3px 10px rgba(0,0,0,0.4);
+              "
+            >
+              🚽 PLAY POTTY TIME
+            </button>
+
+            <button
+              id="continue-album"
+              style="
+                padding: 11px 22px;
+                background: transparent;
+                color: #a78bfa;
+                border: 1px solid #7c3aed;
+                border-radius: 5px;
+                font-weight: bold;
+                cursor: pointer;
+                font-family: Georgia, serif;
+                font-size: 1rem;
+              "
+            >
+              CONTINUE ALBUM
+            </button>
+          </div>
         `;
 
 
@@ -1338,24 +1377,17 @@
         }
 
 
-        setTimeout(() => {
-
-          if (
-            pottyTimeChosen
-          ) {
-            return;
-          }
-
-
-          hideContainer();
-
-
-          setTimeout(
-            skipToNextTrack,
-            300
+        const continueButton =
+          document.getElementById(
+            "continue-album"
           );
 
-        }, 5000);
+
+        if (continueButton) {
+
+          continueButton.onclick =
+            continueAlbum;
+        }
 
 
         return;
@@ -1400,23 +1432,47 @@
             NICE & SLOW UNLOCKED!
           </div>
 
-          <button
-            id="play-nice-and-slow"
-            style="
-              padding: 11px 22px;
-              background: #c084fc;
-              color: #120b18;
-              border: none;
-              border-radius: 5px;
-              font-weight: bold;
-              cursor: pointer;
-              font-family: Georgia, serif;
-              font-size: 1rem;
-              box-shadow: 0 3px 10px rgba(0,0,0,0.4);
-            "
-          >
-            🐌 PLAY NICE & SLOW
-          </button>
+          <div style="
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+          ">
+            <button
+              id="play-nice-and-slow"
+              style="
+                padding: 11px 22px;
+                background: #c084fc;
+                color: #120b18;
+                border: none;
+                border-radius: 5px;
+                font-weight: bold;
+                cursor: pointer;
+                font-family: Georgia, serif;
+                font-size: 1rem;
+                box-shadow: 0 3px 10px rgba(0,0,0,0.4);
+              "
+            >
+              🐌 PLAY NICE & SLOW
+            </button>
+
+            <button
+              id="continue-album"
+              style="
+                padding: 11px 22px;
+                background: transparent;
+                color: #a78bfa;
+                border: 1px solid #7c3aed;
+                border-radius: 5px;
+                font-weight: bold;
+                cursor: pointer;
+                font-family: Georgia, serif;
+                font-size: 1rem;
+              "
+            >
+              CONTINUE ALBUM
+            </button>
+          </div>
         `;
 
 
@@ -1433,24 +1489,17 @@
         }
 
 
-        setTimeout(() => {
-
-          if (
-            niceAndSlowChosen
-          ) {
-            return;
-          }
-
-
-          hideContainer();
-
-
-          setTimeout(
-            skipToNextTrack,
-            300
+        const continueButton =
+          document.getElementById(
+            "continue-album"
           );
 
-        }, 5000);
+
+        if (continueButton) {
+
+          continueButton.onclick =
+            continueAlbum;
+        }
 
 
         return;
@@ -1495,23 +1544,47 @@
             A ROLLING STONE GATHERS NO MAS UNLOCKED!
           </div>
 
-          <button
-            id="play-rolling-stone"
-            style="
-              padding: 11px 22px;
-              background: #c084fc;
-              color: #120b18;
-              border: none;
-              border-radius: 5px;
-              font-weight: bold;
-              cursor: pointer;
-              font-family: Georgia, serif;
-              font-size: 1rem;
-              box-shadow: 0 3px 10px rgba(0,0,0,0.4);
-            "
-          >
-            💀 PLAY A ROLLING STONE GATHERS NO MAS
-          </button>
+          <div style="
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+          ">
+            <button
+              id="play-rolling-stone"
+              style="
+                padding: 11px 22px;
+                background: #c084fc;
+                color: #120b18;
+                border: none;
+                border-radius: 5px;
+                font-weight: bold;
+                cursor: pointer;
+                font-family: Georgia, serif;
+                font-size: 1rem;
+                box-shadow: 0 3px 10px rgba(0,0,0,0.4);
+              "
+            >
+              💀 PLAY A ROLLING STONE GATHERS NO MAS
+            </button>
+
+            <button
+              id="continue-album"
+              style="
+                padding: 11px 22px;
+                background: transparent;
+                color: #a78bfa;
+                border: 1px solid #7c3aed;
+                border-radius: 5px;
+                font-weight: bold;
+                cursor: pointer;
+                font-family: Georgia, serif;
+                font-size: 1rem;
+              "
+            >
+              CONTINUE ALBUM
+            </button>
+          </div>
         `;
 
 
@@ -1528,24 +1601,17 @@
         }
 
 
-        setTimeout(() => {
-
-          if (
-            rollingStoneChosen
-          ) {
-            return;
-          }
-
-
-          hideContainer();
-
-
-          setTimeout(
-            skipToNextTrack,
-            300
+        const continueButton =
+          document.getElementById(
+            "continue-album"
           );
 
-        }, 5000);
+
+        if (continueButton) {
+
+          continueButton.onclick =
+            continueAlbum;
+        }
 
 
         return;
@@ -1563,19 +1629,6 @@
       feedback.innerHTML = `
         <strong>DUEL COMPLETE!</strong>
       `;
-
-
-      setTimeout(() => {
-
-        hideContainer();
-
-
-        setTimeout(
-          skipToNextTrack,
-          300
-        );
-
-      }, 3000);
 
 
       return;
