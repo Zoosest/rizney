@@ -76,28 +76,34 @@
     wrapper.style.pointerEvents = "none";
   } 
 
-  // State 1: The initial opt-in banner with Captain Black Bear
+  // State 1: The initial opt-in banner with full-box Captain Black Bear
   function showPromptState() {
     const wrapper = document.getElementById(CONTAINER_ID);
     if (!wrapper) return;
     currentState = "prompt"; 
 
     wrapper.innerHTML = `
-      <div style="display: flex; flex-direction: column; align-items: center; gap: 12px; margin-bottom: 15px;">
+      <div style="font-size: 1.1rem; font-weight: bold; color: #c084fc; margin-bottom: 12px;">
+        ⚔️ PIRATE DUEL CHALLENGE: Monkey Judge
+      </div>
+      
+      <!-- Full box image container -->
+      <div style="width: 100%; max-height: 240px; overflow: hidden; border-radius: 6px; border: 1px solid #d4af37; margin-bottom: 15px; background: #000;">
         <img src="./assets/black-bear.png" alt="Captain Black Bear" style="
-          width: 90px;
-          height: 90px;
+          width: 100%;
+          height: auto;
+          max-height: 240px;
           object-fit: cover;
-          border-radius: 50%;
-          border: 2px solid #d4af37;
-          box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+          display: block;
           image-rendering: pixelated;
         ">
-        <div style="font-size: 1.15rem; font-weight: bold; color: #c084fc; line-height: 1.4;">
-          Captain Black Bear called you a scurvy sea dog.<br>
-          <span style="color: #f5d76e; font-size: 1.25rem;">Duel?</span>
-        </div>
       </div>
+
+      <div style="font-size: 1.15rem; font-weight: bold; color: #f5d76e; margin-bottom: 15px; line-height: 1.4;">
+        Captain Black Bear called you a scurvy sea dog.<br>
+        <span style="color: #c084fc; font-size: 1.25rem;">Duel?</span>
+      </div>
+
       <div style="display: flex; gap: 12px; justify-content: center; align-items: center;">
         <button id="start-quiz-optin" style="
           padding: 10px 24px;
