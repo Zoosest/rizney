@@ -529,6 +529,36 @@
         box-sizing: border-box;
       }
 
+      /*
+        =======================================================
+        🔒 POTTY TIME — LOCKED VISUAL
+        =======================================================
+      */
+
+      #song-list .song.rizney-potty-locked .song-title,
+      #song-list .song.rizney-potty-locked .song-title small {
+        color: rgba(180, 180, 180, 0.45) !important;
+      }
+
+      #song-list .song.rizney-potty-locked .song-number {
+        color: rgba(180, 180, 180, 0.4) !important;
+      }
+
+      #song-list .song.rizney-potty-locked .animal-button {
+        opacity: 0.35;
+        filter: grayscale(1);
+      }
+
+      #song-list .song.rizney-potty-locked {
+        cursor: not-allowed;
+      }
+
+      #song-list .song.rizney-potty-locked .song-title,
+      #song-list .song.rizney-potty-locked .animal-button,
+      #song-list .song.rizney-potty-locked .song-number {
+        cursor: not-allowed;
+      }
+
       #cards {
         display: grid;
         grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -851,6 +881,7 @@
               () => {
                 updateSongRowNumbersOnly();
                 restoreRoadworkRows();
+                updatePottyTimeLock();
               }
             );
           }
@@ -937,6 +968,63 @@
       info &&
       info[0] === "POTTY TIME"
     );
+  }
+
+  /*
+    🔒 Apply or remove the visible POTTY TIME lock.
+  */
+  function updatePottyTimeLock() {
+    const rows = songRows();
+
+    rows.forEach(row => {
+      if (!isPottyTimeRow(row)) {
+        return;
+      }
+
+      const locked =
+        !isPottyTimeUnlocked();
+
+      row.classList.toggle(
+        "rizney-potty-locked",
+        locked
+      );
+    });
+  }
+
+  /*
+    Watch for the pirate game unlocking POTTY TIME.
+
+    Because localStorage changes made by another
+    script in the SAME page do not fire a normal
+    "storage" event, we check periodically until
+    the unlock happens.
+
+    Once POTTY TIME is unlocked, the timer stops.
+  */
+  let pottyTimeLockWatcher = null;
+
+  function setupPottyTimeLockWatching() {
+    updatePottyTimeLock();
+
+    if (isPottyTimeUnlocked()) {
+      return;
+    }
+
+    pottyTimeLockWatcher =
+      window.setInterval(() => {
+        updatePottyTimeLock();
+
+        if (isPottyTimeUnlocked()) {
+          window.clearInterval(
+            pottyTimeLockWatcher
+          );
+
+          pottyTimeLockWatcher =
+            null;
+
+          updatePottyTimeLock();
+        }
+      }, 500);
   }
 
   /* =========================================================
@@ -1028,7 +1116,21 @@
       isPottyTimeRow(row) &&
       !isPottyTimeUnlocked()
     ) {
+      row.classList.add(
+        "rizney-potty-locked"
+      );
+
       return;
+    }
+
+    /*
+      If POTTY TIME is unlocked, make sure
+      the visual lock is removed immediately.
+    */
+    if (isPottyTimeRow(row)) {
+      row.classList.remove(
+        "rizney-potty-locked"
+      );
     }
 
     const playButton =
@@ -1406,6 +1508,12 @@
       after the row contents are updated.
     */
     restoreRoadworkRows();
+
+    /*
+      Re-apply the POTTY TIME visual lock
+      after the row contents are updated.
+    */
+    updatePottyTimeLock();
   }
 
   /* =========================================================
@@ -1467,6 +1575,12 @@
       Make sure roadwork survives icon updates.
     */
     restoreRoadworkRows();
+
+    /*
+      Make sure POTTY TIME remains visibly locked
+      after icon updates.
+    */
+    updatePottyTimeLock();
   }
 
   /* =========================================================
@@ -2003,6 +2117,11 @@
     setupRoadworkWatching();
 
     /*
+      Start the POTTY TIME visual lock.
+    */
+    setupPottyTimeLockWatching();
+
+    /*
       Set up the CARDS toggle before the
       MutationObserver begins watching for cards.
     */
@@ -2017,6 +2136,11 @@
       else has initialized.
     */
     restoreRoadworkRows();
+
+    /*
+      Final POTTY TIME visual-lock pass.
+    */
+    updatePottyTimeLock();
   }
 
   if (
