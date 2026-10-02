@@ -1,5 +1,5 @@
 /* =========================================================
-   "YOU DON'T KNOW TRACK" - WITH HEADER SCOREBOARD
+   "YOU DON'T KNOW TRACK" - BOTTOM HEADER SCOREBOARD & COMPLETION BONUS
    ========================================================= */
 
 (() => {
@@ -24,8 +24,8 @@
   };
 
   let currentState = "hidden"; // "hidden", "prompt", "dismissed", "listening", "quiz"
+  let hasAwardedCompletionBonus = false; // Tracks if +5 was already given for this playback session
 
-  // Initialize or retrieve score (starts at 100 if none exists)
   function getScore() {
     let score = localStorage.getItem(SCORE_STORAGE_KEY);
     if (score === null) {
@@ -42,7 +42,7 @@
     renderScoreboard();
   }
 
-  // Create or update the scoreboard in your header
+  // Render score badge at the bottom of the header
   function renderScoreboard() {
     let scoreEl = document.getElementById("ydkt-score-display");
     
@@ -61,16 +61,18 @@
         align-items: center;
         gap: 6px;
         box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+        margin: 10px auto;
       `;
 
-      // Try to insert it into a header element, otherwise stick it top-right of the body
-      const headerAnchor = document.querySelector("header") || document.body.firstElementChild;
+      // Places it at the bottom of the header if found, otherwise centers it near the top
+      const headerAnchor = document.querySelector("header");
       if (headerAnchor) {
         headerAnchor.appendChild(scoreEl);
       } else {
         scoreEl.style.position = "fixed";
         scoreEl.style.top = "15px";
-        scoreEl.style.right = "15px";
+        scoreEl.style.left = "50%";
+        scoreEl.style.transform = "translateX(-50%)";
         scoreEl.style.zIndex = "99999";
         document.body.appendChild(scoreEl);
       }
@@ -124,11 +126,11 @@
     wrapper.style.pointerEvents = "none";
   }
 
-  // State 1: The initial opt-in banner
   function showPromptState() {
     const wrapper = document.getElementById(CONTAINER_ID);
     if (!wrapper) return;
     currentState = "prompt";
+    hasAwardedCompletionBonus = false; // Reset bonus tracker for new playback
 
     wrapper.innerHTML = `
       <div style="font-size: 1.1rem; font-weight: bold; color: #c084fc; margin-bottom: 12px;">
@@ -169,6 +171,8 @@
 
     document.getElementById("dismiss-quiz-optin").onclick = () => {
       currentState = "dismissed";
+      // Give +5 completion bonus for listening if they dismiss and finish the song
+      awardCompletionBonus();
       hideContainer();
     };
   }
@@ -206,6 +210,13 @@
       } catch (e) {
         console.log("Could not skip to next video:", e);
       }
+    }
+  }
+
+  function awardCompletionBonus() {
+    if (!hasAwardedCompletionBonus) {
+      hasAwardedCompletionBonus = true;
+      updateScore(5);
     }
   }
 
@@ -287,6 +298,9 @@
       updateScore(-25);
     }
 
+    // Award completion bonus (+5) for finishing the song journey
+    awardCompletionBonus();
+
     setTimeout(() => {
       hideContainer();
       setTimeout(skipToNextTrack, 300);
@@ -332,6 +346,10 @@
 
     } else {
       if (currentState !== "hidden") {
+        // If they listened all the way through without answering or dismissing before song end
+        if (currentState === "dismissed") {
+          awardCompletionBonus();
+        }
         hideContainer();
         currentState = "hidden";
       }
@@ -339,7 +357,7 @@
   }
 
   function init() {
-    renderScoreboard(); // Render the score in the header immediately on load
+    renderScoreboard();
     injectContainer();
     setInterval(checkSongStatus, 1000);
   }
