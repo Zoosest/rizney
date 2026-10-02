@@ -1,176 +1,146 @@
 /* =========================================================
-   SINGLES
-   YOU DON'T KNOW TRACK
-
-   First test:
-   #114 — Monkey Judge 🐒⚖
-   YouTube ID: SHhsdD5viWs
-
-   This file is intentionally standalone.
-   It does not modify main.js.
-   It does not modify whack-a-track.js.
+   SINGLES: YOU DON'T KNOW TRACK
+   Fresh start implementation for Track #114 (Monkey Judge)
    ========================================================= */
 
 (() => {
   "use strict";
 
-  const SINGLE_TRACK_NUMBER = 114;
-  const SINGLE_VIDEO_ID = "SHhsdD5viWs";
-  const BANNER_ID = "singles-banner";
-  const STORAGE_KEY = "singles_arcade_score";
+  const TRACK_NUMBER = 114;
+  const VIDEO_ID = "SHhsdD5viWs";
+  const BANNER_ID = "singles-game-banner";
 
-  const $ = selector => document.querySelector(selector);
-
-  /* =========================================================
-     SCORE SYSTEM (LOCAL STORAGE)
-     ========================================================= */
-
-  function getScore() {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    return saved !== null ? parseInt(saved, 10) : 0;
-  }
-
-  function renderScoreDisplay() {
-    let scoreEl = $(`#${BANNER_ID}-score`);
-    const banner = $(`#${BANNER_ID}`);
-    
-    if (!banner) return;
-
-    if (!scoreEl) {
-      scoreEl = document.createElement("div");
-      scoreEl.id = `${BANNER_ID}-score`;
-      banner.appendChild(scoreEl);
-    }
-
-    scoreEl.textContent = `SCORE: ${getScore()}`;
-  }
+  const $ = (selector) => document.querySelector(selector);
 
   /* =========================================================
-     CREATE BANNER
+     CREATE THE BANNER
      ========================================================= */
 
   function createBanner() {
-    const existing = $(`#${BANNER_ID}`);
-    if (existing) return existing;
+    let banner = $(`#${BANNER_ID}`);
+    if (banner) return banner;
 
-    const banner = document.createElement("section");
+    banner = document.createElement("div");
     banner.id = BANNER_ID;
-    banner.setAttribute("aria-label", "Singles Arcade Banner");
-
     banner.innerHTML = `
-      <div class="singles-banner-main">
-        YOU DON'T KNOW TRACK
-      </div>
-      <div class="singles-banner-label">
-        🎤 SINGLES MODE ACTIVE
+      <div class="singles-inner">
+        <span class="singles-icon">🎤</span>
+        <span class="singles-text">PLAY "YOU DON'T KNOW TRACK"</span>
       </div>
     `;
 
+    // Clean, self-contained styling for the sticky banner
     const style = document.createElement("style");
     style.textContent = `
       #${BANNER_ID} {
-        display: none; /* Hidden by default until Monkey Judge plays */
+        display: none;
         width: 100%;
-        box-sizing: border-box;
-        margin: 0;
-        padding: 8px 12px;
-        text-align: center;
-        color: #f5d76e;
         background: #120b18;
-        border-top: 1px solid #d4af37;
-        border-bottom: 1px solid #d4af37;
-        font-family: Georgia, "Times New Roman", serif;
-        box-shadow: 0 4px 14px rgba(0,0,0,.45);
-        
-        /* Sticky anchor right under your main toolbar */
-        position: sticky;
-        top: 50px; /* Adjust if your toolbar height differs slightly */
-        z-index: 999;
-      }
-
-      #${BANNER_ID} .singles-banner-main {
-        font-size: 0.95rem;
-        font-weight: bold;
-        letter-spacing: .12em;
-      }
-
-      #${BANNER_ID} .singles-banner-label {
-        margin-top: 2px;
-        color: #c084fc;
-        font-size: .65rem;
-        letter-spacing: .16em;
-      }
-
-      #${BANNER_ID}-score {
-        margin-top: 4px;
         color: #f5d76e;
-        font-size: 0.8rem;
-        letter-spacing: .1em;
+        border-bottom: 2px solid #d4af37;
+        padding: 10px 16px;
+        text-align: center;
+        font-family: Georgia, serif;
+        box-sizing: border-box;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+        
+        /* Sticky positioning directly under your main toolbar */
+        position: sticky;
+        top: 55px; /* Adjust this value if your sticky toolbar height differs */
+        z-index: 1000;
+      }
+
+      #${BANNER_ID} .singles-inner {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        cursor: pointer;
+      }
+
+      #${BANNER_ID} .singles-text {
         font-weight: bold;
+        letter-spacing: 0.12em;
+        font-size: 0.95rem;
+      }
+
+      #${BANNER_ID} .singles-icon {
+        font-size: 1.1rem;
+      }
+
+      #${BANNER_ID}:hover {
+        background: #1e122b;
       }
     `;
     document.head.appendChild(style);
 
-    // Find the sticky toolbar or header to place the banner right below it
+    // Anchor right below your sticky controls/toolbar
     const toolbar = $(".controls") \vert{}\vert{} $("header") || document.body.firstElementChild;
-
     if (toolbar && toolbar !== document.body) {
       toolbar.insertAdjacentElement("afterend", banner);
     } else {
       document.body.prepend(banner);
     }
 
-    renderScoreDisplay();
+    // Optional click action stub for when you add the minigame interaction later
+    banner.addEventListener("click", () => {
+      console.log("Singles banner clicked! Ready for minigame questions.");
+    });
+
     return banner;
   }
 
+
   /* =========================================================
-     DETECT MONKEY JUDGE
+     DETECT "MONKEY JUDGE" PLAYING
      ========================================================= */
 
-  function isMonkeyJudgePlaying() {
+  function isSinglePlaying() {
+    // 1. Check the active YouTube player state
     const player = window.rizneyPlayer;
-
     if (player && typeof player.getVideoData === "function") {
       try {
         const data = player.getVideoData();
         if (data && data.video_id) {
-          return String(data.video_id) === SINGLE_VIDEO_ID;
+          return String(data.video_id) === VIDEO_ID;
         }
-      } catch (error) {}
+      } catch (e) {}
     }
 
+    // 2. Fallback check on #now-playing text
     const nowPlaying = $("#now-playing");
     if (!nowPlaying) return false;
 
-    return nowPlaying.textContent.includes(`Song ${SINGLE_TRACK_NUMBER}`);
+    const text = nowPlaying.textContent;
+    return text.includes(`Song ${TRACK_NUMBER}`) || text.includes("Monkey Judge");
   }
 
+
   /* =========================================================
-     UPDATE BANNER VISIBILITY (IN-PLACE, NO SCROLL)
+     UPDATE BANNER STATE (NO PAGE JUMPS)
      ========================================================= */
 
-  function updateBanner() {
-    const banner = createBanner(); // Ensures it exists in the DOM
+  function updateBannerState() {
+    const banner = createBanner();
     if (!banner) return;
 
-    const singlesActive = isMonkeyJudgePlaying();
+    const active = isSinglePlaying();
+    const targetDisplay = active ? "block" : "none";
 
-    // Toggle display without triggering any scroll behaviors
-    const targetDisplay = singlesActive ? "block" : "none";
     if (banner.style.display !== targetDisplay) {
       banner.style.display = targetDisplay;
     }
   }
 
+
   /* =========================================================
-     INIT
+     INITIALIZE
      ========================================================= */
 
   function init() {
     createBanner();
-    updateBanner();
-    window.setInterval(updateBanner, 500);
+    updateBannerState();
+    window.setInterval(updateBannerState, 500);
   }
 
   if (document.readyState === "loading") {
