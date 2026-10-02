@@ -22,7 +22,7 @@
   const STORAGE_KEY = "singles::ledger_v1";
 
   const POINTS_PER_CORRECT = 100;
-  const POINTS_PER_INCORRECT = -10; // small penalty
+  const POINTS_PER_INCORRECT = -10;
   const QUARTERS_PER_CORRECT = 1;
 
   let singlesWasActive = false;
@@ -65,7 +65,6 @@
         quarters: typeof parsed.quarters === "number" ? parsed.quarters : 0
       };
     } catch (e) {
-      // Storage not available or corrupted; fall back to defaults
       return { score: 0, quarters: 0 };
     }
   }
@@ -76,9 +75,7 @@
         score: Math.max(0, Math.round(ledger.score || 0)),
         quarters: Math.max(0, Math.round(ledger.quarters || 0))
       }));
-    } catch (e) {
-      // ignore storage errors
-    }
+    } catch (e) {}
   }
 
   function adjustLedger(deltaScore = 0, deltaQuarters = 0) {
@@ -206,7 +203,6 @@
     const container = $("#singles-question-container");
     if (!modal || !container) return;
 
-    // Build question and options
     container.innerHTML = `<div class="singles-modal-question">${escapeHtml(TRIVIA_DATA.question)}</div>`;
     TRIVIA_DATA.options.forEach((opt, idx) => {
       const btn = document.createElement("button");
@@ -218,12 +214,10 @@
       container.appendChild(btn);
     });
 
-    // show modal and focus first option
     modal.style.display = "flex";
     const firstBtn = modal.querySelector(".singles-option-btn");
     if (firstBtn) firstBtn.focus();
 
-    // Escape key closes modal
     escapeHandler = (ev) => {
       if (ev.key === "Escape") closeTriviaModal();
     };
@@ -235,10 +229,8 @@
     const container = $("#singles-question-container");
     if (!modal || !container) return;
 
-    // Disable all option buttons to prevent double-clicks
     modal.querySelectorAll(".singles-option-btn").forEach(b => b.disabled = true);
 
-    // Show feedback and update ledger
     if (option.correct) {
       container.innerHTML = `<div class="singles-feedback correct">🎉 CORRECT! THE JUDGE HAS SPOKEN: WELL PLAYED!</div>`;
       adjustLedger(POINTS_PER_CORRECT, QUARTERS_PER_CORRECT);
@@ -247,7 +239,6 @@
       adjustLedger(POINTS_PER_INCORRECT, 0);
     }
 
-    // Auto-close after a short pause
     setTimeout(() => {
       closeTriviaModal();
     }, 1400);
@@ -263,7 +254,6 @@
       escapeHandler = null;
     }
 
-    // Return focus to the banner if present
     const banner = $(`#${BANNER_ID}`);
     if (banner) banner.focus();
   }
@@ -279,9 +269,8 @@
     const banner = document.createElement("section");
     banner.id = BANNER_ID;
     banner.setAttribute("aria-label", "Singles — You Don't Know Track");
-    banner.setAttribute("tabindex", "0"); // make focusable for keyboard activation
+    banner.setAttribute("tabindex", "0");
 
-    // Banner inner layout: left text + right ledger badges
     banner.innerHTML = `
       <div class="singles-inner">
         <div class="singles-left">
@@ -363,7 +352,6 @@
 
     document.head.appendChild(style);
 
-    // Click / keyboard activation
     banner.addEventListener("click", () => openTriviaModal());
     banner.addEventListener("keydown", (ev) => {
       if (ev.key === "Enter" || ev.key === " ") {
@@ -372,29 +360,24 @@
       }
     });
 
-    // Insert under .controls if present, otherwise top of body
     const controls = $(".controls");
     if (controls && controls.parentElement) {
       try {
         controls.insertAdjacentElement("afterend", banner);
       } catch (e) {
-        // fallback
         document.body.prepend(banner);
       }
     } else {
       document.body.prepend(banner);
     }
 
-    // Create modal and update ledger display initially
     createTriviaModal();
     updateBannerLedgerDisplay(loadLedger());
 
-    // set CSS variable --singles-top to height of .controls (robust to resizing)
     const updateTop = () => {
       const tb = $(".controls");
       if (tb) {
         const rect = tb.getBoundingClientRect();
-        // Use height + computed margin top/bottom if needed — height is usually fine
         document.documentElement.style.setProperty("--singles-top", `${Math.round(rect.height)}px`);
       } else {
         document.documentElement.style.setProperty("--singles-top", `0px`);
@@ -403,13 +386,12 @@
     updateTop();
     window.addEventListener("resize", updateTop);
 
-    // Keep it updated if toolbar changes via ResizeObserver
     const toolbar = $(".controls");
     if (toolbar && typeof ResizeObserver === "function") {
       try {
         const ro = new ResizeObserver(updateTop);
         ro.observe(toolbar);
-      } catch (e) { /* ignore observer errors */ }
+      } catch (e) {}
     }
 
     return banner;
@@ -430,6 +412,7 @@
 
   function isMonkeyJudgePlaying() {
     try {
+      // 1. Check YouTube player API object directly
       const player = window.rizneyPlayer;
       if (player && typeof player.getVideoData === "function") {
         try {
@@ -437,14 +420,14 @@
           if (data && data.video_id) {
             return String(data.video_id) === SINGLE_VIDEO_ID;
           }
-        } catch (e) {
-          // ignore
-        }
+        } catch (e) {}
       }
 
+      // 2. Fallback: Check #now-playing text content for title or ID
       const nowPlaying = $("#now-playing");
       if (!nowPlaying) return false;
-      return nowPlaying.textContent.includes(`Song ${SINGLE_TRACK_NUMBER}`);
+      const text = nowPlaying.textContent;
+      return text.includes("Monkey Judge") || text.includes(SINGLE_VIDEO_ID);
     } catch (e) {
       return false;
     }
@@ -461,15 +444,13 @@
 
       if (!singlesWasActive) {
         singlesWasActive = true;
-        // scroll into view once when it first appears
         setTimeout(() => {
           try {
             banner.scrollIntoView({ behavior: "smooth", block: "start" });
-          } catch (e) { /* ignore */ }
+          } catch (e) {}
         }, 120);
       }
     } else {
-      // Hide banner and modal; reset flag
       singlesWasActive = false;
       banner.style.display = "none";
       const modal = $(`#${MODAL_ID}`);
@@ -492,7 +473,6 @@
   function startWatching() {
     createBanner();
     updateBannerVisibility();
-    // Poll every 500ms for player changes (safe, low-frequency)
     window.setInterval(updateBannerVisibility, 500);
   }
 
