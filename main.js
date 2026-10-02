@@ -30,6 +30,12 @@
     "pottyTimeUnlocked";
 
   /*
+    Delaware Pirate Duel unlocks NICE & SLOW.
+  */
+  const NICE_AND_SLOW_UNLOCK_KEY =
+    "niceAndSlowUnlocked";
+
+  /*
     Song information is kept in chronological order.
     The first entry [index 0] is your intro track, followed by your animal-icon songs.
   */
@@ -559,6 +565,36 @@
         cursor: not-allowed;
       }
 
+      /*
+        =======================================================
+        🔒 NICE & SLOW — LOCKED VISUAL
+        =======================================================
+      */
+
+      #song-list .song.rizney-nice-slow-locked .song-title,
+      #song-list .song.rizney-nice-slow-locked .song-title small {
+        color: rgba(180, 180, 180, 0.45) !important;
+      }
+
+      #song-list .song.rizney-nice-slow-locked .song-number {
+        color: rgba(180, 180, 180, 0.4) !important;
+      }
+
+      #song-list .song.rizney-nice-slow-locked .animal-button {
+        opacity: 0.35;
+        filter: grayscale(1);
+      }
+
+      #song-list .song.rizney-nice-slow-locked {
+        cursor: not-allowed;
+      }
+
+      #song-list .song.rizney-nice-slow-locked .song-title,
+      #song-list .song.rizney-nice-slow-locked .animal-button,
+      #song-list .song.rizney-nice-slow-locked .song-number {
+        cursor: not-allowed;
+      }
+
       #cards {
         display: grid;
         grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -852,12 +888,6 @@
       return;
     }
 
-    /*
-      Watch for the song list being rebuilt.
-      When main/index code creates fresh rows,
-      immediately restore any tracks already
-      defeated in Whack-A-Track.
-    */
     const observer =
       new MutationObserver(
         mutations => {
@@ -882,6 +912,7 @@
                 updateSongRowNumbersOnly();
                 restoreRoadworkRows();
                 updatePottyTimeLock();
+                updateNiceAndSlowLock();
               }
             );
           }
@@ -899,11 +930,6 @@
     restoreRoadworkRows();
   }
 
-  /*
-    This only makes sure the row numbers are
-    available for Whack-A-Track restoration.
-    It does not alter the visible song numbers.
-  */
   function updateSongRowNumbersOnly() {
     const rows = songRows();
 
@@ -944,19 +970,6 @@
       return false;
     }
 
-    /*
-      FIX:
-      SONG_INFO[0] is the intro track.
-      The visible playlist numbering starts
-      at SONG_INFO[1].
-
-      Therefore:
-        visible Song 1 -> SONG_INFO[1]
-        visible Song 2 -> SONG_INFO[2]
-        etc.
-
-      We must NOT subtract 1 here.
-    */
     const info =
       SONG_INFO[songIndex];
 
@@ -974,15 +987,6 @@
       return false;
     }
 
-    /*
-      FIX:
-      Music Reading card song numbers use the
-      same visible-song numbering.
-
-      SONG_INFO[0] is the intro, so the visible
-      song number maps directly to SONG_INFO
-      at that same index.
-    */
     const info =
       SONG_INFO[songNumber];
 
@@ -992,9 +996,6 @@
     );
   }
 
-  /*
-    🔒 Apply or remove the visible POTTY TIME lock.
-  */
   function updatePottyTimeLock() {
     const rows = songRows();
 
@@ -1013,16 +1014,6 @@
     });
   }
 
-  /*
-    Watch for the pirate game unlocking POTTY TIME.
-
-    Because localStorage changes made by another
-    script in the SAME page do not fire a normal
-    "storage" event, we check periodically until
-    the unlock happens.
-
-    Once POTTY TIME is unlocked, the timer stops.
-  */
   let pottyTimeLockWatcher = null;
 
   function setupPottyTimeLockWatching() {
@@ -1047,6 +1038,76 @@
           updatePottyTimeLock();
         }
       }, 500);
+  }
+
+  /* =========================================================
+     NICE & SLOW UNLOCK
+     ========================================================= */
+
+  function isNiceAndSlowUnlocked() {
+    return (
+      localStorage.getItem(
+        NICE_AND_SLOW_UNLOCK_KEY
+      ) === "true"
+    );
+  }
+
+  function isNiceAndSlowRow(row) {
+    if (!row) {
+      return false;
+    }
+
+    const songIndex =
+      Number(
+        row.dataset.songIndex
+      );
+
+    if (
+      !Number.isInteger(songIndex) ||
+      songIndex < 1
+    ) {
+      return false;
+    }
+
+    const info =
+      SONG_INFO[songIndex];
+
+    return (
+      info &&
+      info[0] === "Nice & Slow"
+    );
+  }
+
+  function isNiceAndSlowSongNumber(songNumber) {
+    if (
+      !Number.isInteger(songNumber) ||
+      songNumber < 1
+    ) {
+      return false;
+    }
+
+    const info =
+      SONG_INFO[songNumber];
+
+    return (
+      info &&
+      info[0] === "Nice & Slow"
+    );
+  }
+
+  function updateNiceAndSlowLock() {
+    const rows = songRows();
+
+    rows.forEach(row => {
+      if (!isNiceAndSlowRow(row)) {
+        return;
+      }
+
+      row.classList.toggle(
+        "rizney-nice-slow-locked",
+        !isNiceAndSlowUnlocked()
+      );
+    });
   }
 
   /* =========================================================
@@ -1128,6 +1189,30 @@
     if (!row) return;
 
     /*
+      🔒 NICE & SLOW LOCK
+
+      Nice & Slow cannot be played until
+      the Delaware Pirate Duel has been
+      successfully completed.
+    */
+    if (
+      isNiceAndSlowRow(row) &&
+      !isNiceAndSlowUnlocked()
+    ) {
+      row.classList.add(
+        "rizney-nice-slow-locked"
+      );
+
+      return;
+    }
+
+    if (isNiceAndSlowRow(row)) {
+      row.classList.remove(
+        "rizney-nice-slow-locked"
+      );
+    }
+
+    /*
       🔒 POTTY TIME LOCK
 
       POTTY TIME cannot be played until
@@ -1145,10 +1230,6 @@
       return;
     }
 
-    /*
-      If POTTY TIME is unlocked, make sure
-      the visual lock is removed immediately.
-    */
     if (isPottyTimeRow(row)) {
       row.classList.remove(
         "rizney-potty-locked"
@@ -1190,7 +1271,6 @@
     wrapper.id =
       "archive-search-wrapper";
 
-    /* Custom search icon */
     const icon =
       document.createElement("span");
 
@@ -1436,14 +1516,6 @@
 
     rows.forEach(
       (row, index) => {
-        /*
-          Whack-A-Track uses this data attribute
-          to find the correct song row after a win.
-
-          index 0 = Song 1
-          index 1 = Song 2
-          etc.
-        */
         row.dataset.songIndex =
           String(index + 1);
 
@@ -1480,11 +1552,6 @@
           keyword
         );
 
-        /*
-          Make the entire purple song-title area
-          clickable without changing the existing
-          play mechanism.
-        */
         titleElement.setAttribute(
           "role",
           "button"
@@ -1525,17 +1592,9 @@
       }
     );
 
-    /*
-      Re-apply any Whack-A-Track road closures
-      after the row contents are updated.
-    */
     restoreRoadworkRows();
-
-    /*
-      Re-apply the POTTY TIME visual lock
-      after the row contents are updated.
-    */
     updatePottyTimeLock();
+    updateNiceAndSlowLock();
   }
 
   /* =========================================================
@@ -1547,10 +1606,6 @@
 
     rows.forEach(
       (row, index) => {
-        /*
-          Keep the Whack-A-Track row number
-          attached even if the icon already exists.
-        */
         row.dataset.songIndex =
           String(index + 1);
 
@@ -1593,16 +1648,9 @@
       }
     );
 
-    /*
-      Make sure roadwork survives icon updates.
-    */
     restoreRoadworkRows();
-
-    /*
-      Make sure POTTY TIME remains visibly locked
-      after icon updates.
-    */
     updatePottyTimeLock();
+    updateNiceAndSlowLock();
   }
 
   /* =========================================================
@@ -1655,6 +1703,19 @@
     if (
       isPottyTimeSongNumber(songIndex) &&
       !isPottyTimeUnlocked()
+    ) {
+      return;
+    }
+
+    /*
+      🔒 NICE & SLOW LOCK
+
+      Music Reading cards must obey the same
+      unlock rule as the normal song rows.
+    */
+    if (
+      isNiceAndSlowSongNumber(songIndex) &&
+      !isNiceAndSlowUnlocked()
     ) {
       return;
     }
@@ -1895,11 +1956,6 @@
       return;
     }
 
-    /*
-      If cards already exist when the page loads,
-      consider them open. Otherwise the first press
-      of CARDS will open them.
-    */
     cardsToggleOpen =
       !!cards.querySelector(".card");
 
@@ -1911,10 +1967,6 @@
     button.addEventListener(
       "click",
       () => {
-        /*
-          SECOND PRESS:
-          Close the entire Music Reading section.
-        */
         if (cardsToggleOpen) {
           cardsToggleOpen = false;
 
@@ -1934,12 +1986,6 @@
           return;
         }
 
-        /*
-          FIRST / THIRD / NEXT OPEN PRESS:
-          Show the Music Reading section,
-          then let the existing CARDS code
-          generate the reading.
-        */
         cardsToggleOpen = true;
 
         reading.hidden = false;
@@ -2097,10 +2143,6 @@
           if (!updatingCards) {
             addCardIcons();
 
-            /*
-              Only reposition the page when
-              the CARDS section is actually open.
-            */
             if (cardsToggleOpen) {
               scheduleReadingScroll();
             }
@@ -2132,37 +2174,30 @@
 
     putIcons();
 
-    /*
-      Watch the song list so Whack-A-Track
-      roadwork survives any row rebuild.
-    */
     setupRoadworkWatching();
 
-    /*
-      Start the POTTY TIME visual lock.
-    */
     setupPottyTimeLockWatching();
 
     /*
-      Set up the CARDS toggle before the
-      MutationObserver begins watching for cards.
+      Delaware Pirate Duel tells main.js
+      immediately when Nice & Slow is unlocked.
     */
+    window.addEventListener(
+      "niceAndSlowUnlocked",
+      updateNiceAndSlowLock
+    );
+
     setupCardsToggle();
 
     setupCardWatching();
 
     addCardIcons();
 
-    /*
-      Final roadwork pass after everything
-      else has initialized.
-    */
     restoreRoadworkRows();
 
-    /*
-      Final POTTY TIME visual-lock pass.
-    */
     updatePottyTimeLock();
+
+    updateNiceAndSlowLock();
   }
 
   if (
