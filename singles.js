@@ -120,8 +120,8 @@
   const YOHO = {
     videoId: "",
     title: "YOHO (Davy Jones)",
-    image: "./assets/octopus.png",
-    imageAlt: "Pirate Octopus",
+    image: "./assets/possum-pirate.png",
+    imageAlt: "Pirate Possum",
 
     quiz: [
       {
