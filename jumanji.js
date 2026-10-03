@@ -16,6 +16,20 @@
 
 
   // =========================================================
+  // SOUND EFFECTS
+  // =========================================================
+
+  const JUMANJI_SOUND =
+    "./assets/jumanji.mp3";
+
+  const BOOM_SOUND =
+    "./assets/boom.mp3";
+
+  const F_N_BOOM_SOUND =
+    "./assets/f-n-boom.mp3";
+
+
+  // =========================================================
   // ANIMALS
   // =========================================================
 
@@ -96,6 +110,9 @@
   const END_INTERVAL =
     180;
 
+  const JUMANJI_SOUND_DELAY =
+    3000;
+
 
   // =========================================================
   // STATE
@@ -119,9 +136,112 @@
   let lastTime =
     0;
 
+  let jumanjiSoundTimer =
+    null;
+
 
   // =========================================================
-  // RANDOM
+  // AUDIO
+  // =========================================================
+
+  function playSound(
+    path
+  ) {
+
+    try {
+
+      const sound =
+        new Audio(path);
+
+      sound.volume =
+        1.0;
+
+      sound.currentTime =
+        0;
+
+      sound.play().catch(
+        error => {
+
+          console.log(
+            "Jumanji sound could not play:",
+            error
+          );
+
+        }
+      );
+
+    } catch (error) {
+
+      console.log(
+        "Could not create Jumanji sound:",
+        error
+      );
+    }
+  }
+
+
+  // =========================================================
+  // JUMANJI INTRO VOICE
+  // =========================================================
+
+  function playJumanjiVoice() {
+
+    if (!active) {
+      return;
+    }
+
+    playSound(
+      JUMANJI_SOUND
+    );
+  }
+
+
+  // =========================================================
+  // HIT SOUND
+  // =========================================================
+
+  function playHitSound() {
+
+    const roll =
+      Math.random();
+
+
+    /*
+      10% = FUCKING BOOM
+      25% = regular BOOM
+      65% = silence
+    */
+
+    if (
+      roll < 0.10
+    ) {
+
+      playSound(
+        F_N_BOOM_SOUND
+      );
+
+      return;
+    }
+
+
+    if (
+      roll < 0.35
+    ) {
+
+      playSound(
+        BOOM_SOUND
+      );
+
+      return;
+    }
+
+    // The remaining 65% intentionally
+    // makes absolutely no sound.
+  }
+
+
+  // =========================================================
+  // RANDOM NUMBER
   // =========================================================
 
   function random(
@@ -148,16 +268,20 @@
         STYLE_ID
       )
     ) {
+
       return;
     }
+
 
     const style =
       document.createElement(
         "style"
       );
 
+
     style.id =
       STYLE_ID;
+
 
     style.textContent = `
 
@@ -173,6 +297,7 @@
 
       }
 
+
       @keyframes jumanji-shake {
 
         0% {
@@ -185,12 +310,46 @@
 
       }
 
+
+      @keyframes jumanji-boom {
+
+        0% {
+          transform:
+            translate(-50%, -50%)
+            scale(.4)
+            rotate(-8deg);
+
+          opacity: 0;
+        }
+
+        20% {
+          transform:
+            translate(-50%, -50%)
+            scale(1.35)
+            rotate(5deg);
+
+          opacity: 1;
+        }
+
+        100% {
+          transform:
+            translate(-50%, -50%)
+            scale(1)
+            rotate(0deg);
+
+          opacity: 0;
+        }
+
+      }
+
+
       #jumanji-chaos-overlay button {
         -webkit-tap-highlight-color:
           transparent;
       }
 
     `;
+
 
     document.head.appendChild(
       style
@@ -209,6 +368,7 @@
         OVERLAY_ID
       );
 
+
     if (overlay) {
       return overlay;
     }
@@ -219,6 +379,7 @@
         "div"
       );
 
+
     overlay.id =
       OVERLAY_ID;
 
@@ -226,12 +387,12 @@
     /*
       THE WEBSITE IS NOW GONE.
 
-      Black screen.
       Nothing underneath can be touched.
     */
 
     overlay.style.cssText = `
       position: fixed;
+
       inset: 0;
 
       width: 100vw;
@@ -311,6 +472,7 @@
         "div"
       );
 
+
     title.textContent =
       "YOU GOT JUMANJI'D!";
 
@@ -377,6 +539,7 @@
         "div"
       );
 
+
     title.textContent =
       "JUNGLE MADNESS";
 
@@ -431,6 +594,99 @@
 
 
   // =========================================================
+  // BOOM TEXT
+  // =========================================================
+
+  function showBoom(
+    x,
+    y
+  ) {
+
+    const overlay =
+      document.getElementById(
+        OVERLAY_ID
+      );
+
+
+    if (!overlay) {
+      return;
+    }
+
+
+    const boom =
+      document.createElement(
+        "div"
+      );
+
+
+    boom.textContent =
+      "BOOM";
+
+
+    boom.style.cssText = `
+      position: absolute;
+
+      left:
+        ${x}px;
+
+      top:
+        ${y}px;
+
+      color:
+        #228b22;
+
+      font-family:
+        Impact,
+        "Arial Black",
+        sans-serif;
+
+      font-size:
+        clamp(2.5rem, 10vw, 7rem);
+
+      font-weight:
+        900;
+
+      line-height:
+        1;
+
+      pointer-events:
+        none;
+
+      z-index:
+        150000;
+
+      white-space:
+        nowrap;
+
+      text-shadow:
+        5px 5px 0 #063d06,
+        0 0 20px #228b22;
+
+      animation:
+        jumanji-boom
+        .55s
+        ease-out
+        forwards;
+    `;
+
+
+    overlay.appendChild(
+      boom
+    );
+
+
+    setTimeout(
+      () => {
+
+        boom.remove();
+
+      },
+      600
+    );
+  }
+
+
+  // =========================================================
   // SPAWN SPEED
   // =========================================================
 
@@ -457,7 +713,7 @@
 
 
   // =========================================================
-  // SPAWN ONE ANIMAL
+  // SPAWN ANIMAL
   // =========================================================
 
   function spawnAnimal(
@@ -468,10 +724,12 @@
       return;
     }
 
+
     if (
       animals.length >=
       MAX_ANIMALS
     ) {
+
       return;
     }
 
@@ -480,6 +738,7 @@
       document.getElementById(
         OVERLAY_ID
       );
+
 
     if (!overlay) {
       return;
@@ -506,12 +765,15 @@
 
 
     // -------------------------------------------------------
-    // OCCASIONAL ABSURDLY HUGE ANIMAL
+    // OCCASIONAL GIANT ANIMAL
     // -------------------------------------------------------
 
     let size =
       Math.round(
-        random(30, 65)
+        random(
+          30,
+          65
+        )
       );
 
 
@@ -531,36 +793,53 @@
 
 
     animal.style.cssText = `
-      position: absolute;
+      position:
+        absolute;
 
-      left: 0;
-      top: 0;
+      left:
+        0;
 
-      padding: 0;
-      margin: 0;
+      top:
+        0;
 
-      border: 0;
+      padding:
+        0;
+
+      margin:
+        0;
+
+      border:
+        0;
 
       background:
         transparent;
 
-      color: inherit;
+      color:
+        inherit;
 
       font-size:
         ${size}px;
 
-      line-height: 1;
+      line-height:
+        1;
 
-      cursor: crosshair;
+      cursor:
+        crosshair;
 
-      pointer-events: auto;
+      pointer-events:
+        auto;
 
-      user-select: none;
-      -webkit-user-select: none;
+      user-select:
+        none;
 
-      touch-action: none;
+      -webkit-user-select:
+        none;
 
-      z-index: 50000;
+      touch-action:
+        none;
+
+      z-index:
+        50000;
 
       -webkit-tap-highlight-color:
         transparent;
@@ -651,7 +930,7 @@
 
 
     // =======================================================
-    // TAP ANIMAL
+    // HIT ANIMAL
     // =======================================================
 
     animal.addEventListener(
@@ -661,13 +940,48 @@
         event.preventDefault();
         event.stopPropagation();
 
+
+        /*
+          Capture the position BEFORE
+          removing the animal.
+        */
+
+        const boomX =
+          record.x +
+          20;
+
+        const boomY =
+          record.y +
+          20;
+
+
         animal.remove();
+
 
         animals =
           animals.filter(
             item =>
               item !== record
           );
+
+
+        /*
+          Every successful hit gets
+          the visual BOOM.
+        */
+
+        showBoom(
+          boomX,
+          boomY
+        );
+
+
+        /*
+          Sound is randomized separately.
+        */
+
+        playHitSound();
+
       },
       true
     );
@@ -689,6 +1003,7 @@
       animal
     );
 
+
     animals.push(
       record
     );
@@ -705,10 +1020,12 @@
       return;
     }
 
+
     if (
       animals.length >=
       MAX_ANIMALS
     ) {
+
       return;
     }
 
@@ -717,6 +1034,7 @@
       document.getElementById(
         OVERLAY_ID
       );
+
 
     if (!overlay) {
       return;
@@ -752,33 +1070,50 @@
 
 
     animal.style.cssText = `
-      position:absolute;
+      position:
+        absolute;
 
-      left:0;
-      top:0;
+      left:
+        0;
 
-      padding:0;
-      margin:0;
+      top:
+        0;
 
-      border:0;
+      padding:
+        0;
 
-      background:transparent;
+      margin:
+        0;
+
+      border:
+        0;
+
+      background:
+        transparent;
 
       font-size:
         ${size}px;
 
-      line-height:1;
+      line-height:
+        1;
 
-      pointer-events:auto;
+      pointer-events:
+        auto;
 
-      touch-action:none;
+      touch-action:
+        none;
 
-      user-select:none;
-      -webkit-user-select:none;
+      user-select:
+        none;
 
-      cursor:crosshair;
+      -webkit-user-select:
+        none;
 
-      z-index:60000;
+      cursor:
+        crosshair;
+
+      z-index:
+        60000;
     `;
 
 
@@ -850,13 +1185,34 @@
         event.preventDefault();
         event.stopPropagation();
 
+
+        const boomX =
+          record.x +
+          20;
+
+        const boomY =
+          record.y +
+          20;
+
+
         animal.remove();
+
 
         animals =
           animals.filter(
             item =>
               item !== record
           );
+
+
+        showBoom(
+          boomX,
+          boomY
+        );
+
+
+        playHitSound();
+
       },
       true
     );
@@ -877,6 +1233,7 @@
     overlay.appendChild(
       animal
     );
+
 
     animals.push(
       record
@@ -930,6 +1287,7 @@
       now <
       nextSpawnAt
     ) {
+
       return;
     }
 
@@ -940,7 +1298,7 @@
 
 
     // -------------------------------------------------------
-    // MORE CHAOS LATE IN THE SONG
+    // MORE CHAOS
     // -------------------------------------------------------
 
     if (
@@ -977,7 +1335,7 @@
 
 
     // -------------------------------------------------------
-    // RANDOM INTRUDER
+    // RANDOM STUPID INTRUDER
     // -------------------------------------------------------
 
     if (
@@ -1034,6 +1392,11 @@
       window.innerHeight;
 
 
+    /*
+      The final part of the song
+      gets increasingly ridiculous.
+    */
+
     animals.forEach(
       animal => {
 
@@ -1053,7 +1416,7 @@
 
 
         // ---------------------------------------------------
-        // WEIRD ANIMALS
+        // WEIRD MOVEMENT
         // ---------------------------------------------------
 
         if (
@@ -1178,6 +1541,7 @@
         OVERLAY_ID
       );
 
+
     if (!overlay) {
       return;
     }
@@ -1194,20 +1558,29 @@
 
 
     message.style.cssText = `
-      position: fixed;
+      position:
+        fixed;
 
-      inset: 0;
+      inset:
+        0;
 
-      display: flex;
+      display:
+        flex;
 
-      align-items: center;
-      justify-content: center;
+      align-items:
+        center;
 
-      text-align: center;
+      justify-content:
+        center;
 
-      pointer-events: none;
+      text-align:
+        center;
 
-      padding: 20px;
+      pointer-events:
+        none;
+
+      padding:
+        20px;
 
       font-family:
         Impact,
@@ -1215,20 +1588,28 @@
         sans-serif;
 
       font-size:
-        clamp(3rem, 11vw, 8rem);
+        clamp(
+          3rem,
+          11vw,
+          8rem
+        );
 
-      font-weight: 900;
+      font-weight:
+        900;
 
-      line-height: .95;
+      line-height:
+        .95;
 
-      color: #228b22;
+      color:
+        #228b22;
 
       text-shadow:
         5px 5px 0 #063d06,
         10px 10px 0 #000000,
         0 0 30px #228b22;
 
-      z-index: 200000;
+      z-index:
+        200000;
 
       animation:
         jumanji-shake
@@ -1256,7 +1637,6 @@
         stopGame,
         3000
       );
-
     }
   }
 
@@ -1307,11 +1687,9 @@
 
 
     /*
-      The first animal.
-      Lonely.
-      Innocent.
-      Completely unaware
-      of what is coming.
+      One lonely animal.
+
+      It has no idea what's coming.
     */
 
     spawnAnimal(
@@ -1328,6 +1706,26 @@
       requestAnimationFrame(
         animate
       );
+
+
+    /*
+      Three seconds into the game:
+
+      "haha you got JUMANJI'D"
+
+      Your voice.
+    */
+
+    clearTimeout(
+      jumanjiSoundTimer
+    );
+
+
+    jumanjiSoundTimer =
+      setTimeout(
+        playJumanjiVoice,
+        JUMANJI_SOUND_DELAY
+      );
   }
 
 
@@ -1339,6 +1737,15 @@
 
     active =
       false;
+
+
+    clearTimeout(
+      jumanjiSoundTimer
+    );
+
+
+    jumanjiSoundTimer =
+      null;
 
 
     if (animationFrame) {
@@ -1393,6 +1800,15 @@
       false;
 
 
+    clearTimeout(
+      jumanjiSoundTimer
+    );
+
+
+    jumanjiSoundTimer =
+      null;
+
+
     if (animationFrame) {
 
       cancelAnimationFrame(
@@ -1406,7 +1822,8 @@
 
     /*
       If ANY animals remain...
-      YOU GOT JUMANJI'D.
+
+      YOU GOT JUMANJI'D!
     */
 
     if (
