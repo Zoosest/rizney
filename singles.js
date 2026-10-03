@@ -22,9 +22,9 @@ quiz: [
 
     options: [
       "Everyone in such a hurry",
-      "Monkeys are always so dirty",
+      "Monkeys always doing dirty",
       "Everything is getting blurry",
-      "Getting so worried"
+      "Everybody getting worried"
     ],
 
     correctIndex: 0
@@ -38,7 +38,7 @@ quiz: [
       "Her keys",
       "Her money",
       "Her hat",
-      "Her case"
+      "Her cake"
     ],
 
     correctIndex: 2
@@ -52,7 +52,7 @@ quiz: [
       "Bubbles",
       "Matt",
       "Tango",
-      "Tom"
+      "Thomas"
     ],
 
     correctIndex: 2
@@ -969,6 +969,15 @@ currentState =
 
 
 wrapper.innerHTML = `
+  <div style="
+    font-size: 1.35rem;
+    font-weight: bold;
+    color: #f5d76e;
+    margin-bottom: 8px;
+  ">
+    YOU DON'T KNOW TRACK
+  </div>
+
   <div style="
     font-size: 1.1rem;
     font-weight: bold;
