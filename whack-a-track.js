@@ -1,27 +1,27 @@
 /* Whack-a-Track mini-game for the Rizney Music Archive. */
 (() => {
-  "use strict";
+  "use strict"; 
 
   const TRACK_HEALTH = 24;
   const GAME_DURATION = 80;
   const MOLE_VISIBLE_MS = 500;
-  const MOLE_INTERVAL_MS = 1400;
+  const MOLE_INTERVAL_MS = 1400; 
 
   /* Snake decoy settings */
   const SNAKE_CHANCE = 0.25;
-  const SNAKE_TIME_PENALTY = 10;
+  const SNAKE_TIME_PENALTY = 10; 
 
   const REMOVED_TRACKS_KEY =
-    "rizneyWhackedTracks";
+    "rizneyWhackedTracks"; 
 
   const youtube = () =>
-    window.rizneyPlayer || window.player || null;
+    window.rizneyPlayer || window.player || null; 
 
   const $ = (selector, root = document) =>
-    root.querySelector(selector);
+    root.querySelector(selector); 
 
   const controls = () =>
-    $(".controls");
+    $(".controls"); 
 
   let game;
   let active = false;
@@ -29,7 +29,7 @@
   let secondsLeft = GAME_DURATION;
   let moleTimer;
   let hideTimer;
-  let gameTimer;
+  let gameTimer; 
 
   function playQuackSound() {
     try {
@@ -37,7 +37,7 @@
       sound.volume = 0.8;
       sound.play().catch(() => {});
     } catch (error) {}
-  }
+  } 
 
   /* Snake hit sound */
   function playHissSound() {
@@ -46,7 +46,7 @@
       sound.volume = 0.8;
       sound.play().catch(() => {});
     } catch (error) {}
-  }
+  } 
 
   function vibrate(pattern) {
     if (
@@ -57,17 +57,17 @@
         navigator.vibrate(pattern);
       } catch (error) {}
     }
-  }
+  } 
 
   function setToolbarHidden(hidden) {
     controls()?.classList.toggle(
       "toolbar-hidden",
       hidden
     );
-  }
+  } 
 
   function positionToolbar() {
-    const dock = $(".player-dock");
+    const dock = $(".player-dock"); 
 
     if (dock) {
       document.documentElement.style.setProperty(
@@ -75,11 +75,11 @@
         `${dock.offsetHeight}px`
       );
     }
-  }
+  } 
 
   function setupToolbar() {
     const style =
-      document.createElement("style");
+      document.createElement("style"); 
 
     style.textContent = `
       .controls {
@@ -87,31 +87,31 @@
         top: var(--player-dock-height, 0px);
         z-index: 90;
         transition: opacity .18s ease, visibility .18s ease;
-      }
+      } 
 
       .controls.toolbar-hidden {
         visibility: hidden;
         opacity: 0;
         pointer-events: none;
-      }
+      } 
 
       #reading,
       #whack-a-track-game {
         scroll-margin-top:
           calc(var(--player-dock-height, 0px) + 8px);
-      }
+      } 
 
       @keyframes lakeRipplePan {
         0% { background-position: 0px 0px; }
         100% { background-position: 80px 40px; }
-      }
+      } 
 
       #wat-board {
         background-color: #1d5b87 !important;
         background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='80' height='40' viewBox='0 0 80 40'><path d='M 0 10 Q 20 4, 40 10 T 80 10' fill='none' stroke='rgba(255,255,255,0.22)' stroke-width='1.5'/><path d='M 0 22 Q 20 16, 40 22 T 80 22' fill='none' stroke='rgba(255,255,255,0.16)' stroke-width='1.2'/><path d='M 0 34 Q 20 28, 40 34 T 80 34' fill='none' stroke='rgba(255,255,255,0.1)' stroke-width='1'/></svg>") !important;
         background-size: 80px 40px !important;
         animation: lakeRipplePan 6s linear infinite !important;
-      }
+      } 
 
       @keyframes watSplashRing {
         0% {
@@ -124,7 +124,7 @@
           opacity: 0;
           border-width: 1.2px;
         }
-      }
+      } 
 
       .wat-ripple {
         position: absolute;
@@ -138,7 +138,7 @@
         pointer-events: none;
         z-index: 2;
         animation: watSplashRing 0.32s ease-out forwards;
-      }
+      } 
 
       @keyframes quackPop {
         0% {
@@ -153,7 +153,7 @@
           transform: scale(1.1) var(--end-rot);
           opacity: 0;
         }
-      }
+      } 
 
       .wat-quack-pop {
         position: absolute;
@@ -163,7 +163,7 @@
         pointer-events: none;
         z-index: 10;
         animation: quackPop 0.4s ease-out forwards;
-      }
+      } 
 
       @keyframes duckSquashPop {
         0% {
@@ -181,7 +181,7 @@
           transform: scale(1, 1) translateY(0);
           opacity: 1;
         }
-      }
+      } 
 
       .wat-duck {
         position: absolute;
@@ -192,7 +192,7 @@
         pointer-events: none;
         display: block;
         animation: duckSquashPop 0.28s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-      }
+      } 
 
       .wat-snake {
         position: absolute;
@@ -203,7 +203,7 @@
         pointer-events: none;
         display: block;
         animation: duckSquashPop 0.28s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-      }
+      } 
 
       @keyframes duckRetreat {
         0% {
@@ -218,12 +218,12 @@
           transform: scale(0.3, 1.5) translateY(36px);
           opacity: 0;
         }
-      }
+      } 
 
       .wat-duck-hiding,
       .wat-snake-hiding {
         animation: duckRetreat 0.18s ease-in forwards !important;
-      }
+      } 
 
       @keyframes duckFallAndWobble {
         0% {
@@ -243,7 +243,7 @@
           transform: scaleX(var(--duck-flip, 1)) translateY(45px) rotate(22deg);
           opacity: 0;
         }
-      }
+      } 
 
       .wat-duck-hit,
       .wat-snake-hit {
@@ -255,17 +255,17 @@
         pointer-events: none;
         display: block;
         animation: duckFallAndWobble 0.4s ease-in forwards;
-      }
+      } 
 
       #song-list .song.rizney-roadwork {
         opacity: .72;
-      }
+      } 
 
       #song-list .song.rizney-roadwork .song-number,
       #song-list .song.rizney-roadwork .song-title,
       #song-list .song.rizney-roadwork .play {
         display: none;
-      }
+      } 
 
       #song-list .song.rizney-roadwork::after {
         content: "🚧 WHACKED!";
@@ -285,7 +285,7 @@
         border-radius: 0;
         grid-column: 1 / 4;
         grid-row: 1;
-      }
+      } 
 
       #song-list .song.rizney-roadwork .animal-button {
         grid-column: 4;
@@ -293,7 +293,7 @@
         cursor: not-allowed;
         opacity: .45;
         pointer-events: none;
-      }
+      } 
 
       @media (max-width: 640px) {
         #whack-a-track-game {
@@ -301,17 +301,17 @@
           margin-top: 4px;
           margin-bottom: 12px;
           padding: 8px 10px 10px;
-        }
+        } 
 
         #whack-a-track-game #wat-board {
           gap: 6px;
           margin: 10px auto;
-        }
+        } 
 
         #whack-a-track-game .wat-hole {
           height: 58px !important;
           min-height: 58px !important;
-        }
+        } 
 
         #song-list .song.rizney-roadwork::after {
           min-height: 54px;
@@ -319,33 +319,33 @@
           font-size: .78rem;
         }
       }
-    `;
+    `; 
 
-    document.head.appendChild(style);
+    document.head.appendChild(style); 
 
-    positionToolbar();
+    positionToolbar(); 
 
     window.addEventListener(
       "resize",
       positionToolbar,
       { passive: true }
-    );
+    ); 
 
     if (window.ResizeObserver) {
-      const dock = $(".player-dock");
+      const dock = $(".player-dock"); 
 
       if (dock) {
         new ResizeObserver(
           positionToolbar
         ).observe(dock);
       }
-    }
+    } 
 
     setToolbarHidden(false);
-  }
+  } 
 
   const playing = () => {
-    const player = youtube();
+    const player = youtube(); 
 
     return (
       player &&
@@ -355,10 +355,10 @@
       player.getPlayerState() ===
         YT.PlayerState.PLAYING
     );
-  };
+  }; 
 
   function getCurrentSongId() {
-    const player = youtube();
+    const player = youtube(); 
 
     if (
       !player ||
@@ -366,18 +366,18 @@
         "function"
     ) {
       return null;
-    }
+    } 
 
     try {
       const data =
-        player.getVideoData();
+        player.getVideoData(); 
 
       if (
         !data ||
         !data.video_id
       ) {
         return null;
-      }
+      } 
 
       return String(
         data.video_id
@@ -385,34 +385,34 @@
     } catch (error) {
       return null;
     }
-  }
+  } 
 
   function getCurrentSongNumber() {
     const currentId =
-      getCurrentSongId();
+      getCurrentSongId(); 
 
     if (!currentId) {
       return null;
-    }
+    } 
 
     const songIds =
       Array.isArray(
         window.rizneySongIds
       )
         ? window.rizneySongIds
-        : [];
+        : &#91;&#93;; 
 
     const index =
       songIds.indexOf(
         currentId
-      );
+      ); 
 
     if (index < 0) {
       return null;
-    }
+    } 
 
     return index + 1;
-  }
+  } 
 
   function getSongIdForNumber(songNumber) {
     if (
@@ -420,120 +420,120 @@
       !Number.isInteger(songNumber)
     ) {
       return null;
-    }
+    } 
 
     const songIds =
       Array.isArray(
         window.rizneySongIds
       )
         ? window.rizneySongIds
-        : [];
+        : &#91;&#93;; 
 
     const songId =
-      songIds[
+      songIds&#91;
         songNumber - 1
-      ];
+      &#93;; 
 
     if (!songId) {
       return null;
-    }
+    } 
 
     return String(
       songId
     );
-  }
+  } 
 
   function getWhackedTracks() {
     try {
       const raw =
         localStorage.getItem(
           REMOVED_TRACKS_KEY
-        );
+        ); 
 
       const parsed =
         JSON.parse(
-          raw || "[]"
-        );
+          raw || "&#91;&#93;"
+        ); 
 
       return Array.isArray(parsed)
         ? parsed
-        : [];
+        : &#91;&#93;;
     } catch (error) {
-      return [];
+      return &#91;&#93;;
     }
-  }
+  } 
 
   function saveWhackedTrack(songId) {
     if (!songId) {
       return null;
-    }
+    } 
 
     try {
       const tracks =
-        getWhackedTracks();
+        getWhackedTracks(); 
 
       if (
         !tracks.includes(songId)
       ) {
-        tracks.push(songId);
+        tracks.push(songId); 
 
         localStorage.setItem(
           REMOVED_TRACKS_KEY,
           JSON.stringify(tracks)
         );
-      }
+      } 
 
       return songId;
     } catch (error) {
       return null;
     }
-  }
+  } 
 
   function isTrackRemembered(songId) {
     if (!songId) {
       return false;
-    }
+    } 
 
     return getWhackedTracks()
       .includes(songId);
-  }
+  } 
 
   function findSongRow(songNumber) {
     if (!songNumber) {
       return null;
-    }
+    } 
 
     return document.querySelector(
-      `#song-list .song[data-song-index="${songNumber}"]`
+      `#song-list .song&#91;data-song-index="${songNumber}"&#93;`
     );
-  }
+  } 
 
   function applyRoadworkToRow(row) {
     if (!row) {
       return false;
-    }
+    } 
 
     row.classList.add(
       "rizney-roadwork"
-    );
+    ); 
 
     row.dataset.rizneyRoadwork =
-      "true";
+      "true"; 
 
     const playButton =
-      row.querySelector(".play");
+      row.querySelector(".play"); 
 
     if (playButton) {
-      playButton.disabled = true;
+      playButton.disabled = true; 
 
       playButton.setAttribute(
         "aria-label",
         "Song closed for roadwork"
       );
-    }
+    } 
 
     return true;
-  }
+  } 
 
   function closeRoad(
     songNumber,
@@ -544,33 +544,33 @@
       !songId
     ) {
       return false;
-    }
+    } 
 
     const row =
-      findSongRow(songNumber);
+      findSongRow(songNumber); 
 
     if (!row) {
       return false;
-    }
+    } 
 
     if (songId) {
       saveWhackedTrack(songId);
-    }
+    } 
 
     return applyRoadworkToRow(
       row
     );
-  }
+  } 
 
   function loadSavedRoadwork() {
     const saved =
       new Set(
         getWhackedTracks()
-      );
+      ); 
 
     if (!saved.size) {
       return;
-    }
+    } 
 
     document
       .querySelectorAll(
@@ -580,7 +580,7 @@
         const songNumber =
           Number(
             row.dataset.songIndex
-          );
+          ); 
 
         if (
           !Number.isInteger(
@@ -589,12 +589,12 @@
           songNumber < 1
         ) {
           return;
-        }
+        } 
 
         const songId =
           getSongIdForNumber(
             songNumber
-          );
+          ); 
 
         if (
           songId &&
@@ -605,49 +605,49 @@
           );
         }
       });
-  }
+  } 
 
   function createGame() {
-    if (game) return game;
+    if (game) return game; 
 
     const panel =
       document.createElement(
         "section"
-      );
+      ); 
 
     panel.id =
-      "whack-a-track-game";
+      "whack-a-track-game"; 
 
     panel.setAttribute(
       "aria-label",
       "Whack-a-Track"
-    );
+    ); 
 
     panel.innerHTML = `
-      <h2>Whack-a-Track</h2>
+      <h2>Whack-a-Track</h2> 
 
       <p id="wat-status"
-         aria-live="polite"></p>
+         aria-live="polite"></p> 
 
       <progress
         id="wat-time"
         max="${GAME_DURATION}"
         value="${GAME_DURATION}"
         aria-label="Time remaining"
-      ></progress>
+      ></progress> 
 
       <progress
         id="wat-health"
         max="${TRACK_HEALTH}"
         value="${TRACK_HEALTH}"
         aria-label="Track health"
-      ></progress>
+      ></progress> 
 
       <div
         id="wat-board"
         role="group"
         aria-label="Whack-a-Track board"
-      ></div>
+      ></div> 
 
       <button
         id="wat-refresh"
@@ -655,7 +655,7 @@
         hidden
       >
         Refresh playlist
-      </button>
+      </button> 
 
       <button
         id="wat-close"
@@ -663,7 +663,7 @@
       >
         Close game
       </button>
-    `;
+    `; 
 
     Object.assign(
       panel.style,
@@ -692,14 +692,14 @@
         scrollMarginTop:
           "calc(var(--player-dock-height, 0px) + 8px)"
       }
-    );
+    ); 
 
     Object.assign(
       $("h2", panel).style,
       {
         margin: "0 0 6px"
       }
-    );
+    ); 
 
     Object.assign(
       $("#wat-status", panel).style,
@@ -707,7 +707,7 @@
         margin: "0 0 4px",
         minHeight: "1.4em"
       }
-    );
+    ); 
 
     Object.assign(
       $("#wat-time", panel).style,
@@ -718,7 +718,7 @@
         margin: "8px 0 8px",
         accentColor: "#c084fc"
       }
-    );
+    ); 
 
     Object.assign(
       $("#wat-health", panel).style,
@@ -729,10 +729,10 @@
         margin: "8px 0 14px",
         accentColor: "#d4af37"
       }
-    );
+    ); 
 
     const board =
-      $("#wat-board", panel);
+      $("#wat-board", panel); 
 
     Object.assign(
       board.style,
@@ -748,13 +748,13 @@
         position: "relative",
         overflow: "visible"
       }
-    );
+    ); 
 
     for (let i = 0; i < 6; i++) {
       const hole =
         document.createElement(
           "button"
-        );
+        ); 
 
       hole.type = "button";
       hole.className =
@@ -762,7 +762,7 @@
       hole.innerHTML =
         "";
       hole.dataset.active =
-        "false";
+        "false"; 
 
       Object.assign(
         hole.style,
@@ -778,7 +778,7 @@
           zIndex: "1",
           overflow: "hidden"
         }
-      );
+      ); 
 
       hole.addEventListener(
         "click",
@@ -789,7 +789,7 @@
               "true"
           ) {
             return;
-          }
+          } 
 
           /*
             SNAKE DECOY:
@@ -802,62 +802,62 @@
             "snake"
           ) {
             hole.dataset.active =
-              "hit";
+              "hit"; 
 
             secondsLeft =
               Math.max(
                 0,
                 secondsLeft -
                   SNAKE_TIME_PENALTY
-              );
+              ); 
 
             $("#wat-time",
               panel
             ).value =
-              secondsLeft;
+              secondsLeft; 
 
-            vibrate([25, 30, 25]);
+            vibrate(&#91;25, 30, 25&#93;); 
 
             /* Snake hiss sound */
-            playHissSound();
+            playHissSound(); 
 
             hole.innerHTML =
-              `<img src="assets/snake-hit.png" alt="" class="wat-snake-hit" />`;
+              `<img src="assets/snake-hit.png" alt="" class="wat-snake-hit" />`; 
 
             hole.style.zIndex =
-              "3";
+              "3"; 
 
-            triggerSplash(hole);
+            triggerSplash(hole); 
 
             /* Damage pop-up: -10 seconds */
             const damagePop =
               document.createElement(
                 "img"
-              );
+              ); 
 
             damagePop.src =
-              "assets/damage.png";
+              "assets/damage.png"; 
 
             damagePop.alt =
-              "-10";
+              "-10"; 
 
             damagePop.className =
-              "wat-quack-pop";
+              "wat-quack-pop"; 
 
             const offsetX =
-              (Math.random() - 0.5) * 44;
+              (Math.random() - 0.5) * 44; 
 
             const offsetY =
               -16 +
-              (Math.random() - 0.5) * 16;
+              (Math.random() - 0.5) * 16; 
 
             const baseRot =
               -15 +
-              Math.random() * 10;
+              Math.random() * 10; 
 
             const midRot =
               -5 +
-              Math.random() * 20;
+              Math.random() * 20; 
 
             const endRot =
               5 +
@@ -867,22 +867,22 @@
                   Math.random() < 0.5
                     ? 1
                     : -1
-                );
+                ); 
 
             damagePop.style.setProperty(
               "--base-rot",
               `rotate(${baseRot}deg)`
-            );
+            ); 
 
             damagePop.style.setProperty(
               "--mid-rot",
               `rotate(${midRot}deg)`
-            );
+            ); 
 
             damagePop.style.setProperty(
               "--end-rot",
               `rotate(${endRot}deg)`
-            );
+            ); 
 
             damagePop.style.left =
               `${
@@ -890,7 +890,7 @@
                 (hole.offsetWidth / 2) -
                 36 +
                 offsetX
-              }px`;
+              }px`; 
 
             damagePop.style.top =
               `${
@@ -898,15 +898,15 @@
                 (hole.offsetHeight / 2) -
                 36 +
                 offsetY
-              }px`;
+              }px`; 
 
             board.appendChild(
               damagePop
-            );
+            ); 
 
             setTimeout(() => {
               damagePop.remove();
-            }, 400);
+            }, 400); 
 
             setTimeout(() => {
               if (
@@ -922,83 +922,83 @@
                 hole.dataset.active =
                   "false";
               }
-            }, 400);
+            }, 400); 
 
             if (
               secondsLeft <= 0
             ) {
               finish(false);
-            }
+            } 
 
             return;
-          }
+          } 
 
           /*
             EXISTING DUCK BEHAVIOR:
             Everything below remains the
             original Whack-a-Track behavior.
-          */
+          */ 
 
           hole.dataset.active =
-            "hit";
+            "hit"; 
 
-          trackHealth--;
+          trackHealth--; 
 
           if (
             trackHealth <= 0
           ) {
-            vibrate([40, 30, 80]);
+            vibrate(&#91;40, 30, 80&#93;);
           } else {
-            vibrate([15, 30, 45]);
-          }
+            vibrate(&#91;15, 30, 45&#93;);
+          } 
 
-          playQuackSound();
+          playQuackSound(); 
 
           $("#wat-health", panel)
             .value =
-            trackHealth;
+            trackHealth; 
 
           const duckFlip =
             Math.random() < 0.5
               ? -1
-              : 1;
+              : 1; 
 
           hole.innerHTML =
-            `<img src="assets/duck-hit.png" alt="" class="wat-duck-hit" style="--duck-flip: ${duckFlip};" />`;
+            `<img src="assets/duck-hit.png" alt="" class="wat-duck-hit" style="--duck-flip: ${duckFlip};" />`; 
 
           hole.style.zIndex =
-            "3";
+            "3"; 
 
-          triggerSplash(hole);
+          triggerSplash(hole); 
 
           const quackPop =
             document.createElement(
               "img"
-            );
+            ); 
 
           quackPop.src =
-            "assets/quack.png";
+            "./assets/quack.png"; 
 
           quackPop.alt =
-            "QUACK!";
+            "QUACK!"; 
 
           quackPop.className =
-            "wat-quack-pop";
+            "wat-quack-pop"; 
 
           const offsetX =
-            (Math.random() - 0.5) * 44;
+            (Math.random() - 0.5) * 44; 
 
           const offsetY =
             -16 +
-            (Math.random() - 0.5) * 16;
+            (Math.random() - 0.5) * 16; 
 
           const baseRot =
             -15 +
-            Math.random() * 10;
+            Math.random() * 10; 
 
           const midRot =
             -5 +
-            Math.random() * 20;
+            Math.random() * 20; 
 
           const endRot =
             5 +
@@ -1008,22 +1008,22 @@
                 Math.random() < 0.5
                   ? 1
                   : -1
-              );
+              ); 
 
           quackPop.style.setProperty(
             "--base-rot",
             `rotate(${baseRot}deg)`
-          );
+          ); 
 
           quackPop.style.setProperty(
             "--mid-rot",
             `rotate(${midRot}deg)`
-          );
+          ); 
 
           quackPop.style.setProperty(
             "--end-rot",
             `rotate(${endRot}deg)`
-          );
+          ); 
 
           quackPop.style.left =
             `${
@@ -1031,7 +1031,7 @@
               (hole.offsetWidth / 2) -
               36 +
               offsetX
-            }px`;
+            }px`; 
 
           quackPop.style.top =
             `${
@@ -1039,15 +1039,15 @@
               (hole.offsetHeight / 2) -
               36 +
               offsetY
-            }px`;
+            }px`; 
 
           board.appendChild(
             quackPop
-          );
+          ); 
 
           setTimeout(() => {
             quackPop.remove();
-          }, 400);
+          }, 400); 
 
           setTimeout(() => {
             if (
@@ -1061,7 +1061,7 @@
               hole.dataset.target =
                 "";
             }
-          }, 400);
+          }, 400); 
 
           if (
             trackHealth <= 0
@@ -1069,20 +1069,20 @@
             finish(true);
           }
         }
-      );
+      ); 
 
       board.appendChild(
         hole
       );
-    }
+    } 
 
     const closeBtn =
-      $("#wat-close", panel);
+      $("#wat-close", panel); 
 
     const refreshBtn =
-      $("#wat-refresh", panel);
+      $("#wat-refresh", panel); 
 
-    [closeBtn, refreshBtn].forEach(btn => {
+    &#91;closeBtn, refreshBtn&#93;.forEach(btn => {
       if (btn) {
         Object.assign(btn.style, {
           backgroundColor: "#000000",
@@ -1095,12 +1095,12 @@
           marginTop: "8px"
         });
       }
-    });
+    }); 
 
     closeBtn.addEventListener(
       "click",
       closeGame
-    );
+    ); 
 
     refreshBtn.addEventListener(
       "click",
@@ -1110,7 +1110,7 @@
         );
         window.location.reload();
       }
-    );
+    ); 
 
     (
       $(".player-dock") ||
@@ -1119,9 +1119,9 @@
     ).insertAdjacentElement(
       "afterend",
       panel
-    );
+    ); 
 
-    panel.hidden = true;
+    panel.hidden = true; 
 
     new MutationObserver(
       () =>
@@ -1132,39 +1132,39 @@
       panel,
       {
         attributes: true,
-        attributeFilter: [
+        attributeFilter: &#91;
           "hidden"
-        ]
+        &#93;
       }
-    );
+    ); 
 
     game = {
       panel,
       board,
       status:
         $("#wat-status", panel)
-    };
+    }; 
 
     return game;
-  }
+  } 
 
   function triggerSplash(hole) {
     const ripple =
       document.createElement(
         "div"
-      );
+      ); 
 
     ripple.className =
-      "wat-ripple";
+      "wat-ripple"; 
 
     hole.appendChild(
       ripple
-    );
+    ); 
 
     setTimeout(() => {
       ripple.remove();
     }, 320);
-  }
+  } 
 
   function hideMoles() {
     game.board
@@ -1173,41 +1173,41 @@
       )
       .forEach(hole => {
         hole.dataset.active =
-          "false";
+          "false"; 
 
         hole.dataset.target =
-          "";
+          ""; 
 
         hole.innerHTML =
-          "";
+          ""; 
 
         hole.style.zIndex =
           "1";
       });
-  }
+  } 
 
   function spawnMole() {
-    if (!active) return;
+    if (!active) return; 
 
-    const holes = [
+    const holes = &#91;
       ...game.board
         .querySelectorAll(
           ".wat-hole"
         )
-    ];
+    &#93;; 
 
     const hole =
-      holes[
+      holes&#91;
         Math.floor(
           Math.random() *
             holes.length
         )
-      ];
+      &#93;; 
 
-    hideMoles();
+    hideMoles(); 
 
     hole.dataset.active =
-      "true";
+      "true"; 
 
     /*
       Randomly choose between a normal
@@ -1215,30 +1215,30 @@
     */
     const isSnake =
       Math.random() <
-      SNAKE_CHANCE;
+      SNAKE_CHANCE; 
 
     if (isSnake) {
       hole.dataset.target =
-        "snake";
+        "snake"; 
 
       hole.innerHTML =
         `<img src="assets/snake.png" alt="" class="wat-snake" />`;
     } else {
       hole.dataset.target =
-        "duck";
+        "duck"; 
 
       hole.innerHTML =
         `<img src="assets/duck.png" alt="" class="wat-duck" />`;
-    }
+    } 
 
     hole.style.zIndex =
-      "3";
+      "3"; 
 
-    triggerSplash(hole);
+    triggerSplash(hole); 
 
     clearTimeout(
       hideTimer
-    );
+    ); 
 
     hideTimer =
       setTimeout(
@@ -1250,7 +1250,7 @@
             const targetImg =
               hole.querySelector(
                 ".wat-duck, .wat-snake"
-              );
+              ); 
 
             if (targetImg) {
               targetImg.classList.add(
@@ -1259,11 +1259,11 @@
                 )
                   ? "wat-snake-hiding"
                   : "wat-duck-hiding"
-              );
+              ); 
 
               triggerSplash(
                 hole
-              );
+              ); 
 
               setTimeout(() => {
                 if (
@@ -1271,13 +1271,13 @@
                   "true"
                 ) {
                   hole.innerHTML =
-                    "";
+                    ""; 
 
                   hole.style.zIndex =
-                    "1";
+                    "1"; 
 
                   hole.dataset.target =
-                    "";
+                    ""; 
 
                   hole.dataset.active =
                     "false";
@@ -1285,59 +1285,59 @@
               }, 180);
             } else {
               hole.innerHTML =
-                "";
+                ""; 
 
               hole.style.zIndex =
-                "1";
+                "1"; 
 
               hole.dataset.target =
-                "";
+                ""; 
 
               hole.dataset.active =
                 "false";
             }
           } else {
             hole.dataset.target =
-              "";
+              ""; 
 
             hole.dataset.active =
               "false";
           }
         },
         MOLE_VISIBLE_MS
-      );
+      ); 
 
     moleTimer =
       setTimeout(
         spawnMole,
         MOLE_INTERVAL_MS
       );
-  }
+  } 
 
   function startClock() {
     clearInterval(
       gameTimer
-    );
+    ); 
 
     secondsLeft =
-      GAME_DURATION;
+      GAME_DURATION; 
 
     $("#wat-time",
       game.panel
     ).value =
-      secondsLeft;
+      secondsLeft; 
 
     gameTimer =
       setInterval(
         () => {
-          if (!active) return;
+          if (!active) return; 
 
-          secondsLeft--;
+          secondsLeft--; 
 
           $("#wat-time",
             game.panel
           ).value =
-            secondsLeft;
+            secondsLeft; 
 
           if (
             secondsLeft <= 0
@@ -1347,74 +1347,74 @@
         },
         1000
       );
-  }
+  } 
 
   function finish(won) {
-    if (!active) return;
+    if (!active) return; 
 
     /*
        Remember exactly where the player
        is standing before advancing.
-    */
+    */ 
 
     const savedScrollPosition =
-      window.scrollY;
+      window.scrollY; 
 
-    active = false;
+    active = false; 
 
     clearTimeout(
       moleTimer
-    );
+    ); 
 
     clearTimeout(
       hideTimer
-    );
+    ); 
 
     clearInterval(
       gameTimer
-    );
+    ); 
 
-    hideMoles();
+    hideMoles(); 
 
     if (!won) {
       game.status.textContent =
         "The track survived. Try again!";
       return;
-    }
+    } 
 
     const songId =
-      getCurrentSongId();
+      getCurrentSongId(); 
 
     const songNumber =
-      getCurrentSongNumber();
+      getCurrentSongNumber(); 
 
     const savedId =
       saveWhackedTrack(
         songId
-      );
+      ); 
 
     const roadClosed =
       closeRoad(
         songNumber,
         songId
-      );
+      ); 
 
     if (roadClosed) {
       $("#wat-refresh",
         game.panel
       ).hidden = false;
-    }
+    } 
 
     game.status.textContent =
-      "TRACK BANISHED! 🚫";
+      "TRACK BANISHED! 🚫"; 
 
     /*
        Advance to the next song/card,
        then immediately restore the
        exact scroll position.
-    */
+    */ 
 
-    next();
+    next(); 
 
     requestAnimationFrame(() => {
       window.scrollTo({
@@ -1422,141 +1422,141 @@
         behavior: "instant"
       });
     });
-  }
+  } 
 
   function closeGame() {
-    active = false;
+    active = false; 
 
     clearTimeout(
       moleTimer
-    );
+    ); 
 
     clearTimeout(
       hideTimer
-    );
+    ); 
 
     clearInterval(
       gameTimer
-    );
+    ); 
 
     if (game) {
       game.panel.hidden =
         true;
     }
-  }
+  } 
 
   function startGame(event) {
     event?.preventDefault();
-    event?.stopImmediatePropagation();
+    event?.stopImmediatePropagation(); 
 
     game =
-      createGame();
+      createGame(); 
 
     clearTimeout(
       moleTimer
-    );
+    ); 
 
     clearTimeout(
       hideTimer
-    );
+    ); 
 
     clearInterval(
       gameTimer
-    );
+    ); 
 
     $("#wat-refresh",
       game.panel
     ).hidden =
-      getWhackedTracks().length === 0;
+      getWhackedTracks().length === 0; 
 
     game.panel.hidden =
-      false;
+      false; 
 
     if (!playing()) {
-      active = false;
+      active = false; 
 
       game.status.textContent =
-        "Play a track to start the game.";
+        "Play a track to start the game."; 
 
       game.panel.scrollIntoView({
         behavior: "smooth",
         block: "start"
-      });
+      }); 
 
       return;
-    }
+    } 
 
     const songNumber =
-      getCurrentSongNumber();
+      getCurrentSongNumber(); 
 
     const songId =
-      getCurrentSongId();
+      getCurrentSongId(); 
 
     if (
       isTrackRemembered(
         songId
       )
     ) {
-      active = false;
+      active = false; 
 
       const row =
         findSongRow(
           songNumber
-        );
+        ); 
 
       applyRoadworkToRow(
         row
-      );
+      ); 
 
       game.status.innerHTML =
         `🚧 ROAD CLOSED<br>` +
-        `<small>This track is already closed for roadwork.</small>`;
+        `<small>This track is already closed for roadwork.</small>`; 
 
       game.panel.scrollIntoView({
         behavior: "smooth",
         block: "start"
-      });
+      }); 
 
       return;
-    }
+    } 
 
     trackHealth =
-      TRACK_HEALTH;
+      TRACK_HEALTH; 
 
-    active = true;
+    active = true; 
 
     $("#wat-health",
       game.panel
     ).value =
-      trackHealth;
+      trackHealth; 
 
     $("#wat-time",
       game.panel
     ).value =
-      GAME_DURATION;
+      GAME_DURATION; 
 
-    hideMoles();
+    hideMoles(); 
 
     game.status.textContent =
-      "Whack the ducks to banish the track!";
+      "Whack the ducks to banish the track!"; 
 
-    startClock();
+    startClock(); 
 
-    spawnMole();
+    spawnMole(); 
 
     game.panel.scrollIntoView({
       behavior: "smooth",
       block: "start"
     });
-  }
+  } 
 
   function init() {
-    setupToolbar();
+    setupToolbar(); 
 
-    loadSavedRoadwork();
+    loadSavedRoadwork(); 
 
     const button =
-      $("#whack-track");
+      $("#whack-track"); 
 
     if (
       !button ||
@@ -1564,23 +1564,23 @@
         "true"
     ) {
       return;
-    }
+    } 
 
     button.dataset.whackGameBound =
-      "true";
+      "true"; 
 
     Object.assign(
       button.style,
       {
         cursor: "pointer"
       }
-    );
+    ); 
 
     button.addEventListener(
       "click",
       startGame
     );
-  }
+  } 
 
   if (
     document.readyState ===
@@ -1593,6 +1593,6 @@
     );
   } else {
     init();
-  }
+  } 
 
 })();
