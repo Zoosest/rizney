@@ -1,6 +1,6 @@
-
 /* =========================================================
    JUMANJI CHAOS
+   "JUNGLE MADNESS"
    "YOU GOT JUMANJI'D"
    ========================================================= */
 
@@ -95,9 +95,6 @@
   let animationFrame =
     null;
 
-  let spawnTimer =
-    null;
-
   let nextSpawnAt =
     0;
 
@@ -139,6 +136,22 @@
         }
 
       }
+
+      @keyframes jumanji-title-pulse {
+
+        0% {
+          transform: scale(1);
+        }
+
+        100% {
+          transform: scale(1.04);
+        }
+
+      }
+
+      #jumanji-chaos-overlay button {
+        -webkit-tap-highlight-color: transparent;
+      }
     `;
 
     document.head.appendChild(
@@ -148,7 +161,7 @@
 
 
   // =========================================================
-  // CREATE OVERLAY
+  // CREATE FULL SCREEN OVERLAY
   // =========================================================
 
   function createOverlay() {
@@ -170,21 +183,156 @@
     overlay.id =
       OVERLAY_ID;
 
+
+    /*
+      THIS IS THE IMPORTANT PART.
+
+      The overlay covers the ENTIRE browser window.
+      It receives pointer events so nothing underneath
+      can accidentally be pressed.
+    */
+
     overlay.style.cssText = `
       position: fixed;
       inset: 0;
       width: 100vw;
       height: 100vh;
+
+      background: #000000;
+
       overflow: hidden;
-      pointer-events: none;
-      z-index: 2000;
+
+      pointer-events: auto;
+
+      z-index: 2147483647;
+
+      touch-action: none;
+
+      user-select: none;
+      -webkit-user-select: none;
+
+      cursor: crosshair;
     `;
+
+
+    /*
+      Swallow clicks/taps that happen on the
+      black background instead of allowing them
+      to reach the website underneath.
+    */
+
+    overlay.addEventListener(
+      "click",
+      event => {
+
+        event.preventDefault();
+
+        event.stopPropagation();
+
+      },
+      true
+    );
+
+
+    /*
+      Also swallow pointer events on the
+      background itself.
+    */
+
+    overlay.addEventListener(
+      "pointerdown",
+      event => {
+
+        if (
+          event.target ===
+          overlay
+        ) {
+
+          event.preventDefault();
+
+          event.stopPropagation();
+        }
+
+      },
+      true
+    );
+
 
     document.body.appendChild(
       overlay
     );
 
+
     return overlay;
+  }
+
+
+  // =========================================================
+  // JUNGLE MADNESS TITLE
+  // =========================================================
+
+  function createTitle(
+    overlay
+  ) {
+
+    const title =
+      document.createElement(
+        "div"
+      );
+
+    title.id =
+      "jumanji-madness-title";
+
+    title.textContent =
+      "JUNGLE MADNESS";
+
+    title.style.cssText = `
+      position: absolute;
+
+      top: 12px;
+      left: 0;
+      width: 100%;
+
+      text-align: center;
+
+      color: #ffffff;
+
+      font-family:
+        Impact,
+        "Arial Black",
+        sans-serif;
+
+      font-size:
+        clamp(2rem, 8vw, 5rem);
+
+      font-weight: 900;
+
+      letter-spacing:
+        0.08em;
+
+      line-height: 1;
+
+      pointer-events: none;
+
+      user-select: none;
+      -webkit-user-select: none;
+
+      text-shadow:
+        4px 4px 0 #222,
+        0 0 15px rgba(255,255,255,.35);
+
+      animation:
+        jumanji-title-pulse
+        .35s
+        infinite
+        alternate;
+
+      z-index: 100000;
+    `;
+
+    overlay.appendChild(
+      title
+    );
   }
 
 
@@ -212,11 +360,6 @@
   function getSpawnInterval(
     progress
   ) {
-
-    /*
-      Slow at the beginning.
-      Completely ridiculous near the end.
-    */
 
     const eased =
       Math.pow(
@@ -263,6 +406,7 @@
       return;
     }
 
+
     const animal =
       document.createElement(
         "button"
@@ -279,27 +423,47 @@
         )
       ];
 
+
     const size =
       Math.round(
-        random(30, 60)
+        random(30, 65)
       );
 
+
     animal.style.cssText = `
-      position:absolute;
-      left:0;
-      top:0;
-      padding:0;
-      margin:0;
-      border:0;
-      background:transparent;
-      color:inherit;
-      font-size:${size}px;
-      line-height:1;
-      cursor:pointer;
-      pointer-events:auto;
-      user-select:none;
-      -webkit-user-select:none;
-      touch-action:manipulation;
+      position: absolute;
+
+      left: 0;
+      top: 0;
+
+      padding: 0;
+      margin: 0;
+
+      border: 0;
+
+      background:
+        transparent;
+
+      color: inherit;
+
+      font-size:
+        ${size}px;
+
+      line-height: 1;
+
+      cursor: crosshair;
+
+      pointer-events: auto;
+
+      user-select: none;
+      -webkit-user-select: none;
+
+      touch-action: none;
+
+      z-index: 50000;
+
+      -webkit-tap-highlight-color:
+        transparent;
     `;
 
 
@@ -319,9 +483,9 @@
 
       y:
         random(
-          0,
+          70,
           Math.max(
-            1,
+            71,
             window.innerHeight - 70
           )
         ),
@@ -373,11 +537,11 @@
 
 
     // =======================================================
-    // TAP ANIMAL = REMOVE ANIMAL
+    // TAP ANIMAL = REMOVE IT
     // =======================================================
 
     animal.addEventListener(
-      "click",
+      "pointerdown",
       event => {
 
         event.preventDefault();
@@ -391,7 +555,21 @@
             item =>
               item !== record
           );
-      }
+      },
+      true
+    );
+
+
+    animal.addEventListener(
+      "click",
+      event => {
+
+        event.preventDefault();
+
+        event.stopPropagation();
+
+      },
+      true
     );
 
 
@@ -406,7 +584,7 @@
 
 
   // =========================================================
-  // SCHEDULE NEXT ANIMAL
+  // SCHEDULE NEXT SPAWN
   // =========================================================
 
   function scheduleNextSpawn(
@@ -451,18 +629,14 @@
     }
 
 
-    /*
-      Spawn one.
-    */
-
     spawnAnimal(
       progress
     );
 
 
     /*
-      Near the end, occasionally
-      throw out several at once.
+      Starts getting ridiculous
+      around the final quarter.
     */
 
     if (
@@ -506,6 +680,7 @@
     }
 
     if (!lastTime) {
+
       lastTime =
         timestamp;
     }
@@ -552,7 +727,8 @@
 
         const wobbleY =
           Math.cos(
-            animal.phase * 0.8
+            animal.phase *
+            0.8
           ) *
           animal.wobble;
 
@@ -562,9 +738,9 @@
           delta;
 
 
-        /*
-          Bounce around the screen.
-        */
+        // ---------------------------------------------------
+        // BOUNCE
+        // ---------------------------------------------------
 
         if (
           animal.x < -50 ||
@@ -576,7 +752,7 @@
 
 
         if (
-          animal.y < -50 ||
+          animal.y < 50 ||
           animal.y > height + 20
         ) {
 
@@ -595,7 +771,7 @@
 
         animal.y =
           Math.max(
-            -50,
+            50,
             Math.min(
               height + 20,
               animal.y
@@ -649,25 +825,47 @@
       );
 
     message.style.cssText = `
-      position:fixed;
-      inset:0;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      text-align:center;
-      pointer-events:none;
-      padding:20px;
-      font-family:Impact,"Arial Black",sans-serif;
-      font-size:clamp(3rem,11vw,8rem);
-      font-weight:900;
-      line-height:.95;
-      color:#f5d76e;
+      position: fixed;
+
+      inset: 0;
+
+      display: flex;
+
+      align-items: center;
+      justify-content: center;
+
+      text-align: center;
+
+      pointer-events: none;
+
+      padding: 20px;
+
+      font-family:
+        Impact,
+        "Arial Black",
+        sans-serif;
+
+      font-size:
+        clamp(3rem, 11vw, 8rem);
+
+      font-weight: 900;
+
+      line-height: .95;
+
+      color: #f5d76e;
+
       text-shadow:
         5px 5px 0 #c084fc,
         10px 10px 0 #120b18,
         0 0 30px rgba(255,255,255,.8);
-      z-index:9999;
-      animation:jumanji-chaos-shake .12s infinite alternate;
+
+      z-index: 200000;
+
+      animation:
+        jumanji-chaos-shake
+        .12s
+        infinite
+        alternate;
     `;
 
     message.textContent =
@@ -679,11 +877,6 @@
 
 
     if (isLoss) {
-
-      /*
-        Leave the animals underneath
-        the message for maximum stupidity.
-      */
 
       setTimeout(
         stopGame,
@@ -725,31 +918,34 @@
 
     injectStyles();
 
+
     const overlay =
       createOverlay();
 
-
-    /*
-      Clean out anything left over.
-    */
 
     overlay.innerHTML =
       "";
 
 
     /*
-      One lonely animal appears first.
+      JUNGLE MADNESS
+      appears immediately.
+    */
+
+    createTitle(
+      overlay
+    );
+
+
+    /*
+      One lonely animal
+      begins the madness.
     */
 
     spawnAnimal(
       0
     );
 
-
-    /*
-      First spawn happens after
-      the initial slow interval.
-    */
 
     scheduleNextSpawn(
       0
@@ -773,14 +969,6 @@
       false;
 
 
-    clearTimeout(
-      spawnTimer
-    );
-
-    spawnTimer =
-      null;
-
-
     if (animationFrame) {
 
       cancelAnimationFrame(
@@ -798,6 +986,7 @@
       );
 
     if (overlay) {
+
       overlay.remove();
     }
 
@@ -819,9 +1008,7 @@
 
   function finishGame() {
 
-    if (
-      finished
-    ) {
+    if (finished) {
       return;
     }
 
@@ -843,13 +1030,8 @@
     }
 
 
-    clearTimeout(
-      spawnTimer
-    );
-
-
     /*
-      If there are still animals,
+      If even ONE animal survives:
       YOU GOT JUMANJI'D.
     */
 
@@ -888,6 +1070,7 @@
       typeof player.getVideoData !==
         "function"
     ) {
+
       return;
     }
 
@@ -926,6 +1109,7 @@
     ) {
 
       if (active) {
+
         stopGame();
       }
 
@@ -993,6 +1177,7 @@
       !duration ||
       duration <= 0
     ) {
+
       return;
     }
 
@@ -1039,11 +1224,6 @@
 
     injectStyles();
 
-
-    /*
-      Check often enough to catch
-      the Jumanji song immediately.
-    */
 
     setInterval(
       checkJumanji,
