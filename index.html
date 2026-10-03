@@ -1521,54 +1521,5 @@
   <script src="./singles.js"></script> 
   <script src="./whack-a-track.js"></script> 
 
-
-  <!-- =====================================================
-       TEMPORARY TEST RESET BUTTON
-       ONLY RESETS PIRATE / UNLOCK TEST DATA
-       DOES NOT TOUCH WHACK-A-TRACK DATA
-       ===================================================== -->
-
-  <button
-    id="reset-test-data"
-    type="button"
-    style="
-      position:fixed;
-      bottom:10px;
-      right:10px;
-      z-index:999999;
-      padding:8px 12px;
-      background:#55208a;
-      color:#f5d76e;
-      border:1px solid #d4af37;
-      border-radius:999px;
-      font-family:Georgia,'Times New Roman',serif;
-      font-weight:bold;
-      font-size:12px;
-      cursor:pointer;
-    "
-  >
-    RESET TEST DATA
-  </button>
-
-  <script>
-    document
-      .getElementById("reset-test-data")
-      .addEventListener("click", () => {
-
-        localStorage.removeItem("monkeyJudgeCompleted");
-        localStorage.removeItem("pottyTimeUnlocked");
-
-        localStorage.removeItem("delawareCompleted");
-        localStorage.removeItem("niceAndSlowUnlocked");
-
-        localStorage.removeItem("yohoCompleted");
-        localStorage.removeItem("rollingStoneUnlocked");
-
-        alert("Pirate unlocks reset! Reloading...");
-
-        location.reload();
-      });
-  </script>
-
 </body>
 </html>
