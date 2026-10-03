@@ -1,23 +1,16 @@
 /* =========================================================
-   JUMANJI CHAOS
-   "YOU GOT JUMANJI'D!"
-   "JUNGLE MADNESS"
+   "JUMANJI CHAOS" — STUPID EDITION
    ========================================================= */
 
 (() => {
   "use strict";
 
   // =========================================================
-  // JUMANJI VIDEO
+  // CONSTANTS
   // =========================================================
 
   const JUMANJI_VIDEO_ID =
     "FOeZaZRRRZ0";
-
-
-  // =========================================================
-  // SOUND EFFECTS
-  // =========================================================
 
   const JUMANJI_SOUND =
     "./assets/jumanji.mp3";
@@ -27,6 +20,15 @@
 
   const F_N_BOOM_SOUND =
     "./assets/f-n-boom.mp3";
+
+  const OVERLAY_ID =
+    "jumanji-chaos-overlay";
+
+  const STYLE_ID =
+    "jumanji-chaos-styles";
+
+  const MAX_ANIMALS =
+    180;
 
 
   // =========================================================
@@ -75,7 +77,7 @@
 
 
   // =========================================================
-  // COMPLETELY UNNECESSARY INTRUDERS
+  // RANDOM INTRUDERS
   // =========================================================
 
   const INTRUDERS = [
@@ -92,29 +94,6 @@
 
 
   // =========================================================
-  // SETTINGS
-  // =========================================================
-
-  const OVERLAY_ID =
-    "jumanji-chaos-overlay";
-
-  const STYLE_ID =
-    "jumanji-chaos-styles";
-
-  const MAX_ANIMALS =
-    180;
-
-  const START_INTERVAL =
-    2500;
-
-  const END_INTERVAL =
-    180;
-
-  const JUMANJI_SOUND_DELAY =
-    3000;
-
-
-  // =========================================================
   // STATE
   // =========================================================
 
@@ -124,71 +103,197 @@
   let finished =
     false;
 
-  let animals =
-    [];
-
   let animationFrame =
     null;
 
-  let nextSpawnAt =
-    0;
-
-  let lastTime =
-    0;
+  let spawnTimer =
+    null;
 
   let jumanjiSoundTimer =
     null;
 
+  let overlay =
+    null;
+
+  let animals =
+    [];
+
+  let gameStartTime =
+    0;
+
+  let gameDuration =
+    300000;
+
 
   // =========================================================
-  // AUDIO
+  // LOUD SOUND SYSTEM
   // =========================================================
 
-  function playSound(
-    path
-  ) {
+  let audioContext =
+    null;
+
+
+  function getAudioContext() {
+
+    if (audioContext) {
+      return audioContext;
+    }
 
     try {
 
-      const sound =
-        new Audio(path);
+      const AudioContext =
+        window.AudioContext ||
+        window.webkitAudioContext;
 
-      sound.volume =
-        1.0;
+      if (!AudioContext) {
+        return null;
+      }
 
-      sound.currentTime =
-        0;
+      audioContext =
+        new AudioContext();
 
-      sound.play().catch(
-        error => {
-
-          console.log(
-            "Jumanji sound could not play:",
-            error
-          );
-
-        }
-      );
-
-    } catch (error) {
+    } catch (e) {
 
       console.log(
-        "Could not create Jumanji sound:",
-        error
+        "Could not create audio context:",
+        e
+      );
+
+      return null;
+    }
+
+    return audioContext;
+  }
+
+
+  function playSound(path) {
+
+    try {
+
+      const audio =
+        new Audio(path);
+
+      audio.volume =
+        1.0;
+
+      audio.currentTime =
+        0;
+
+      audio.play().catch(err => {
+
+        console.log(
+          "Sound playback blocked:",
+          err
+        );
+
+      });
+
+    } catch (e) {
+
+      console.log(
+        "Could not play sound:",
+        e
       );
     }
   }
 
 
+  /*
+    Hit sounds use Web Audio so they can be
+    amplified beyond the normal HTML Audio
+    volume ceiling.
+
+    3.5x gain = MUCH LOUDER.
+  */
+
+  async function playLoudSound(path) {
+
+    const ctx =
+      getAudioContext();
+
+    if (!ctx) {
+
+      playSound(path);
+
+      return;
+    }
+
+    try {
+
+      if (
+        ctx.state ===
+        "suspended"
+      ) {
+
+        await ctx.resume();
+      }
+
+
+      const audio =
+        new Audio(path);
+
+      audio.preload =
+        "auto";
+
+      audio.volume =
+        1.0;
+
+
+      const source =
+        ctx.createMediaElementSource(
+          audio
+        );
+
+
+      const gainNode =
+        ctx.createGain();
+
+
+      /*
+        TURN IT UP.
+      */
+
+      gainNode.gain.value =
+        3.5;
+
+
+      source.connect(
+        gainNode
+      );
+
+      gainNode.connect(
+        ctx.destination
+      );
+
+
+      audio.currentTime =
+        0;
+
+
+      await audio.play();
+
+    } catch (e) {
+
+      console.log(
+        "Loud sound playback failed:",
+        e
+      );
+
+      /*
+        Fall back to normal playback
+        if Web Audio isn't available.
+      */
+
+      playSound(path);
+    }
+  }
+
+
   // =========================================================
-  // JUMANJI INTRO VOICE
+  // JUMANJI VOICE
   // =========================================================
 
   function playJumanjiVoice() {
-
-    if (!active) {
-      return;
-    }
 
     playSound(
       JUMANJI_SOUND
@@ -207,53 +312,29 @@
 
 
     /*
-      10% = FUCKING BOOM
-      25% = regular BOOM
-      65% = silence
+      10% — FUCKING BOOM
+      25% — boom
+      65% — silence
     */
 
     if (
       roll < 0.10
     ) {
 
-      playSound(
+      playLoudSound(
         F_N_BOOM_SOUND
       );
 
-      return;
-    }
-
-
-    if (
+    } else if (
       roll < 0.35
     ) {
 
-      playSound(
+      playLoudSound(
         BOOM_SOUND
       );
 
-      return;
     }
 
-    // The remaining 65% intentionally
-    // makes absolutely no sound.
-  }
-
-
-  // =========================================================
-  // RANDOM NUMBER
-  // =========================================================
-
-  function random(
-    min,
-    max
-  ) {
-
-    return (
-      Math.random() *
-      (max - min) +
-      min
-    );
   }
 
 
@@ -268,16 +349,12 @@
         STYLE_ID
       )
     ) {
-
       return;
     }
 
 
     const style =
-      document.createElement(
-        "style"
-      );
-
+      document.createElement("style");
 
     style.id =
       STYLE_ID;
@@ -285,27 +362,18 @@
 
     style.textContent = `
 
-      @keyframes jumanji-pulse {
+      @keyframes jumanji-title-pulse {
 
         0% {
-          transform: scale(1);
+          transform: translateX(-50%) scale(1);
+        }
+
+        50% {
+          transform: translateX(-50%) scale(1.04);
         }
 
         100% {
-          transform: scale(1.04);
-        }
-
-      }
-
-
-      @keyframes jumanji-shake {
-
-        0% {
-          transform: rotate(-4deg);
-        }
-
-        100% {
-          transform: rotate(4deg);
+          transform: translateX(-50%) scale(1);
         }
 
       }
@@ -316,7 +384,7 @@
         0% {
           transform:
             translate(-50%, -50%)
-            scale(.4)
+            scale(0.5)
             rotate(-8deg);
 
           opacity: 0;
@@ -325,7 +393,7 @@
         20% {
           transform:
             translate(-50%, -50%)
-            scale(1.35)
+            scale(1.25)
             rotate(5deg);
 
           opacity: 1;
@@ -343,9 +411,63 @@
       }
 
 
-      #jumanji-chaos-overlay button {
-        -webkit-tap-highlight-color:
-          transparent;
+      .jumanji-animal {
+
+        position: absolute;
+
+        display: flex;
+
+        align-items: center;
+
+        justify-content: center;
+
+        line-height: 1;
+
+        cursor: crosshair;
+
+        user-select: none;
+
+        -webkit-user-select: none;
+
+        will-change:
+          transform,
+          left,
+          top;
+
+      }
+
+
+      .jumanji-boom-text {
+
+        position: absolute;
+
+        pointer-events: none;
+
+        color: white;
+
+        font-family:
+          Arial,
+          Helvetica,
+          sans-serif;
+
+        font-size: 1.25rem;
+
+        font-weight: bold;
+
+        letter-spacing: 1px;
+
+        text-shadow:
+          0 1px 3px black,
+          0 0 5px black;
+
+        animation:
+          jumanji-boom
+          0.55s
+          ease-out
+          forwards;
+
+        z-index: 999999;
+
       }
 
     `;
@@ -358,44 +480,31 @@
 
 
   // =========================================================
-  // CREATE FULL SCREEN OVERLAY
+  // CREATE OVERLAY
   // =========================================================
 
   function createOverlay() {
 
-    let overlay =
-      document.getElementById(
-        OVERLAY_ID
-      );
-
-
     if (overlay) {
-      return overlay;
+      return;
     }
 
 
     overlay =
-      document.createElement(
-        "div"
-      );
-
+      document.createElement("div");
 
     overlay.id =
       OVERLAY_ID;
 
 
-    /*
-      THE WEBSITE IS NOW GONE.
-
-      Nothing underneath can be touched.
-    */
-
     overlay.style.cssText = `
+
       position: fixed;
 
       inset: 0;
 
       width: 100vw;
+
       height: 100vh;
 
       background: #000000;
@@ -409,22 +518,25 @@
       touch-action: none;
 
       user-select: none;
+
       -webkit-user-select: none;
 
       cursor: crosshair;
+
     `;
 
 
     /*
-      Eat background clicks.
+      Capture clicks on the black background
+      so nothing underneath can accidentally
+      be pressed.
     */
 
     overlay.addEventListener(
-      "click",
-      event => {
+      "pointerdown",
+      e => {
 
-        event.preventDefault();
-        event.stopPropagation();
+        e.stopPropagation();
 
       },
       true
@@ -432,18 +544,10 @@
 
 
     overlay.addEventListener(
-      "pointerdown",
-      event => {
+      "click",
+      e => {
 
-        if (
-          event.target ===
-          overlay
-        ) {
-
-          event.preventDefault();
-          event.stopPropagation();
-
-        }
+        e.stopPropagation();
 
       },
       true
@@ -453,35 +557,38 @@
     document.body.appendChild(
       overlay
     );
-
-
-    return overlay;
   }
 
 
   // =========================================================
-  // TOP TITLE
+  // TITLES
   // =========================================================
 
-  function createTopTitle(
-    overlay
-  ) {
+  function createTitles() {
 
-    const title =
-      document.createElement(
-        "div"
-      );
+    if (!overlay) {
+      return;
+    }
 
 
-    title.textContent =
+    const top =
+      document.createElement("div");
+
+
+    top.textContent =
       "YOU GOT JUMANJI'D!";
 
 
-    title.style.cssText = `
+    top.style.cssText = `
+
       position: absolute;
 
-      top: 10px;
-      left: 0;
+      top: 20px;
+
+      left: 50%;
+
+      transform:
+        translateX(-50%);
 
       width: 100%;
 
@@ -490,65 +597,60 @@
       color: #228b22;
 
       font-family:
-        Impact,
-        "Arial Black",
-        sans-serif;
+        Georgia,
+        serif;
 
       font-size:
-        clamp(1.8rem, 7vw, 5rem);
+        clamp(
+          1.4rem,
+          5vw,
+          2.5rem
+        );
 
-      font-weight: 900;
+      font-weight: bold;
 
-      letter-spacing:
-        0.06em;
+      letter-spacing: 2px;
 
-      line-height: 1;
+      text-shadow:
+        0 2px 5px black,
+        0 0 10px #228b22;
 
       pointer-events: none;
 
-      z-index: 100000;
-
-      text-shadow:
-        3px 3px 0 #063d06,
-        0 0 15px #228b22;
+      z-index: 999998;
 
       animation:
-        jumanji-pulse
-        .4s
-        infinite
-        alternate;
+        jumanji-title-pulse
+        2s
+        ease-in-out
+        infinite;
+
     `;
 
 
     overlay.appendChild(
-      title
+      top
     );
-  }
 
 
-  // =========================================================
-  // BOTTOM TITLE
-  // =========================================================
-
-  function createBottomTitle(
-    overlay
-  ) {
-
-    const title =
-      document.createElement(
-        "div"
-      );
+    const bottom =
+      document.createElement("div");
 
 
-    title.textContent =
+    bottom.textContent =
       "JUNGLE MADNESS";
 
 
-    title.style.cssText = `
+    bottom.style.cssText = `
+
       position: absolute;
 
-      bottom: 12px;
-      left: 0;
+      bottom: 20px;
+
+      left: 50%;
+
+      transform:
+        translateX(-50%);
 
       width: 100%;
 
@@ -557,38 +659,33 @@
       color: #228b22;
 
       font-family:
-        Impact,
-        "Arial Black",
-        sans-serif;
+        Georgia,
+        serif;
 
       font-size:
-        clamp(1.8rem, 7vw, 5rem);
+        clamp(
+          1.3rem,
+          4vw,
+          2rem
+        );
 
-      font-weight: 900;
+      font-weight: bold;
 
-      letter-spacing:
-        0.08em;
+      letter-spacing: 3px;
 
-      line-height: 1;
+      text-shadow:
+        0 2px 5px black,
+        0 0 10px #228b22;
 
       pointer-events: none;
 
-      z-index: 100000;
+      z-index: 999998;
 
-      text-shadow:
-        3px 3px 0 #063d06,
-        0 0 15px #228b22;
-
-      animation:
-        jumanji-pulse
-        .35s
-        infinite
-        alternate;
     `;
 
 
     overlay.appendChild(
-      title
+      bottom
     );
   }
 
@@ -602,72 +699,37 @@
     y
   ) {
 
-    const overlay =
-      document.getElementById(
-        OVERLAY_ID
-      );
-
-
     if (!overlay) {
       return;
     }
 
 
     const boom =
-      document.createElement(
-        "div"
-      );
+      document.createElement("div");
+
+
+    /*
+      Deliberately NOT dramatic.
+
+      Just:
+
+      boom
+    */
+
+    boom.className =
+      "jumanji-boom-text";
 
 
     boom.textContent =
-      "BOOM";
+      "boom";
 
 
-    boom.style.cssText = `
-      position: absolute;
+    boom.style.left =
+      `${x}px`;
 
-      left:
-        ${x}px;
 
-      top:
-        ${y}px;
-
-      color:
-        #228b22;
-
-      font-family:
-        Impact,
-        "Arial Black",
-        sans-serif;
-
-      font-size:
-        clamp(2.5rem, 10vw, 7rem);
-
-      font-weight:
-        900;
-
-      line-height:
-        1;
-
-      pointer-events:
-        none;
-
-      z-index:
-        150000;
-
-      white-space:
-        nowrap;
-
-      text-shadow:
-        5px 5px 0 #063d06,
-        0 0 20px #228b22;
-
-      animation:
-        jumanji-boom
-        .55s
-        ease-out
-        forwards;
-    `;
+    boom.style.top =
+      `${y}px`;
 
 
     overlay.appendChild(
@@ -675,39 +737,88 @@
     );
 
 
-    setTimeout(
-      () => {
+    setTimeout(() => {
 
-        boom.remove();
+      boom.remove();
 
-      },
-      600
-    );
+    }, 600);
   }
 
 
   // =========================================================
-  // SPAWN SPEED
+  // RANDOM ANIMAL
   // =========================================================
 
-  function getSpawnInterval(
-    progress
-  ) {
+  function randomAnimal() {
 
-    const eased =
-      Math.pow(
-        progress,
-        1.8
-      );
+    /*
+      After the halfway point, intruders
+      occasionally invade the jungle.
+    */
+
+    const progress =
+      getProgress();
 
 
-    return (
-      START_INTERVAL -
-      (
-        START_INTERVAL -
-        END_INTERVAL
-      ) *
-      eased
+    if (
+      progress > 0.55 &&
+      Math.random() < 0.08
+    ) {
+
+      return {
+        emoji:
+          INTRUDERS[
+            Math.floor(
+              Math.random() *
+              INTRUDERS.length
+            )
+          ],
+
+        intruder:
+          true
+
+      };
+    }
+
+
+    return {
+      emoji:
+        ANIMALS[
+          Math.floor(
+            Math.random() *
+            ANIMALS.length
+          )
+        ],
+
+      intruder:
+        false
+    };
+  }
+
+
+  // =========================================================
+  // PROGRESS
+  // =========================================================
+
+  function getProgress() {
+
+    if (!gameStartTime) {
+      return 0;
+    }
+
+
+    const elapsed =
+      Date.now() -
+      gameStartTime;
+
+
+    return Math.max(
+      0,
+      Math.min(
+        1,
+        elapsed /
+          gameDuration
+      )
     );
   }
 
@@ -716,11 +827,12 @@
   // SPAWN ANIMAL
   // =========================================================
 
-  function spawnAnimal(
-    progress
-  ) {
+  function spawnAnimal() {
 
-    if (!active) {
+    if (
+      !active ||
+      !overlay
+    ) {
       return;
     }
 
@@ -729,246 +841,214 @@
       animals.length >=
       MAX_ANIMALS
     ) {
-
       return;
     }
 
 
-    const overlay =
-      document.getElementById(
-        OVERLAY_ID
-      );
-
-
-    if (!overlay) {
-      return;
-    }
+    const animalData =
+      randomAnimal();
 
 
     const animal =
-      document.createElement(
-        "button"
-      );
+      document.createElement("div");
 
 
-    animal.type =
-      "button";
+    animal.className =
+      "jumanji-animal";
 
 
     animal.textContent =
-      ANIMALS[
-        Math.floor(
-          Math.random() *
-          ANIMALS.length
-        )
-      ];
+      animalData.emoji;
 
 
-    // -------------------------------------------------------
-    // OCCASIONAL GIANT ANIMAL
-    // -------------------------------------------------------
+    /*
+      Most animals are normal-sized.
 
-    let size =
-      Math.round(
-        random(
-          30,
-          65
-        )
-      );
+      Occasionally:
+      RIDICULOUSLY HUGE.
+    */
 
-
-    if (
+    const huge =
       Math.random() <
-      0.045
-    ) {
+      0.045;
+
+
+    let size;
+
+
+    if (huge) {
 
       size =
-        Math.round(
-          random(
-            100,
-            180
-          )
-        );
+        100 +
+        Math.random() * 80;
+
+    } else {
+
+      size =
+        30 +
+        Math.random() * 42;
+
     }
 
 
-    animal.style.cssText = `
-      position:
-        absolute;
+    animal.style.fontSize =
+      `${size}px`;
 
-      left:
-        0;
 
-      top:
-        0;
+    /*
+      Random starting position.
+    */
 
-      padding:
-        0;
+    const width =
+      window.innerWidth;
 
-      margin:
-        0;
+    const height =
+      window.innerHeight;
 
-      border:
-        0;
 
-      background:
-        transparent;
+    const x =
+      Math.random() *
+      Math.max(
+        20,
+        width - size
+      );
 
-      color:
-        inherit;
 
-      font-size:
-        ${size}px;
+    const y =
+      Math.random() *
+      Math.max(
+        20,
+        height - size
+      );
 
-      line-height:
-        1;
 
-      cursor:
-        crosshair;
+    animal.style.left =
+      `${x}px`;
 
-      pointer-events:
-        auto;
 
-      user-select:
-        none;
+    animal.style.top =
+      `${y}px`;
 
-      -webkit-user-select:
-        none;
 
-      touch-action:
-        none;
+    /*
+      Gradually faster as the song progresses.
+    */
 
-      z-index:
-        50000;
+    const progress =
+      getProgress();
 
-      -webkit-tap-highlight-color:
-        transparent;
-    `;
 
+    const speedMultiplier =
+      0.6 +
+      progress * 2.2;
+
+
+    let vx =
+      (
+        Math.random() * 2 - 1
+      ) *
+      speedMultiplier;
+
+
+    let vy =
+      (
+        Math.random() * 2 - 1
+      ) *
+      speedMultiplier;
+
+
+    /*
+      Occasionally make one move
+      especially weirdly.
+    */
 
     const weird =
       Math.random() <
       0.12;
 
 
-    const record = {
+    const wobble =
+      weird
+        ? 0.08 +
+          Math.random() * 0.18
+        : 0;
+
+
+    let rotation =
+      Math.random() *
+      360;
+
+
+    let rotationSpeed =
+      (
+        Math.random() * 4 - 2
+      );
+
+
+    const animalObject = {
 
       element:
         animal,
 
-      x:
-        random(
-          0,
-          Math.max(
-            1,
-            window.innerWidth - 70
-          )
-        ),
+      x,
 
-      y:
-        random(
-          70,
-          Math.max(
-            71,
-            window.innerHeight - 70
-          )
-        ),
+      y,
 
-      vx:
-        random(
-          -0.18,
-          0.18
-        ) *
-        (1 + progress * 3),
+      vx,
 
-      vy:
-        random(
-          -0.18,
-          0.18
-        ) *
-        (1 + progress * 3),
+      vy,
 
-      rotation:
-        random(
-          0,
-          360
-        ),
+      size,
 
-      rotationSpeed:
-        random(
-          -0.08,
-          0.08
-        ),
+      rotation,
 
-      wobble:
-        random(
-          1,
-          4
-        ),
+      rotationSpeed,
+
+      wobble,
+
+      weird,
 
       phase:
-        random(
-          0,
-          Math.PI * 2
-        ),
+        Math.random() *
+        Math.PI *
+        2
 
-      wobbleSpeed:
-        random(
-          0.001,
-          0.004
-        ),
-
-      weird:
-        weird,
-
-      weirdPhase:
-        random(
-          0,
-          Math.PI * 2
-        )
     };
 
 
-    // =======================================================
-    // HIT ANIMAL
-    // =======================================================
+    /*
+      CLICK / TAP ANIMAL
+    */
 
     animal.addEventListener(
       "pointerdown",
-      event => {
+      e => {
 
-        event.preventDefault();
-        event.stopPropagation();
+        e.preventDefault();
+
+        e.stopPropagation();
 
 
-        /*
-          Capture the position BEFORE
-          removing the animal.
-        */
+        if (
+          !active
+        ) {
+          return;
+        }
+
+
+        const rect =
+          animal.getBoundingClientRect();
+
 
         const boomX =
-          record.x +
-          20;
+          rect.left +
+          rect.width / 2;
+
 
         const boomY =
-          record.y +
-          20;
+          rect.top +
+          rect.height / 2;
 
-
-        animal.remove();
-
-
-        animals =
-          animals.filter(
-            item =>
-              item !== record
-          );
-
-
-        /*
-          Every successful hit gets
-          the visual BOOM.
-        */
 
         showBoom(
           boomX,
@@ -976,23 +1056,28 @@
         );
 
 
-        /*
-          Sound is randomized separately.
-        */
-
         playHitSound();
 
-      },
-      true
-    );
+
+        animal.remove();
 
 
-    animal.addEventListener(
-      "click",
-      event => {
+        const index =
+          animals.indexOf(
+            animalObject
+          );
 
-        event.preventDefault();
-        event.stopPropagation();
+
+        if (
+          index !== -1
+        ) {
+
+          animals.splice(
+            index,
+            1
+          );
+
+        }
 
       },
       true
@@ -1005,249 +1090,53 @@
 
 
     animals.push(
-      record
+      animalObject
     );
   }
 
 
   // =========================================================
-  // RANDOM INTRUDER
+  // SPAWN SPEED
   // =========================================================
 
-  function spawnIntruder() {
+  function getSpawnInterval() {
 
-    if (!active) {
-      return;
-    }
-
-
-    if (
-      animals.length >=
-      MAX_ANIMALS
-    ) {
-
-      return;
-    }
+    const progress =
+      getProgress();
 
 
-    const overlay =
-      document.getElementById(
-        OVERLAY_ID
+    /*
+      Starts around 2.5 seconds.
+
+      Ends around 180ms.
+
+      The exponential curve makes the
+      jungle become increasingly stupid.
+    */
+
+    const accelerated =
+      Math.pow(
+        progress,
+        1.8
       );
 
 
-    if (!overlay) {
-      return;
-    }
-
-
-    const animal =
-      document.createElement(
-        "button"
-      );
-
-
-    animal.type =
-      "button";
-
-
-    animal.textContent =
-      INTRUDERS[
-        Math.floor(
-          Math.random() *
-          INTRUDERS.length
-        )
-      ];
-
-
-    const size =
-      Math.round(
-        random(
-          45,
-          95
-        )
-      );
-
-
-    animal.style.cssText = `
-      position:
-        absolute;
-
-      left:
-        0;
-
-      top:
-        0;
-
-      padding:
-        0;
-
-      margin:
-        0;
-
-      border:
-        0;
-
-      background:
-        transparent;
-
-      font-size:
-        ${size}px;
-
-      line-height:
-        1;
-
-      pointer-events:
-        auto;
-
-      touch-action:
-        none;
-
-      user-select:
-        none;
-
-      -webkit-user-select:
-        none;
-
-      cursor:
-        crosshair;
-
-      z-index:
-        60000;
-    `;
-
-
-    const record = {
-
-      element:
-        animal,
-
-      x:
-        random(
-          0,
-          window.innerWidth - 60
-        ),
-
-      y:
-        random(
-          70,
-          window.innerHeight - 100
-        ),
-
-      vx:
-        random(
-          -0.7,
-          0.7
-        ),
-
-      vy:
-        random(
-          -0.7,
-          0.7
-        ),
-
-      rotation:
-        random(
-          0,
-          360
-        ),
-
-      rotationSpeed:
-        random(
-          -0.2,
-          0.2
-        ),
-
-      wobble:
-        random(
-          2,
-          7
-        ),
-
-      phase:
-        random(
-          0,
-          Math.PI * 2
-        ),
-
-      wobbleSpeed:
-        random(
-          0.004,
-          0.01
-        )
-    };
-
-
-    animal.addEventListener(
-      "pointerdown",
-      event => {
-
-        event.preventDefault();
-        event.stopPropagation();
-
-
-        const boomX =
-          record.x +
-          20;
-
-        const boomY =
-          record.y +
-          20;
-
-
-        animal.remove();
-
-
-        animals =
-          animals.filter(
-            item =>
-              item !== record
-          );
-
-
-        showBoom(
-          boomX,
-          boomY
-        );
-
-
-        playHitSound();
-
-      },
-      true
-    );
-
-
-    animal.addEventListener(
-      "click",
-      event => {
-
-        event.preventDefault();
-        event.stopPropagation();
-
-      },
-      true
-    );
-
-
-    overlay.appendChild(
-      animal
-    );
-
-
-    animals.push(
-      record
+    return (
+      2500 -
+      (
+        2500 -
+        180
+      ) *
+      accelerated
     );
   }
 
 
   // =========================================================
-  // SCHEDULE NEXT SPAWN
+  // SCHEDULE SPAWNING
   // =========================================================
 
-  function scheduleNextSpawn(
-    progress
-  ) {
+  function scheduleNextSpawn() {
 
     if (!active) {
       return;
@@ -1255,134 +1144,86 @@
 
 
     const interval =
-      getSpawnInterval(
-        progress
-      );
+      getSpawnInterval();
 
 
-    nextSpawnAt =
-      Date.now() +
-      interval;
+    spawnTimer =
+      setTimeout(() => {
+
+        if (!active) {
+          return;
+        }
+
+
+        spawnAnimal();
+
+
+        /*
+          Extra chaos late in the game.
+        */
+
+        const progress =
+          getProgress();
+
+
+        if (
+          progress >
+            0.65
+        ) {
+
+          spawnAnimal();
+
+        }
+
+
+        if (
+          progress >
+            0.80 &&
+          Math.random() <
+            0.65
+        ) {
+
+          spawnAnimal();
+
+        }
+
+
+        if (
+          progress >
+            0.90
+        ) {
+
+          spawnAnimal();
+
+          if (
+            Math.random() <
+              0.7
+          ) {
+
+            spawnAnimal();
+
+          }
+
+        }
+
+
+        scheduleNextSpawn();
+
+      }, interval);
   }
 
 
   // =========================================================
-  // PROCESS SPAWNING
+  // ANIMATION
   // =========================================================
 
-  function processSpawning(
-    progress
-  ) {
+  function animate() {
 
-    if (!active) {
+    if (
+      !active
+    ) {
       return;
     }
-
-
-    const now =
-      Date.now();
-
-
-    if (
-      now <
-      nextSpawnAt
-    ) {
-
-      return;
-    }
-
-
-    spawnAnimal(
-      progress
-    );
-
-
-    // -------------------------------------------------------
-    // MORE CHAOS
-    // -------------------------------------------------------
-
-    if (
-      progress > 0.65 &&
-      Math.random() < 0.25
-    ) {
-
-      spawnAnimal(
-        progress
-      );
-    }
-
-
-    if (
-      progress > 0.80 &&
-      Math.random() < 0.45
-    ) {
-
-      spawnAnimal(
-        progress
-      );
-    }
-
-
-    if (
-      progress > 0.90 &&
-      Math.random() < 0.65
-    ) {
-
-      spawnAnimal(
-        progress
-      );
-    }
-
-
-    // -------------------------------------------------------
-    // RANDOM STUPID INTRUDER
-    // -------------------------------------------------------
-
-    if (
-      progress > 0.55 &&
-      Math.random() < 0.08
-    ) {
-
-      spawnIntruder();
-    }
-
-
-    scheduleNextSpawn(
-      progress
-    );
-  }
-
-
-  // =========================================================
-  // ANIMATE
-  // =========================================================
-
-  function animate(
-    timestamp
-  ) {
-
-    if (!active) {
-      return;
-    }
-
-
-    if (!lastTime) {
-
-      lastTime =
-        timestamp;
-    }
-
-
-    const delta =
-      Math.min(
-        timestamp -
-        lastTime,
-        40
-      );
-
-
-    lastTime =
-      timestamp;
 
 
     const width =
@@ -1392,132 +1233,161 @@
       window.innerHeight;
 
 
-    /*
-      The final part of the song
-      gets increasingly ridiculous.
-    */
+    const progress =
+      getProgress();
+
+
+    const speedBoost =
+      1 +
+      progress * 2.5;
+
 
     animals.forEach(
       animal => {
 
-        animal.phase +=
-          animal.wobbleSpeed *
-          delta;
-
-
-        animal.x +=
-          animal.vx *
-          delta;
-
-
-        animal.y +=
-          animal.vy *
-          delta;
-
-
-        // ---------------------------------------------------
-        // WEIRD MOVEMENT
-        // ---------------------------------------------------
+        /*
+          Weird animals get extra
+          wobble and unpredictable movement.
+        */
 
         if (
           animal.weird
         ) {
 
-          animal.weirdPhase +=
-            0.01 *
-            delta;
+          animal.phase +=
+            animal.wobble;
 
 
-          animal.x +=
+          animal.vx +=
             Math.sin(
-              animal.weirdPhase
+              animal.phase
             ) *
-            1.5;
+            0.04;
 
-
-          animal.y +=
+          animal.vy +=
             Math.cos(
-              animal.weirdPhase *
-              1.7
+              animal.phase *
+              1.3
             ) *
-            1.5;
+            0.04;
+
         }
 
 
-        const wobbleX =
-          Math.sin(
-            animal.phase
-          ) *
-          animal.wobble;
+        animal.x +=
+          animal.vx *
+          speedBoost;
 
 
-        const wobbleY =
-          Math.cos(
-            animal.phase *
-            0.8
-          ) *
-          animal.wobble;
+        animal.y +=
+          animal.vy *
+          speedBoost;
+
+
+        /*
+          Bounce around the screen.
+        */
+
+        if (
+          animal.x <= 0
+        ) {
+
+          animal.x =
+            0;
+
+          animal.vx =
+            Math.abs(
+              animal.vx
+            );
+
+        }
+
+
+        if (
+          animal.x +
+            animal.size >=
+          width
+        ) {
+
+          animal.x =
+            width -
+            animal.size;
+
+          animal.vx =
+            -Math.abs(
+              animal.vx
+            );
+
+        }
+
+
+        if (
+          animal.y <= 0
+        ) {
+
+          animal.y =
+            0;
+
+          animal.vy =
+            Math.abs(
+              animal.vy
+            );
+
+        }
+
+
+        if (
+          animal.y +
+            animal.size >=
+          height
+        ) {
+
+          animal.y =
+            height -
+            animal.size;
+
+          animal.vy =
+            -Math.abs(
+              animal.vy
+            );
+
+        }
 
 
         animal.rotation +=
           animal.rotationSpeed *
-          delta;
+          speedBoost;
 
 
-        // ---------------------------------------------------
-        // BOUNCE
-        // ---------------------------------------------------
-
-        if (
-          animal.x < -60 ||
-          animal.x > width + 20
-        ) {
-
-          animal.vx *= -1;
-        }
+        animal.element.style.left =
+          `${animal.x}px`;
 
 
-        if (
-          animal.y < 55 ||
-          animal.y > height + 20
-        ) {
-
-          animal.vy *= -1;
-        }
-
-
-        animal.x =
-          Math.max(
-            -60,
-            Math.min(
-              width + 20,
-              animal.x
-            )
-          );
-
-
-        animal.y =
-          Math.max(
-            55,
-            Math.min(
-              height + 20,
-              animal.y
-            )
-          );
+        animal.element.style.top =
+          `${animal.y}px`;
 
 
         animal.element.style.transform =
-          `
-            translate(
-              ${animal.x + wobbleX}px,
-              ${animal.y + wobbleY}px
-            )
-            rotate(
-              ${animal.rotation}deg
-            )
-          `;
+          `rotate(${animal.rotation}deg)`;
+
       }
     );
+
+
+    /*
+      Final stretch gets increasingly insane.
+    */
+
+    if (
+      progress >
+        0.90 &&
+      Math.random() <
+        0.035
+    ) {
+
+      spawnAnimal();
+
+    }
 
 
     animationFrame =
@@ -1528,126 +1398,14 @@
 
 
   // =========================================================
-  // BIG END MESSAGE
-  // =========================================================
-
-  function showMessage(
-    text,
-    isLoss
-  ) {
-
-    const overlay =
-      document.getElementById(
-        OVERLAY_ID
-      );
-
-
-    if (!overlay) {
-      return;
-    }
-
-
-    const message =
-      document.createElement(
-        "div"
-      );
-
-
-    message.textContent =
-      text;
-
-
-    message.style.cssText = `
-      position:
-        fixed;
-
-      inset:
-        0;
-
-      display:
-        flex;
-
-      align-items:
-        center;
-
-      justify-content:
-        center;
-
-      text-align:
-        center;
-
-      pointer-events:
-        none;
-
-      padding:
-        20px;
-
-      font-family:
-        Impact,
-        "Arial Black",
-        sans-serif;
-
-      font-size:
-        clamp(
-          3rem,
-          11vw,
-          8rem
-        );
-
-      font-weight:
-        900;
-
-      line-height:
-        .95;
-
-      color:
-        #228b22;
-
-      text-shadow:
-        5px 5px 0 #063d06,
-        10px 10px 0 #000000,
-        0 0 30px #228b22;
-
-      z-index:
-        200000;
-
-      animation:
-        jumanji-shake
-        .12s
-        infinite
-        alternate;
-    `;
-
-
-    overlay.appendChild(
-      message
-    );
-
-
-    if (isLoss) {
-
-      setTimeout(
-        stopGame,
-        5000
-      );
-
-    } else {
-
-      setTimeout(
-        stopGame,
-        3000
-      );
-    }
-  }
-
-
-  // =========================================================
-  // START
+  // START GAME
   // =========================================================
 
   function startGame() {
 
-    if (active) {
+    if (
+      active
+    ) {
       return;
     }
 
@@ -1658,79 +1416,161 @@
     finished =
       false;
 
+
     animals =
       [];
 
-    lastTime =
-      0;
+
+    gameStartTime =
+      Date.now();
+
+
+    /*
+      Get actual YouTube duration
+      when available.
+    */
+
+    try {
+
+      if (
+        window.rizneyPlayer &&
+        typeof
+          window.rizneyPlayer.getDuration ===
+          "function"
+      ) {
+
+        const duration =
+          window.rizneyPlayer.getDuration();
+
+
+        if (
+          duration > 0
+        ) {
+
+          gameDuration =
+            duration *
+            1000;
+
+        }
+
+      }
+
+    } catch (e) {}
 
 
     injectStyles();
 
+    createOverlay();
 
-    const overlay =
-      createOverlay();
-
-
-    overlay.innerHTML =
-      "";
-
-
-    createTopTitle(
-      overlay
-    );
-
-
-    createBottomTitle(
-      overlay
-    );
+    createTitles();
 
 
     /*
-      One lonely animal.
-
-      It has no idea what's coming.
+      Start with one lonely animal.
     */
 
-    spawnAnimal(
-      0
-    );
-
-
-    scheduleNextSpawn(
-      0
-    );
-
-
-    animationFrame =
-      requestAnimationFrame(
-        animate
-      );
+    spawnAnimal();
 
 
     /*
-      Three seconds into the game:
-
-      "haha you got JUMANJI'D"
-
-      Your voice.
+      Schedule the jungle invasion.
     */
 
-    clearTimeout(
-      jumanjiSoundTimer
-    );
+    scheduleNextSpawn();
 
+
+    /*
+      Start movement.
+    */
+
+    animate();
+
+
+    /*
+      Let the song play for three seconds
+      before the stupid Jumanji voice appears.
+    */
 
     jumanjiSoundTimer =
       setTimeout(
         playJumanjiVoice,
-        JUMANJI_SOUND_DELAY
+        3000
       );
   }
 
 
   // =========================================================
-  // STOP
+  // END MESSAGE
+  // =========================================================
+
+  function showMessage(
+    message
+  ) {
+
+    if (!overlay) {
+      return;
+    }
+
+
+    const messageBox =
+      document.createElement("div");
+
+
+    messageBox.textContent =
+      message;
+
+
+    messageBox.style.cssText = `
+
+      position: absolute;
+
+      left: 50%;
+
+      top: 50%;
+
+      transform:
+        translate(-50%, -50%);
+
+      width: 90%;
+
+      text-align: center;
+
+      color: #228b22;
+
+      font-family:
+        Georgia,
+        serif;
+
+      font-size:
+        clamp(
+          1.7rem,
+          7vw,
+          4rem
+        );
+
+      font-weight: bold;
+
+      letter-spacing: 2px;
+
+      text-shadow:
+        0 3px 8px black,
+        0 0 15px #228b22;
+
+      pointer-events: none;
+
+      z-index: 1000000;
+
+    `;
+
+
+    overlay.appendChild(
+      messageBox
+    );
+  }
+
+
+  // =========================================================
+  // STOP GAME
   // =========================================================
 
   function stopGame() {
@@ -1739,16 +1579,9 @@
       false;
 
 
-    clearTimeout(
-      jumanjiSoundTimer
-    );
-
-
-    jumanjiSoundTimer =
-      null;
-
-
-    if (animationFrame) {
+    if (
+      animationFrame
+    ) {
 
       cancelAnimationFrame(
         animationFrame
@@ -1759,36 +1592,55 @@
     }
 
 
-    const overlay =
-      document.getElementById(
-        OVERLAY_ID
+    if (
+      spawnTimer
+    ) {
+
+      clearTimeout(
+        spawnTimer
       );
+
+      spawnTimer =
+        null;
+    }
+
+
+    if (
+      jumanjiSoundTimer
+    ) {
+
+      clearTimeout(
+        jumanjiSoundTimer
+      );
+
+      jumanjiSoundTimer =
+        null;
+    }
 
 
     if (overlay) {
 
       overlay.remove();
+
+      overlay =
+        null;
     }
 
 
     animals =
       [];
-
-    finished =
-      false;
-
-    lastTime =
-      0;
   }
 
 
   // =========================================================
-  // FINISH
+  // FINISH GAME
   // =========================================================
 
   function finishGame() {
 
-    if (finished) {
+    if (
+      finished
+    ) {
       return;
     }
 
@@ -1800,16 +1652,9 @@
       false;
 
 
-    clearTimeout(
-      jumanjiSoundTimer
-    );
-
-
-    jumanjiSoundTimer =
-      null;
-
-
-    if (animationFrame) {
+    if (
+      animationFrame
+    ) {
 
       cancelAnimationFrame(
         animationFrame
@@ -1820,10 +1665,38 @@
     }
 
 
-    /*
-      If ANY animals remain...
+    if (
+      spawnTimer
+    ) {
 
-      YOU GOT JUMANJI'D!
+      clearTimeout(
+        spawnTimer
+      );
+
+      spawnTimer =
+        null;
+    }
+
+
+    if (
+      jumanjiSoundTimer
+    ) {
+
+      clearTimeout(
+        jumanjiSoundTimer
+      );
+
+      jumanjiSoundTimer =
+        null;
+    }
+
+
+    /*
+      If any animals remain,
+      JUMANJI WINS.
+
+      If somehow every animal was
+      destroyed, the player escaped.
     */
 
     if (
@@ -1831,185 +1704,173 @@
     ) {
 
       showMessage(
-        "YOU GOT JUMANJI'D!",
-        true
+        "YOU GOT JUMANJI'D!"
       );
 
     } else {
 
       showMessage(
-        "YOU ESCAPED JUMANJI",
-        false
+        "YOU ESCAPED JUMANJI"
       );
 
     }
+
   }
 
 
   // =========================================================
-  // CHECK PLAYER
+  // CHECK JUMANJI
   // =========================================================
 
   function checkJumanji() {
 
-    const player =
-      window.rizneyPlayer;
-
-
     if (
-      !player ||
-      typeof player.getVideoData !==
+      !window.rizneyPlayer ||
+      typeof
+        window.rizneyPlayer.getVideoData !==
         "function"
     ) {
-
       return;
     }
-
-
-    let videoId =
-      "";
 
 
     try {
 
       const data =
-        player.getVideoData();
+        window.rizneyPlayer
+          .getVideoData();
 
 
-      if (data) {
-
-        videoId =
-          String(
-            data.video_id ||
-            ""
-          );
-      }
-
-    } catch (error) {
-
-      return;
-    }
-
-
-    // =======================================================
-    // NOT JUMANJI
-    // =======================================================
-
-    if (
-      videoId !==
-      JUMANJI_VIDEO_ID
-    ) {
-
-      if (active) {
-
-        stopGame();
-      }
-
-      return;
-    }
-
-
-    // =======================================================
-    // START
-    // =======================================================
-
-    if (
-      !active &&
-      !finished
-    ) {
-
-      startGame();
-    }
-
-
-    if (!active) {
-      return;
-    }
-
-
-    // =======================================================
-    // PLAYER TIME
-    // =======================================================
-
-    let currentTime =
-      0;
-
-    let duration =
-      0;
-
-
-    try {
-
-      if (
-        typeof player.getCurrentTime ===
-          "function"
-      ) {
-
-        currentTime =
-          player.getCurrentTime();
-      }
+      const videoId =
+        data &&
+        data.video_id
+          ? String(
+              data.video_id
+            )
+          : "";
 
 
       if (
-        typeof player.getDuration ===
-          "function"
+        videoId ===
+        JUMANJI_VIDEO_ID
       ) {
 
-        duration =
-          player.getDuration();
+        if (
+          !active &&
+          !finished
+        ) {
+
+          startGame();
+
+        }
+
+
+        /*
+          Keep game duration synchronized
+          with the actual YouTube video.
+        */
+
+        if (
+          window.rizneyPlayer &&
+          typeof
+            window.rizneyPlayer.getDuration ===
+            "function"
+        ) {
+
+          const duration =
+            window.rizneyPlayer
+              .getDuration();
+
+
+          if (
+            duration > 0
+          ) {
+
+            gameDuration =
+              duration *
+              1000;
+
+          }
+
+        }
+
+
+        /*
+          End slightly before YouTube itself
+          advances to the next track.
+        */
+
+        if (
+          active
+        ) {
+
+          const currentTime =
+            typeof
+              window.rizneyPlayer.getCurrentTime ===
+              "function"
+              ? window.rizneyPlayer
+                  .getCurrentTime()
+              : 0;
+
+
+          const duration =
+            typeof
+              window.rizneyPlayer.getDuration ===
+              "function"
+              ? window.rizneyPlayer
+                  .getDuration()
+              : 0;
+
+
+          if (
+            duration > 0 &&
+            duration -
+              currentTime <=
+              0.7
+          ) {
+
+            finishGame();
+
+          }
+
+        }
+
+
+      } else {
+
+        /*
+          We have left Jumanji.
+        */
+
+        if (
+          active ||
+          overlay
+        ) {
+
+          stopGame();
+
+        }
+
+
+        finished =
+          false;
+
       }
 
-    } catch (error) {
+    } catch (e) {
 
-      return;
+      /*
+        Don't let a YouTube API hiccup
+        kill the rest of the website.
+      */
+
     }
 
-
-    if (
-      !duration ||
-      duration <= 0
-    ) {
-
-      return;
-    }
-
-
-    const progress =
-      Math.max(
-        0,
-        Math.min(
-          1,
-          currentTime /
-          duration
-        )
-      );
-
-
-    // =======================================================
-    // SPAWN
-    // =======================================================
-
-    processSpawning(
-      progress
-    );
-
-
-    // =======================================================
-    // SONG END
-    // =======================================================
-
-    if (
-      currentTime >=
-      duration - 0.7
-    ) {
-
-      finishGame();
-    }
   }
 
 
   // =========================================================
-  // INITIALIZE
+  // INITIALIZATION
   // =========================================================
 
   function init() {
@@ -2037,6 +1898,7 @@
   } else {
 
     init();
+
   }
 
 })();
