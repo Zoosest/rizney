@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Rizney Music Archive</title> 
+  <title>Rizney Music Archive</title>
 
   <style>
     :root {
@@ -14,29 +14,29 @@
       --gold:#d4af37;
       --bright-gold:#f5d76e;
       --muted:#b9a8c5;
-    } 
+    }
 
     * {
       box-sizing:border-box;
-    } 
+    }
 
     html {
       scroll-behavior:smooth;
-    } 
+    }
 
     body {
       margin:0;
       color:var(--purple);
       background:var(--black);
       font-family:Georgia,"Times New Roman",serif;
-    } 
+    }
 
     .top-area {
       position:relative;
       padding:0;
       min-height:79px;
       text-align:center;
-    } 
+    }
 
     .donate,
     .context {
@@ -50,16 +50,16 @@
       font-size:.68rem;
       text-decoration:none;
       line-height:1;
-    } 
+    }
 
     .donate {
       left:10px;
-    } 
+    }
 
     .context {
       left:88px;
       cursor:pointer;
-    } 
+    }
 
     .logo-img {
       position:absolute;
@@ -71,12 +71,12 @@
       height:68px;
       object-fit:contain;
       object-position:right top;
-    } 
+    }
 
     h1,
     .tagline {
       display:none;
-    } 
+    }
 
     .player-dock {
       position:sticky;
@@ -86,7 +86,7 @@
       border-top:1px solid var(--gold);
       border-bottom:1px solid var(--gold);
       box-shadow:0 7px 28px rgba(0,0,0,.9);
-    } 
+    }
 
     .player-wrap {
       width:100%;
@@ -94,14 +94,14 @@
       margin:auto;
       aspect-ratio:16/9;
       background:#090509;
-    } 
+    }
 
     #player {
       width:100%;
       height:100%;
       border:0;
       display:block;
-    } 
+    }
 
     #now-playing {
       padding:7px 10px 8px;
@@ -112,7 +112,7 @@
       white-space:nowrap;
       overflow:hidden;
       text-overflow:ellipsis;
-    } 
+    }
 
     .controls {
       display:flex;
@@ -123,7 +123,7 @@
       padding:10px 8px 12px;
       background:#000;
       border-bottom:1px solid #3b1d50;
-    } 
+    }
 
     button {
       border:1px solid var(--gold);
@@ -134,16 +134,16 @@
       font:inherit;
       font-size:.82rem;
       cursor:pointer;
-    } 
+    }
 
     button:hover {
       background:#7e35bc;
-    } 
+    }
 
     button:disabled {
       opacity:.45;
       cursor:not-allowed;
-    } 
+    }
 
     .skip {
       min-width:42px;
@@ -151,33 +151,33 @@
       height:38px;
       padding:0;
       font-size:1.2rem;
-    } 
+    }
 
     main {
       width:min(100% - 24px,900px);
       margin:auto;
       padding:18px 0 50px;
-    } 
+    }
 
     .intro {
       color:var(--muted);
       text-align:center;
       line-height:1.45;
-    } 
+    }
 
     h2 {
       color:var(--bright-gold);
       font-size:1.25rem;
       border-bottom:1px solid var(--gold);
       padding-bottom:8px;
-    } 
+    }
 
     #cards {
       display:grid;
       grid-template-columns:repeat(3,minmax(0,1fr));
       gap:9px;
       margin:12px 0 22px;
-    } 
+    }
 
     .card {
       min-height:150px;
@@ -187,30 +187,30 @@
       border:2px solid var(--gold);
       border-radius:12px;
       text-align:center;
-    } 
+    }
 
     .card .symbol {
       display:block;
       color:var(--bright-gold);
       font-size:1.7rem;
       margin-bottom:6px;
-    } 
+    }
 
     .card strong {
       display:block;
       margin-bottom:8px;
       font-size:.78rem;
-    } 
+    }
 
     .card a {
       color:var(--bright-gold);
       font-size:.7rem;
-    } 
+    }
 
     #song-list {
       display:grid;
       gap:8px;
-    } 
+    }
 
     .song {
       display:grid;
@@ -222,17 +222,17 @@
       background:var(--panel);
       border:1px solid #3b1d50;
       border-radius:8px;
-    } 
+    }
 
     .song.playing {
       border-color:var(--gold);
       background:#21102e;
       box-shadow:inset -4px 0 0 var(--gold);
-    } 
+    }
 
     .song.playing .song-title {
       color:var(--bright-gold);
-    } 
+    }
 
     .song-playing {
       display:inline-block;
@@ -243,18 +243,18 @@
       font-weight:bold;
       letter-spacing:.04em;
       white-space:nowrap;
-    } 
+    }
 
     .song-number {
       color:var(--gold);
       text-align:center;
-    } 
+    }
 
     .song-title {
       overflow:hidden;
       text-overflow:ellipsis;
       white-space:nowrap;
-    } 
+    }
 
     .song small {
       display:block;
@@ -262,12 +262,12 @@
       font-family:sans-serif;
       font-size:.7rem;
       margin-top:3px;
-    } 
+    }
 
     .play {
       padding:7px 10px;
       font-size:.78rem;
-    } 
+    }
 
     footer {
       position:relative;
@@ -275,7 +275,7 @@
       padding:2px 0 4px;
       text-align:center;
       border-top:0;
-    } 
+    }
 
     footer::before {
       content:"";
@@ -284,7 +284,7 @@
       right:0;
       top:-12px;
       border-top:1px solid var(--gold);
-    } 
+    }
 
     footer img {
       display:block;
@@ -293,7 +293,7 @@
       max-width:85%;
       margin:0 auto;
       object-fit:contain;
-    } 
+    }
 
     #context-overlay {
       position:fixed;
@@ -303,16 +303,16 @@
       overflow-y:auto;
       background:rgba(0,0,0,.96);
       padding:18px 12px 40px;
-    } 
+    }
 
     #context-overlay.open {
       display:block;
-    } 
+    }
 
     .context-page {
       width:min(100%,900px);
       margin:0 auto;
-    } 
+    }
 
     .context-close {
       display:inline-block;
@@ -325,11 +325,11 @@
       font-size:.68rem;
       line-height:1;
       margin-bottom:14px;
-    } 
+    }
 
     .context-close:hover {
       background:#55208a;
-    } 
+    }
 
     .context-page h1 {
       display:block;
@@ -339,24 +339,29 @@
       border-bottom:1px solid var(--gold);
       padding-bottom:12px;
       margin:0 0 22px;
-    } 
+    }
 
     .context-page h2 {
       color:var(--bright-gold);
       font-size:1.2rem;
-    } 
+    }
 
     .context-page p {
       color:var(--muted);
       line-height:1.65;
-    } 
+    }
+
+    /* Keeps only the six "Some are..." lines together. */
+    .context-list p {
+      margin:0;
+    }
 
     .context-footer {
       margin:18px auto 0;
       padding:0;
       background:#fff;
       text-align:center;
-    } 
+    }
 
     .context-footer img {
       display:block;
@@ -365,28 +370,28 @@
       max-height:360px;
       object-fit:contain;
       margin:0 auto;
-    } 
+    }
 
     @media(max-width:500px) {
       .top-area {
         padding:0;
         min-height:72px;
-      } 
+      }
 
       .donate,
       .context {
         top:6px;
         padding:5px 8px;
         font-size:.63rem;
-      } 
+      }
 
       .donate {
         left:8px;
-      } 
+      }
 
       .context {
         left:75px;
-      } 
+      }
 
       .logo-img {
         top:1px;
@@ -396,319 +401,311 @@
         width:108px;
         height:62px;
         object-position:right top;
-      } 
+      }
 
       h1 {
         font-size:1.35rem;
-      } 
+      }
 
       .controls {
         gap:6px;
-      } 
+      }
 
       button {
         font-size:.75rem;
         padding:8px 10px;
-      } 
+      }
 
       .skip {
         width:38px;
         min-width:38px;
         height:34px;
-      } 
+      }
 
       .card {
         min-height:130px;
-      } 
+      }
 
       .card strong {
         font-size:.7rem;
-      } 
+      }
 
       .song {
         grid-template-columns:30px 1fr auto;
-      } 
+      }
 
       .song-title {
         font-size:.82rem;
-      } 
+      }
 
       .song-playing {
         font-size:.58rem;
         margin-left:5px;
-      } 
+      }
 
       footer {
         margin-top:3px;
         padding:2px 0 3px;
-      } 
+      }
 
       footer::before {
         top:-10px;
-      } 
+      }
 
       footer img {
         width:180px;
         height:180px;
         max-width:85%;
         margin:0 auto;
-      } 
+      }
 
       #context-overlay {
         padding:14px 12px 30px;
-      } 
+      }
 
       .context-page h1 {
         font-size:1.35rem;
       }
     }
   </style>
-</head> 
+</head>
 
-<body> 
+<body>
 
-  <section class="top-area"> 
+  <section class="top-area">
 
     <img
       src="./assets/rizney.png"
       alt="Rizney"
       class="logo-img"
-    /> 
+    />
 
     <a
       class="donate"
       href="https://venmo.com/u/YOUR_VENMO_USERNAME"
       target="_blank"
       rel="noopener"
-    >♥ Donate</a> 
+    >♥ Donate</a>
 
     <button
       class="context"
       id="context-button"
       type="button"
       aria-label="Open Context"
-    >✦ Context</button> 
+    >✦ Context</button>
 
-  </section> 
+  </section>
 
-  <section class="player-dock"> 
+  <section class="player-dock">
 
     <div class="player-wrap">
       <div id="player"></div>
-    </div> 
+    </div>
 
     <div id="now-playing">
       Now playing: ...
-    </div> 
+    </div>
 
-  </section> 
+  </section>
 
-  <nav class="controls" aria-label="Music controls"> 
+  <nav class="controls" aria-label="Music controls">
 
     <button
       id="previous-song"
       class="skip"
       type="button"
       aria-label="Previous song"
-    >«</button> 
+    >«</button>
 
     <button
       id="draw-cards"
       type="button"
-    >CARDS</button> 
+    >CARDS</button>
 
     <button
       id="whack-track"
       type="button"
-    >Whack-A-Track</button> 
+    >Whack-A-Track</button>
 
     <button
       id="random-song"
       type="button"
-    >Random</button> 
+    >Random</button>
 
     <button
       id="next-song"
       class="skip"
       type="button"
       aria-label="Next song"
-    >»</button> 
+    >»</button>
 
-  </nav> 
+  </nav>
 
-  <main> 
+  <main>
 
     <p class="intro">
       Choose a song or let the cards choose a song for you
-    </p> 
+    </p>
 
-    <section id="reading" hidden> 
+    <section id="reading" hidden>
 
-      <h2>Your Music Reading</h2> 
+      <h2>Your Music Reading</h2>
 
-      <div id="cards"></div> 
+      <div id="cards"></div>
 
-    </section> 
+    </section>
 
-    <section> 
+    <section>
 
-      <h2>Track listing</h2> 
+      <h2>Track listing</h2>
 
-      <div id="song-list"></div> 
+      <div id="song-list"></div>
 
-    </section> 
+    </section>
 
-  </main> 
+  </main>
 
-  <footer> 
+  <footer>
 
     <img
       src="./assets/curse.png"
       alt="Curse"
-    /> 
+    />
 
-  </footer> 
+  </footer>
 
   <section
     id="context-overlay"
     aria-label="Context"
     aria-hidden="true"
-  > 
+  >
 
-    <div class="context-page"> 
+    <div class="context-page">
 
       <button
         class="context-close"
         id="context-close"
         type="button"
-      >← Back to the music</button> 
+      >← Back to the music</button>
 
-      <h1>CONTEXT</h1> 
+      <h1>CONTEXT</h1>
 
-      <section> 
+      <section>
 
-        <h2>About this album</h2> 
+        <h2>About this album</h2>
 
         <p>
           For many of us, the pandemic was a hard time
-        </p> 
+        </p>
 
         <p>
           It felt like something was taken away from humanity — something we haven't quite gotten back yet
-        </p> 
+        </p>
 
         <p>
           For me, one way of trying to process it was to make music
-        </p> 
+        </p>
 
         <p>
           I started making songs every day
-        </p> 
+        </p>
 
         <p>
           Daily therapy songs
-        </p> 
+        </p>
 
-        <p>
-          Some are funny
-        </p>
-        <p>
-          Some are sad
-        </p>
-        <p>
-          Some are hopeful
-        </p>
-        <p>
-          Some are angry
-        </p>
-        <p>
-          Some are weird
-        </p>
-        <p>
-          Some are probably just bad 
-        </p>
+        <div class="context-list">
+
+          <p>Some are funny</p>
+          <p>Some are sad</p>
+          <p>Some are hopeful</p>
+          <p>Some are angry</p>
+          <p>Some are weird</p>
+          <p>Some are probably just bad</p>
+
+        </div>
 
         <p>
           But I made them anyway
-        </p> 
+        </p>
 
         <p>
           This album is basically what came out of that process
-        </p> 
+        </p>
 
         <p>
           <strong>Note:</strong> All vocals were recorded on my phone without listening to a beat or tempo
-        </p> 
+        </p>
 
         <p>
           Somehow it kinda worked 😸
-        </p> 
+        </p>
 
         <p>
           The songs are arranged in reverse chronological order — the newest songs I composed are first and the earliest songs last
-        </p> 
+        </p>
 
         <p>
-          no wait.. or is it.. no that's right!  enjoy 
+          no wait.. or is it.. no that's right! enjoy
         </p>
 
         <p>
           All of the songs in this archive were produced between October 2025 and July 2026.
-        </p> 
+        </p>
 
-      </section> 
+      </section>
 
-      <section> 
+      <section>
 
-        <h2>WARMLINES</h2> 
+        <h2>WARMLINES</h2>
 
         <p>
           One thing that helped me a lot while I was making these songs was talking to people on warmlines
-        </p> 
+        </p>
 
         <p>
           If you've never heard of them, they're peer-support phone lines where you can talk with someone when you need to talk — even if you're not in an immediate crisis
-        </p> 
+        </p>
 
         <p>
           Many are free and confidential, and they're often staffed by people with their own lived experience
-        </p> 
+        </p>
 
         <p>
           I didn't know they existed for a long time
-        </p> 
+        </p>
 
         <p>
           I'm really glad I found them
-        </p> 
+        </p>
 
         <p>
           Maybe they'll help you, too
-        </p> 
+        </p>
 
         <p>
           Find a Warmline →
-        </p> 
+        </p>
 
-      </section> 
+      </section>
 
-      <footer class="context-footer"> 
+      <footer class="context-footer">
 
         <img
           src="./assets/Hugh.jpg"
           alt="Hugh"
           loading="lazy"
-        /> 
+        />
 
-      </footer> 
+      </footer>
 
-    </div> 
+    </div>
 
-  </section> 
+  </section>
 
-  <script src="https://www.youtube.com/iframe_api"></script> 
+  <script src="https://www.youtube.com/iframe_api"></script>
 
-  <script> 
+  <script>
 
     const songs = [
       'https://youtube.com/shorts/nSog7wdCuzM',
@@ -933,9 +930,9 @@
       'https://youtu.be/zb0vUX07fn0',
       'https://youtu.be/zb0vUX07fn0',
       'https://youtu.be/K2Dujl_bFZg'
-    ]; 
+    ];
 
-    const introVideoId = 'mkKOtZPLkzY'; 
+    const introVideoId = 'mkKOtZPLkzY';
 
     const ids = songs
       .map(url =>
@@ -943,41 +940,41 @@
           /(?:youtu\.be\/|shorts\/|watch\?v=)([^?&]+)/
         )?.[1]
       )
-      .filter(Boolean); 
+      .filter(Boolean);
 
-    window.rizneySongIds = ids; 
+    window.rizneySongIds = ids;
 
-    const $ = s => document.querySelector(s); 
+    const $ = s => document.querySelector(s);
 
     const nowPlaying = $('#now-playing');
     const list = $('#song-list');
     const cards = $('#cards');
-    const reading = $('#reading'); 
+    const reading = $('#reading');
 
     const previousButton = $('#previous-song');
-    const nextButton = $('#next-song'); 
+    const nextButton = $('#next-song');
 
     let player = null;
-    let currentIndex = -1; 
+    let currentIndex = -1;
 
-    let introTransitionPending = false; 
+    let introTransitionPending = false;
 
     let cardPlaylist = null;
-    let cardPosition = 0; 
+    let cardPosition = 0;
 
     const titleFor = i => {
       if (i === -1) {
         return "MEGA MIX'N'MOJO Intro";
-      } 
+      }
 
       const row =
         document.querySelectorAll(
           '#song-list .song'
-        )[i]; 
+        )[i];
 
       if (row) {
         const titleElement =
-          row.querySelector('.song-title'); 
+          row.querySelector('.song-title');
 
         if (
           titleElement &&
@@ -987,201 +984,201 @@
             .trim()
             .replace(/^♫\s*/, '');
         }
-      } 
+      }
 
       return `Song ${i + 1}`;
-    }; 
+    };
 
-    function updatePlayingIndicator() { 
+    function updatePlayingIndicator() {
 
       document
         .querySelectorAll('#song-list .song')
-        .forEach((row, index) => { 
+        .forEach((row, index) => {
 
           const isPlaying =
-            index === currentIndex; 
+            index === currentIndex;
 
           row.classList.toggle(
             'playing',
             isPlaying
-          ); 
+          );
 
           const indicator =
-            row.querySelector('.song-playing'); 
+            row.querySelector('.song-playing');
 
           if (indicator) {
             indicator.hidden =
               !isPlaying;
           }
         });
-    } 
+    }
 
-    function updateButtons() { 
+    function updateButtons() {
 
-      if (cardPlaylist !== null) { 
+      if (cardPlaylist !== null) {
 
         previousButton.disabled =
-          cardPosition <= 0; 
+          cardPosition <= 0;
 
         nextButton.disabled =
-          cardPosition >= cardPlaylist.length - 1; 
+          cardPosition >= cardPlaylist.length - 1;
 
         return;
-      } 
+      }
 
       previousButton.disabled =
-        currentIndex < 0; 
+        currentIndex < 0;
 
       nextButton.disabled = false;
-    } 
+    }
 
-    function playIntro() { 
+    function playIntro() {
 
       cardPlaylist = null;
-      cardPosition = 0; 
+      cardPosition = 0;
 
-      currentIndex = -1; 
+      currentIndex = -1;
 
-      introTransitionPending = false; 
+      introTransitionPending = false;
 
       nowPlaying.textContent =
-        "Now playing: MEGA MIX'N'MOJO Intro"; 
+        "Now playing: MEGA MIX'N'MOJO Intro";
 
-      updatePlayingIndicator(); 
+      updatePlayingIndicator();
 
-      if (player) { 
+      if (player) {
 
         player.loadVideoById({
           videoId: introVideoId
         });
-      } 
+      }
 
-      updateButtons(); 
+      updateButtons();
 
       window.scrollTo({
         top: 0,
         behavior: 'smooth'
       });
-    } 
+    }
 
-    function play(index) { 
+    function play(index) {
 
       if (!ids[index]) {
         return;
-      } 
+      }
 
       cardPlaylist = null;
-      cardPosition = 0; 
+      cardPosition = 0;
 
-      currentIndex = index; 
+      currentIndex = index;
 
       nowPlaying.textContent =
-        `Now playing: ${titleFor(index)}`; 
+        `Now playing: ${titleFor(index)}`;
 
-      updatePlayingIndicator(); 
+      updatePlayingIndicator();
 
-      if (player) { 
+      if (player) {
 
         player.loadVideoById({
           videoId: ids[index]
         });
-      } 
+      }
 
       updateButtons();
-    } 
+    }
 
-    function playPosition(position) { 
+    function playPosition(position) {
 
       if (
         !cardPlaylist ||
         cardPlaylist[position] === undefined
       ) {
         return;
-      } 
+      }
 
-      introTransitionPending = false; 
+      introTransitionPending = false;
 
-      cardPosition = position; 
+      cardPosition = position;
 
       currentIndex =
-        cardPlaylist[position]; 
+        cardPlaylist[position];
 
       nowPlaying.textContent =
-        `Reading ${position + 1} of ${cardPlaylist.length}: ${titleFor(currentIndex)}`; 
+        `Reading ${position + 1} of ${cardPlaylist.length}: ${titleFor(currentIndex)}`;
 
-      updatePlayingIndicator(); 
+      updatePlayingIndicator();
 
-      if (player) { 
+      if (player) {
 
         player.loadVideoById({
           videoId: ids[currentIndex]
         });
-      } 
+      }
 
       updateButtons();
-    } 
+    }
 
-    function next() { 
+    function next() {
 
-      if (cardPlaylist !== null) { 
+      if (cardPlaylist !== null) {
 
         if (
           cardPosition <
           cardPlaylist.length - 1
-        ) { 
+        ) {
 
           playPosition(
             cardPosition + 1
-          ); 
+          );
 
           return;
-        } 
+        }
 
         cardPlaylist = null;
-        cardPosition = 0; 
+        cardPosition = 0;
 
         nowPlaying.textContent =
-          'Music reading complete ✦'; 
+          'Music reading complete ✦';
 
-        updateButtons(); 
-
-        return;
-      } 
-
-      if (currentIndex === -1) { 
-
-        play(0); 
+        updateButtons();
 
         return;
-      } 
+      }
+
+      if (currentIndex === -1) {
+
+        play(0);
+
+        return;
+      }
 
       let nextIndex =
-        currentIndex + 1; 
+        currentIndex + 1;
 
-      let savedWhackedTracks = []; 
+      let savedWhackedTracks = [];
 
-      try { 
+      try {
 
         const raw =
           localStorage.getItem(
             'rizneyWhackedTracks'
-          ); 
+          );
 
         const parsed =
           JSON.parse(
             raw || '[]'
-          ); 
+          );
 
         if (Array.isArray(parsed)) {
           savedWhackedTracks = parsed;
-        } 
+        }
 
-      } catch (error) {} 
+      } catch (error) {}
 
       const whacked =
         new Set(
           savedWhackedTracks
-        ); 
+        );
 
       while (
         nextIndex < ids.length &&
@@ -1190,188 +1187,188 @@
         )
       ) {
         nextIndex++;
-      } 
+      }
 
       if (
         nextIndex < ids.length
-      ) { 
+      ) {
 
-        play(nextIndex); 
+        play(nextIndex);
 
-      } else { 
+      } else {
 
         nowPlaying.textContent =
           'You reached the end of the collection ✦';
-      } 
+      }
 
       updateButtons();
-    } 
+    }
 
-    function previous() { 
+    function previous() {
 
-      if (cardPlaylist !== null) { 
+      if (cardPlaylist !== null) {
 
-        if (cardPosition > 0) { 
+        if (cardPosition > 0) {
 
           playPosition(
             cardPosition - 1
           );
-        } 
+        }
 
         return;
-      } 
+      }
 
-      if (currentIndex === 0) { 
+      if (currentIndex === 0) {
 
-        playIntro(); 
+        playIntro();
 
         return;
-      } 
+      }
 
-      if (currentIndex > 0) { 
+      if (currentIndex > 0) {
 
         play(currentIndex - 1);
       }
-    } 
+    }
 
-    window.onYouTubeIframeAPIReady = () => { 
+    window.onYouTubeIframeAPIReady = () => {
 
       player = new YT.Player(
         'player',
-        { 
+        {
 
-          videoId: introVideoId, 
+          videoId: introVideoId,
 
           playerVars: {
             autoplay: 0,
             rel: 0,
             modestbranding: 1,
             playsinline: 1
-          }, 
+          },
 
-          events: { 
+          events: {
 
-            onReady: () => { 
+            onReady: () => {
 
               window.rizneyPlayer =
-                player; 
+                player;
 
               nowPlaying.textContent =
-                "Now playing: MEGA MIX'N'MOJO Intro"; 
+                "Now playing: MEGA MIX'N'MOJO Intro";
 
               updateButtons();
-            }, 
+            },
 
-            onStateChange: e => { 
+            onStateChange: e => {
 
               if (
                 e.data ===
                 YT.PlayerState.PLAYING
-              ) { 
+              ) {
 
                 introTransitionPending = false;
-              } 
+              }
 
               if (
                 e.data ===
                 YT.PlayerState.ENDED
-              ) { 
+              ) {
 
-                if (introTransitionPending) { 
+                if (introTransitionPending) {
 
-                  introTransitionPending = false; 
+                  introTransitionPending = false;
 
                   return;
-                } 
+                }
 
                 next();
               }
             }
           }
         }
-      ); 
+      );
 
       window.rizneyPlayer =
         player;
-    }; 
+    };
 
-    ids.forEach((id, index) => { 
+    ids.forEach((id, index) => {
 
       const row =
-        document.createElement('article'); 
+        document.createElement('article');
 
-      row.className = 'song'; 
+      row.className = 'song';
 
       row.innerHTML = `
         <span class="song-number">
           ${index + 1}
-        </span> 
+        </span>
 
         <span class="song-title">
-          ♫ ${titleFor(index)} 
+          ♫ ${titleFor(index)}
 
           <span
             class="song-playing"
             hidden
-          >▶ PLAYING</span> 
+          >▶ PLAYING</span>
 
           <small>
             YouTube video • chronological position ${index + 1}
-          </small> 
+          </small>
 
-        </span> 
+        </span>
 
         <button
           class="play"
           type="button"
-        >Play</button> 
-      `; 
+        >Play</button>
+      `;
 
       row.querySelector(
         'button'
-      ).onclick = () => { 
+      ).onclick = () => {
 
         cardPlaylist = null;
-        cardPosition = 0; 
+        cardPosition = 0;
 
-        introTransitionPending = false; 
+        introTransitionPending = false;
 
         play(index);
-      }; 
+      };
 
       list.appendChild(row);
-    }); 
+    });
 
-    $('#random-song').onclick = () => { 
+    $('#random-song').onclick = () => {
 
       cardPlaylist = null;
-      cardPosition = 0; 
+      cardPosition = 0;
 
-      introTransitionPending = false; 
+      introTransitionPending = false;
 
       play(
         Math.floor(
           Math.random() * ids.length
         )
       );
-    }; 
+    };
 
     previousButton.onclick =
-      previous; 
+      previous;
 
-    nextButton.onclick = () => { 
+    nextButton.onclick = () => {
 
-      if (currentIndex === -1) { 
+      if (currentIndex === -1) {
 
         introTransitionPending = true;
-      } 
+      }
 
       next();
-    }; 
+    };
 
-    $('#draw-cards').onclick = () => { 
+    $('#draw-cards').onclick = () => {
 
-      introTransitionPending = false; 
+      introTransitionPending = false;
 
       cardPlaylist =
         [...ids.keys()]
@@ -1381,13 +1378,13 @@
           .slice(
             0,
             Math.min(6, ids.length)
-          ); 
+          );
 
-      cardPosition = 0; 
+      cardPosition = 0;
 
-      reading.hidden = false; 
+      reading.hidden = false;
 
-      cards.innerHTML = ''; 
+      cards.innerHTML = '';
 
       [
         '✦',
@@ -1402,125 +1399,125 @@
           cardPlaylist.length
         )
         .forEach(
-          (symbol, position) => { 
+          (symbol, position) => {
 
             const card =
               document.createElement(
                 'article'
-              ); 
+              );
 
-            card.className = 'card'; 
+            card.className = 'card';
 
             card.innerHTML = `
               <span class="symbol">
                 ${symbol}
-              </span> 
+              </span>
 
               <strong>
                 Reading ${position + 1}
-              </strong> 
+              </strong>
 
               <a href="#">
                 Play song ${cardPlaylist[position] + 1}
-              </a> 
-            `; 
+              </a>
+            `;
 
             card.querySelector(
               'a'
-            ).onclick = e => { 
+            ).onclick = e => {
 
-              e.preventDefault(); 
+              e.preventDefault();
 
               playPosition(
                 position
               );
-            }; 
+            };
 
             cards.appendChild(card);
           }
-        ); 
+        );
 
       updateButtons();
-    }; 
+    };
 
     const contextButton =
-      $('#context-button'); 
+      $('#context-button');
 
     const contextOverlay =
-      $('#context-overlay'); 
+      $('#context-overlay');
 
     const contextClose =
-      $('#context-close'); 
+      $('#context-close');
 
-    function openContext() { 
+    function openContext() {
 
       contextOverlay.classList.add(
         'open'
-      ); 
+      );
 
       contextOverlay.setAttribute(
         'aria-hidden',
         'false'
-      ); 
+      );
 
       document.body.style.overflow =
-        'hidden'; 
+        'hidden';
 
       contextClose.focus();
-    } 
+    }
 
-    function closeContext() { 
+    function closeContext() {
 
       contextOverlay.classList.remove(
         'open'
-      ); 
+      );
 
       contextOverlay.setAttribute(
         'aria-hidden',
         'true'
-      ); 
+      );
 
       document.body.style.overflow =
-        ''; 
+        '';
 
       contextButton.focus();
-    } 
+    }
 
     contextButton.addEventListener(
       'click',
       openContext
-    ); 
+    );
 
     contextClose.addEventListener(
       'click',
       closeContext
-    ); 
+    );
 
     document.addEventListener(
       'keydown',
-      e => { 
+      e => {
 
         if (
           e.key === 'Escape' &&
           contextOverlay.classList.contains(
             'open'
           )
-        ) { 
+        ) {
 
           closeContext();
-        } 
+        }
 
       }
-    ); 
+    );
 
     updateButtons();
-    updatePlayingIndicator(); 
+    updatePlayingIndicator();
 
-  </script> 
+  </script>
 
-  <script src="./main.js"></script> 
-  <script src="./singles.js"></script> 
-  <script src="./whack-a-track.js"></script> 
+  <script src="./main.js"></script>
+  <script src="./singles.js"></script>
+  <script src="./whack-a-track.js"></script>
   <script src="./jumanji.js"></script>
 
 </body>
