@@ -130,12 +130,8 @@
   // =========================================================
 
   /*
-    IMPORTANT:
-
-    Keep sound playback completely separate
-    from the animal pointer/tapping system.
-
-    This is deliberately simple and reliable.
+    Sound playback stays completely separate
+    from the animal tapping system.
   */
 
   function playSound(
@@ -206,11 +202,6 @@
       10% — FUCKING BOOM
       25% — boom
       65% — silence
-
-      HTML audio volume maxes out at 1.0.
-      We use 1.0 here intentionally because
-      the previous Web Audio amplification
-      interfered with tapping on some browsers.
     */
 
     if (
@@ -341,6 +332,8 @@
 
         -webkit-user-select: none;
 
+        pointer-events: auto;
+
         will-change:
           transform,
           left,
@@ -350,12 +343,7 @@
 
 
       /*
-        Deliberately boring little
-        "boom" text.
-
-        White.
-        Lowercase.
-        Not dramatic.
+        Tiny, boring little white boom.
       */
 
       .jumanji-boom-text {
@@ -453,33 +441,18 @@
 
 
     /*
-      Prevent clicks on the black overlay
-      from reaching the website underneath.
+      IMPORTANT:
 
-      Animal buttons themselves stop propagation
-      separately below.
+      DO NOT put a pointerdown listener
+      on the overlay in capture mode.
+
+      Doing that would intercept the tap
+      BEFORE the animal receives it.
+
+      The overlay is already above the
+      entire website, so the website
+      underneath cannot be tapped anyway.
     */
-
-    overlay.addEventListener(
-      "pointerdown",
-      e => {
-
-        e.stopPropagation();
-
-      },
-      true
-    );
-
-
-    overlay.addEventListener(
-      "click",
-      e => {
-
-        e.stopPropagation();
-
-      },
-      true
-    );
 
 
     document.body.appendChild(
@@ -690,7 +663,7 @@
 
     /*
       Random inappropriate intruders
-      begin appearing later in the game.
+      begin appearing later.
     */
 
     if (
@@ -809,8 +782,8 @@
 
 
     /*
-      Occasionally spawn a
-      ridiculously huge animal.
+      Occasionally spawn something
+      ridiculously huge.
     */
 
     const huge =
@@ -1009,8 +982,8 @@
 
 
         /*
-          Every successful animal hit
-          gets the little white "boom".
+          Every animal gets the
+          little white "boom".
         */
 
         showBoom(
@@ -1020,15 +993,14 @@
 
 
         /*
-          Sound is completely separate
-          from the tap/removal logic.
+          Occasionally make noise.
         */
 
         playHitSound();
 
 
         /*
-          Remove the animal immediately.
+          Remove the animal.
         */
 
         animal.remove();
@@ -1052,9 +1024,14 @@
         }
 
       },
-      true
+      false
     );
 
+
+    /*
+      Add the animal AFTER its event
+      handler has been attached.
+    */
 
     overlay.appendChild(
       animal
@@ -1128,13 +1105,13 @@
           spawnAnimal();
 
 
-          /*
-            Extra chaos after 65%.
-          */
-
           const progress =
             getProgress();
 
+
+          /*
+            Extra animals after 65%.
+          */
 
           if (
             progress >
@@ -1147,7 +1124,7 @@
 
 
           /*
-            More chaos after 80%.
+            More animals after 80%.
           */
 
           if (
@@ -1220,7 +1197,7 @@
 
 
     /*
-      Animals get faster over time.
+      Animals gradually get faster.
     */
 
     const speedBoost =
@@ -1233,8 +1210,7 @@
       animal => {
 
         /*
-          Weird animals get extra
-          unpredictable movement.
+          Weird animals wobble around.
         */
 
         if (
@@ -1273,7 +1249,7 @@
 
 
         // =================================================
-        // BOUNCE OFF EDGES
+        // BOUNCE
         // =================================================
 
         if (
@@ -1367,7 +1343,7 @@
 
 
     /*
-      Final stretch gets increasingly insane.
+      Final 10% becomes increasingly stupid.
     */
 
     if (
@@ -1419,7 +1395,7 @@
 
 
     /*
-      Get the actual YouTube duration.
+      Get actual YouTube duration.
     */
 
     try {
@@ -1481,8 +1457,7 @@
 
 
     /*
-      Jumanji voice appears
-      three seconds into the game.
+      Jumanji voice after three seconds.
     */
 
     jumanjiSoundTimer =
@@ -1699,12 +1674,6 @@
     }
 
 
-    /*
-      Animals remaining = Jumanji wins.
-
-      Zero animals = player escaped.
-    */
-
     if (
       animals.length > 0
     ) {
@@ -1765,7 +1734,7 @@
       ) {
 
         /*
-          Start when Jumanji begins.
+          Start the game.
         */
 
         if (
@@ -1779,7 +1748,8 @@
 
 
         /*
-          Keep duration synchronized.
+          Synchronize with the actual
+          YouTube duration.
         */
 
         if (
@@ -1809,8 +1779,8 @@
 
 
         /*
-          Finish slightly before the
-          YouTube player advances.
+          Finish just before YouTube
+          advances to the next track.
         */
 
         if (
@@ -1874,8 +1844,7 @@
     } catch (e) {
 
       /*
-        Don't let a YouTube API hiccup
-        break the website.
+        Ignore temporary YouTube API errors.
       */
 
     }
