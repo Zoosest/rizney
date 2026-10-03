@@ -1,317 +1,1597 @@
-/* =========================================================
-   SINGLES
-   YOU DON'T KNOW TRACK
-
-   First test:
-   #114 — Monkey Judge 🐒⚖
-   YouTube ID: SHhsdD5viWs
-
-   This file is intentionally standalone.
-   It does not modify main.js.
-   It does not modify whack-a-track.js.
-   ========================================================= */
-
+/* Whack-a-Track mini-game for the Rizney Music Archive. */
 (() => {
   "use strict";
 
-  const SINGLE_TRACK_NUMBER = 114;
-  const SINGLE_VIDEO_ID = "SHhsdD5viWs";
-  const BANNER_ID = "singles-banner";
-  const AUDIO_PATH = "assets/you-dont-know-track.mp3";
+  const TRACK_HEALTH = 24;
+  const GAME_DURATION = 80;
+  const MOLE_VISIBLE_MS = 500;
+  const MOLE_INTERVAL_MS = 1400;
 
-  /*
-   * State flags to track behaviors that should 
-   * only happen once per appearance.
-   */
-  let singlesWasActive = false;
-  let audioHasPlayed = false;
+  /* Snake decoy settings */
+  const SNAKE_CHANCE = 0.25;
+  const SNAKE_TIME_PENALTY = 10;
 
-  /*
-   * Preload your custom voice audio clip.
-   */
-  const singlesAudio = new Audio(AUDIO_PATH);
-  singlesAudio.preload = "auto";
+  const REMOVED_TRACKS_KEY =
+    "rizneyWhackedTracks";
 
-  const $ = selector =>
-    document.querySelector(selector);
+  const youtube = () =>
+    window.rizneyPlayer || window.player || null;
 
+  const $ = (selector, root = document) =>
+    root.querySelector(selector);
 
-  /* =========================================================
-     CREATE BANNER
-     ========================================================= */
+  const controls = () =>
+    $(".controls");
 
-  function createBanner() {
+  let game;
+  let active = false;
+  let trackHealth = TRACK_HEALTH;
+  let secondsLeft = GAME_DURATION;
+  let moleTimer;
+  let hideTimer;
+  let gameTimer;
 
-    const existing =
-      $(`#${BANNER_ID}`);
+  function playQuackSound() {
+    try {
+      const sound = new Audio("assets/quack.mp3");
+      sound.volume = 0.8;
+      sound.play().catch(() => {});
+    } catch (error) {}
+  }
 
-    if (existing) {
-      return existing;
+  /* Snake hit sound */
+  function playHissSound() {
+    try {
+      const sound = new Audio("assets/hiss.mp3");
+      sound.volume = 0.8;
+      sound.play().catch(() => {});
+    } catch (error) {}
+  }
+
+  function vibrate(pattern) {
+    if (
+      typeof navigator !== "undefined" &&
+      typeof navigator.vibrate === "function"
+    ) {
+      try {
+        navigator.vibrate(pattern);
+      } catch (error) {}
     }
+  }
 
-    const banner =
-      document.createElement("section");
-
-    banner.id =
-      BANNER_ID;
-
-    banner.setAttribute(
-      "aria-label",
-      "Singles"
+  function setToolbarHidden(hidden) {
+    controls()?.classList.toggle(
+      "toolbar-hidden",
+      hidden
     );
+  }
 
-    banner.innerHTML = `
-      <div class="singles-banner-main">
-        YOU DON'T KNOW TRACK
-      </div>
+  function positionToolbar() {
+    const dock = $(".player-dock");
 
-      <div class="singles-banner-label">
-        🎤 SINGLES
-      </div>
-    `;
+    if (dock) {
+      document.documentElement.style.setProperty(
+        "--player-dock-height",
+        `${dock.offsetHeight}px`
+      );
+    }
+  }
 
-
+  function setupToolbar() {
     const style =
       document.createElement("style");
 
     style.textContent = `
-      #${BANNER_ID} {
+      .controls {
+        position: sticky;
+        top: var(--player-dock-height, 0px);
+        z-index: 90;
+        transition: opacity .18s ease, visibility .18s ease;
+      }
+
+      .controls.toolbar-hidden {
+        visibility: hidden;
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      #reading,
+      #whack-a-track-game {
+        scroll-margin-top:
+          calc(var(--player-dock-height, 0px) + 8px);
+      }
+
+      @keyframes lakeRipplePan {
+        0% { background-position: 0px 0px; }
+        100% { background-position: 80px 40px; }
+      }
+
+      #wat-board {
+        background-color: #1d5b87 !important;
+        background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='80' height='40' viewBox='0 0 80 40'><path d='M 0 10 Q 20 4, 40 10 T 80 10' fill='none' stroke='rgba(255,255,255,0.22)' stroke-width='1.5'/><path d='M 0 22 Q 20 16, 40 22 T 80 22' fill='none' stroke='rgba(255,255,255,0.16)' stroke-width='1.2'/><path d='M 0 34 Q 20 28, 40 34 T 80 34' fill='none' stroke='rgba(255,255,255,0.1)' stroke-width='1'/></svg>") !important;
+        background-size: 80px 40px !important;
+        animation: lakeRipplePan 6s linear infinite !important;
+      }
+
+      @keyframes watSplashRing {
+        0% {
+          transform: scale(0.2);
+          opacity: 1;
+          border-width: 3px;
+        }
+        100% {
+          transform: scale(1.35);
+          opacity: 0;
+          border-width: 1.2px;
+        }
+      }
+
+      .wat-ripple {
+        position: absolute;
+        bottom: -3px;
+        left: 50%;
+        width: 36px;
+        height: 18px;
+        margin-left: -18px;
+        border: 2.5px solid rgba(255, 255, 255, 0.95);
+        border-radius: 50%;
+        pointer-events: none;
+        z-index: 2;
+        animation: watSplashRing 0.32s ease-out forwards;
+      }
+
+      @keyframes quackPop {
+        0% {
+          transform: scale(0.3) var(--base-rot);
+          opacity: 0;
+        }
+        50% {
+          transform: scale(1.25) var(--mid-rot);
+          opacity: 1;
+        }
+        100% {
+          transform: scale(1.1) var(--end-rot);
+          opacity: 0;
+        }
+      }
+
+      .wat-quack-pop {
+        position: absolute;
+        width: 72px;
+        height: 72px;
+        object-fit: contain;
+        pointer-events: none;
+        z-index: 10;
+        animation: quackPop 0.4s ease-out forwards;
+      }
+
+      @keyframes duckSquashPop {
+        0% {
+          transform: scale(0.3, 1.6) translateY(36px);
+          opacity: 0;
+        }
+        35% {
+          transform: scale(1.22, 0.78) translateY(-8px);
+          opacity: 1;
+        }
+        65% {
+          transform: scale(0.94, 1.06) translateY(3px);
+        }
+        100% {
+          transform: scale(1, 1) translateY(0);
+          opacity: 1;
+        }
+      }
+
+      .wat-duck {
+        position: absolute;
+        inset: 4px;
+        width: calc(100% - 8px);
+        height: calc(100% - 8px);
+        object-fit: contain;
+        pointer-events: none;
+        display: block;
+        animation: duckSquashPop 0.28s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+      }
+
+      .wat-snake {
+        position: absolute;
+        inset: 4px;
+        width: calc(100% - 8px);
+        height: calc(100% - 8px);
+        object-fit: contain;
+        pointer-events: none;
+        display: block;
+        animation: duckSquashPop 0.28s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+      }
+
+      @keyframes duckRetreat {
+        0% {
+          transform: scale(1, 1) translateY(0);
+          opacity: 1;
+        }
+        40% {
+          transform: scale(0.88, 1.12) translateY(-4px);
+          opacity: 1;
+        }
+        100% {
+          transform: scale(0.3, 1.5) translateY(36px);
+          opacity: 0;
+        }
+      }
+
+      .wat-duck-hiding,
+      .wat-snake-hiding {
+        animation: duckRetreat 0.18s ease-in forwards !important;
+      }
+
+      @keyframes duckFallAndWobble {
+        0% {
+          transform: scaleX(var(--duck-flip, 1)) translateY(0) rotate(0deg);
+          opacity: 1;
+        }
+        25% {
+          transform: scaleX(var(--duck-flip, 1)) translateY(8px) rotate(-14deg);
+        }
+        50% {
+          transform: scaleX(var(--duck-flip, 1)) translateY(18px) rotate(16deg);
+        }
+        75% {
+          transform: scaleX(var(--duck-flip, 1)) translateY(28px) rotate(-10deg);
+        }
+        100% {
+          transform: scaleX(var(--duck-flip, 1)) translateY(45px) rotate(22deg);
+          opacity: 0;
+        }
+      }
+
+      .wat-duck-hit,
+      .wat-snake-hit {
+        position: absolute;
+        inset: 4px;
+        width: calc(100% - 8px);
+        height: calc(100% - 8px);
+        object-fit: contain;
+        pointer-events: none;
+        display: block;
+        animation: duckFallAndWobble 0.4s ease-in forwards;
+      }
+
+      #song-list .song.rizney-roadwork {
+        opacity: .72;
+      }
+
+      #song-list .song.rizney-roadwork .song-number,
+      #song-list .song.rizney-roadwork .song-title,
+      #song-list .song.rizney-roadwork .play {
         display: none;
-        width: 100%;
-        box-sizing: border-box;
+      }
+
+      #song-list .song.rizney-roadwork::after {
+        content: "🚧 WHACKED!";
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 0;
+        min-height: 62px;
         margin: 0;
-        padding: 10px 12px;
+        padding: 0 8px;
         text-align: center;
+        font-weight: 800;
+        letter-spacing: .08em;
         color: #f5d76e;
-        background: #120b18;
-        border-top: 1px solid #d4af37;
-        border-bottom: 1px solid #d4af37;
-        font-family: Georgia, "Times New Roman", serif;
-        box-shadow: 0 4px 14px rgba(0,0,0,.45);
-        position: relative;
-        z-index: 80;
+        background: transparent;
+        border: 0;
+        border-radius: 0;
+        grid-column: 1 / 4;
+        grid-row: 1;
       }
 
-      #${BANNER_ID} .singles-banner-main {
-        font-size: 1rem;
-        font-weight: bold;
-        letter-spacing: .12em;
+      #song-list .song.rizney-roadwork .animal-button {
+        grid-column: 4;
+        grid-row: 1;
+        cursor: not-allowed;
+        opacity: .45;
+        pointer-events: none;
       }
 
-      #${BANNER_ID} .singles-banner-label {
-        margin-top: 3px;
-        color: #c084fc;
-        font-size: .7rem;
-        letter-spacing: .16em;
-      }
-
-      @media (max-width: 500px) {
-        #${BANNER_ID} {
-          padding: 8px 10px;
+      @media (max-width: 640px) {
+        #whack-a-track-game {
+          width: 100%;
+          margin-top: 4px;
+          margin-bottom: 12px;
+          padding: 8px 10px 10px;
         }
 
-        #${BANNER_ID} .singles-banner-main {
-          font-size: .85rem;
+        #whack-a-track-game #wat-board {
+          gap: 6px;
+          margin: 10px auto;
+        }
+
+        #whack-a-track-game .wat-hole {
+          height: 58px !important;
+          min-height: 58px !important;
+        }
+
+        #song-list .song.rizney-roadwork::after {
+          min-height: 54px;
+          padding: 0 5px;
+          font-size: .78rem;
         }
       }
     `;
 
     document.head.appendChild(style);
 
+    positionToolbar();
 
-    const controls =
-      $(".controls");
+    window.addEventListener(
+      "resize",
+      positionToolbar,
+      { passive: true }
+    );
 
-    if (controls) {
+    if (window.ResizeObserver) {
+      const dock = $(".player-dock");
 
-      controls.insertAdjacentElement(
-        "afterend",
-        banner
-      );
-
-    } else {
-
-      document.body.prepend(
-        banner
-      );
+      if (dock) {
+        new ResizeObserver(
+          positionToolbar
+        ).observe(dock);
+      }
     }
 
-    return banner;
+    setToolbarHidden(false);
   }
 
+  const playing = () => {
+    const player = youtube();
 
-  /* =========================================================
-     DETECT MONKEY JUDGE
-     ========================================================= */
+    return (
+      player &&
+      typeof player.getPlayerState ===
+        "function" &&
+      window.YT &&
+      player.getPlayerState() ===
+        YT.PlayerState.PLAYING
+    );
+  };
 
-  function isMonkeyJudgePlaying() {
-
-    const player =
-      window.rizneyPlayer;
-
+  function getCurrentSongId() {
+    const player = youtube();
 
     if (
-      player &&
-      typeof player.getVideoData ===
+      !player ||
+      typeof player.getVideoData !==
         "function"
     ) {
-
-      try {
-
-        const data =
-          player.getVideoData();
-
-        if (
-          data &&
-          data.video_id
-        ) {
-
-          return (
-            String(data.video_id) ===
-            SINGLE_VIDEO_ID
-          );
-        }
-
-      } catch (error) {}
+      return null;
     }
 
+    try {
+      const data =
+        player.getVideoData();
 
-    const nowPlaying =
-      $("#now-playing");
+      if (
+        !data ||
+        !data.video_id
+      ) {
+        return null;
+      }
 
-    if (!nowPlaying) {
+      return String(
+        data.video_id
+      );
+    } catch (error) {
+      return null;
+    }
+  }
+
+  function getCurrentSongNumber() {
+    const currentId =
+      getCurrentSongId();
+
+    if (!currentId) {
+      return null;
+    }
+
+    const songIds =
+      Array.isArray(
+        window.rizneySongIds
+      )
+        ? window.rizneySongIds
+        : [];
+
+    const index =
+      songIds.indexOf(
+        currentId
+      );
+
+    if (index < 0) {
+      return null;
+    }
+
+    return index + 1;
+  }
+
+  function getSongIdForNumber(songNumber) {
+    if (
+      !songNumber ||
+      !Number.isInteger(songNumber)
+    ) {
+      return null;
+    }
+
+    const songIds =
+      Array.isArray(
+        window.rizneySongIds
+      )
+        ? window.rizneySongIds
+        : [];
+
+    const songId =
+      songIds[
+        songNumber - 1
+      ];
+
+    if (!songId) {
+      return null;
+    }
+
+    return String(
+      songId
+    );
+  }
+
+  function getWhackedTracks() {
+    try {
+      const raw =
+        localStorage.getItem(
+          REMOVED_TRACKS_KEY
+        );
+
+      const parsed =
+        JSON.parse(
+          raw || "[]"
+        );
+
+      return Array.isArray(parsed)
+        ? parsed
+        : [];
+    } catch (error) {
+      return [];
+    }
+  }
+
+  function saveWhackedTrack(songId) {
+    if (!songId) {
+      return null;
+    }
+
+    try {
+      const tracks =
+        getWhackedTracks();
+
+      if (
+        !tracks.includes(songId)
+      ) {
+        tracks.push(songId);
+
+        localStorage.setItem(
+          REMOVED_TRACKS_KEY,
+          JSON.stringify(tracks)
+        );
+      }
+
+      return songId;
+    } catch (error) {
+      return null;
+    }
+  }
+
+  function isTrackRemembered(songId) {
+    if (!songId) {
       return false;
     }
 
+    return getWhackedTracks()
+      .includes(songId);
+  }
 
-    return (
-      nowPlaying.textContent.includes(
-        `Song ${SINGLE_TRACK_NUMBER}`
-      )
+  function findSongRow(songNumber) {
+    if (!songNumber) {
+      return null;
+    }
+
+    return document.querySelector(
+      `#song-list .song[data-song-index="${songNumber}"]`
     );
   }
 
+  function applyRoadworkToRow(row) {
+    if (!row) {
+      return false;
+    }
 
-  /* =========================================================
-     UPDATE BANNER
-     ========================================================= */
+    row.classList.add(
+      "rizney-roadwork"
+    );
 
-  function updateBanner() {
+    row.dataset.rizneyRoadwork =
+      "true";
 
-    const banner =
-      $(`#${BANNER_ID}`);
+    const playButton =
+      row.querySelector(".play");
 
-    if (!banner) {
+    if (playButton) {
+      playButton.disabled = true;
+
+      playButton.setAttribute(
+        "aria-label",
+        "Song closed for roadwork"
+      );
+    }
+
+    return true;
+  }
+
+  function closeRoad(
+    songNumber,
+    songId
+  ) {
+    if (
+      !songNumber &&
+      !songId
+    ) {
+      return false;
+    }
+
+    const row =
+      findSongRow(songNumber);
+
+    if (!row) {
+      return false;
+    }
+
+    if (songId) {
+      saveWhackedTrack(songId);
+    }
+
+    return applyRoadworkToRow(
+      row
+    );
+  }
+
+  function loadSavedRoadwork() {
+    const saved =
+      new Set(
+        getWhackedTracks()
+      );
+
+    if (!saved.size) {
       return;
     }
 
+    document
+      .querySelectorAll(
+        "#song-list .song"
+      )
+      .forEach(row => {
+        const songNumber =
+          Number(
+            row.dataset.songIndex
+          );
 
-    const singlesActive =
-      isMonkeyJudgePlaying();
+        if (
+          !Number.isInteger(
+            songNumber
+          ) ||
+          songNumber < 1
+        ) {
+          return;
+        }
 
+        const songId =
+          getSongIdForNumber(
+            songNumber
+          );
 
-    if (singlesActive) {
+        if (
+          songId &&
+          saved.has(songId)
+        ) {
+          applyRoadworkToRow(
+            row
+          );
+        }
+      });
+  }
 
-      banner.style.display =
-        "block";
+  function createGame() {
+    if (game) return game;
 
+    const panel =
+      document.createElement(
+        "section"
+      );
 
-      /*
-       * Play your custom voice recording 
-       * exactly once when entering the track.
-       */
-      if (!audioHasPlayed) {
-        audioHasPlayed = true;
-        singlesAudio.currentTime = 0;
-        singlesAudio.play().catch(err => {
-          // Handled gracefully if browser blocks autoplay before user interaction
-          console.log("Audio play blocked/waiting for interaction:", err);
+    panel.id =
+      "whack-a-track-game";
+
+    panel.setAttribute(
+      "aria-label",
+      "Whack-a-Track"
+    );
+
+    panel.innerHTML = `
+      <h2>Whack-a-Track</h2>
+
+      <p id="wat-status"
+         aria-live="polite"></p>
+
+      <progress
+        id="wat-time"
+        max="${GAME_DURATION}"
+        value="${GAME_DURATION}"
+        aria-label="Time remaining"
+      ></progress>
+
+      <progress
+        id="wat-health"
+        max="${TRACK_HEALTH}"
+        value="${TRACK_HEALTH}"
+        aria-label="Track health"
+      ></progress>
+
+      <div
+        id="wat-board"
+        role="group"
+        aria-label="Whack-a-Track board"
+      ></div>
+
+      <button
+        id="wat-refresh"
+        type="button"
+        hidden
+      >
+        Refresh playlist
+      </button>
+
+      <button
+        id="wat-close"
+        type="button"
+      >
+        Close game
+      </button>
+    `;
+
+    Object.assign(
+      panel.style,
+      {
+        position: "sticky",
+        top:
+          "var(--player-dock-height, 104px)",
+        zIndex: "20",
+        maxWidth:
+          "min(92vw, 620px)",
+        boxSizing: "border-box",
+        margin:
+          "8px auto 18px",
+        padding:
+          "10px 14px 14px",
+        textAlign:
+          "center",
+        background:
+          "#120b18",
+        border:
+          "2px solid #d4af37",
+        borderRadius:
+          "12px",
+        boxShadow:
+          "0 0 24px rgba(212,175,55,.35)",
+        scrollMarginTop:
+          "calc(var(--player-dock-height, 0px) + 8px)"
+      }
+    );
+
+    Object.assign(
+      $("h2", panel).style,
+      {
+        margin: "0 0 6px"
+      }
+    );
+
+    Object.assign(
+      $("#wat-status", panel).style,
+      {
+        margin: "0 0 4px",
+        minHeight: "1.4em"
+      }
+    );
+
+    Object.assign(
+      $("#wat-time", panel).style,
+      {
+        display: "block",
+        width: "100%",
+        height: "18px",
+        margin: "8px 0 8px",
+        accentColor: "#c084fc"
+      }
+    );
+
+    Object.assign(
+      $("#wat-health", panel).style,
+      {
+        display: "block",
+        width: "100%",
+        height: "18px",
+        margin: "8px 0 14px",
+        accentColor: "#d4af37"
+      }
+    );
+
+    const board =
+      $("#wat-board", panel);
+
+    Object.assign(
+      board.style,
+      {
+        display: "grid",
+        gridTemplateColumns:
+          "repeat(3, minmax(0, 1fr))",
+        gap: "10px",
+        margin: "18px auto",
+        padding: "12px",
+        borderRadius: "10px",
+        border: "1px solid #d4af37",
+        position: "relative",
+        overflow: "visible"
+      }
+    );
+
+    for (let i = 0; i < 6; i++) {
+      const hole =
+        document.createElement(
+          "button"
+        );
+
+      hole.type = "button";
+      hole.className =
+        "wat-hole";
+      hole.innerHTML =
+        "";
+      hole.dataset.active =
+        "false";
+
+      Object.assign(
+        hole.style,
+        {
+          height: "76px",
+          width: "100%",
+          padding: "0",
+          cursor: "crosshair",
+          background: "transparent",
+          border: "none",
+          outline: "none",
+          position: "relative",
+          zIndex: "1",
+          overflow: "hidden"
+        }
+      );
+
+      hole.addEventListener(
+        "click",
+        () => {
+          if (
+            !active ||
+            hole.dataset.active !==
+              "true"
+          ) {
+            return;
+          }
+
+          /*
+            SNAKE DECOY:
+            Hitting a snake does not damage
+            track health. Instead it removes
+            time from the clock.
+          */
+          if (
+            hole.dataset.target ===
+            "snake"
+          ) {
+            hole.dataset.active =
+              "hit";
+
+            secondsLeft =
+              Math.max(
+                0,
+                secondsLeft -
+                  SNAKE_TIME_PENALTY
+              );
+
+            $("#wat-time",
+              panel
+            ).value =
+              secondsLeft;
+
+            vibrate([25, 30, 25]);
+
+            /* Snake hiss sound */
+            playHissSound();
+
+            hole.innerHTML =
+              `<img src="assets/snake-hit.png" alt="" class="wat-snake-hit" />`;
+
+            hole.style.zIndex =
+              "3";
+
+            triggerSplash(hole);
+
+            /* Damage pop-up: -10 seconds */
+            const damagePop =
+              document.createElement(
+                "img"
+              );
+
+            damagePop.src =
+              "assets/damage.png";
+
+            damagePop.alt =
+              "-10";
+
+            damagePop.className =
+              "wat-quack-pop";
+
+            const offsetX =
+              (Math.random() - 0.5) * 44;
+
+            const offsetY =
+              -16 +
+              (Math.random() - 0.5) * 16;
+
+            const baseRot =
+              -15 +
+              Math.random() * 10;
+
+            const midRot =
+              -5 +
+              Math.random() * 20;
+
+            const endRot =
+              5 +
+              Math.random() *
+                20 *
+                (
+                  Math.random() < 0.5
+                    ? 1
+                    : -1
+                );
+
+            damagePop.style.setProperty(
+              "--base-rot",
+              `rotate(${baseRot}deg)`
+            );
+
+            damagePop.style.setProperty(
+              "--mid-rot",
+              `rotate(${midRot}deg)`
+            );
+
+            damagePop.style.setProperty(
+              "--end-rot",
+              `rotate(${endRot}deg)`
+            );
+
+            damagePop.style.left =
+              `${
+                hole.offsetLeft +
+                (hole.offsetWidth / 2) -
+                36 +
+                offsetX
+              }px`;
+
+            damagePop.style.top =
+              `${
+                hole.offsetTop +
+                (hole.offsetHeight / 2) -
+                36 +
+                offsetY
+              }px`;
+
+            board.appendChild(
+              damagePop
+            );
+
+            setTimeout(() => {
+              damagePop.remove();
+            }, 400);
+
+            setTimeout(() => {
+              if (
+                hole.dataset.active ===
+                "hit"
+              ) {
+                hole.innerHTML =
+                  "";
+                hole.style.zIndex =
+                  "1";
+                hole.dataset.target =
+                  "";
+                hole.dataset.active =
+                  "false";
+              }
+            }, 400);
+
+            if (
+              secondsLeft <= 0
+            ) {
+              finish(false);
+            }
+
+            return;
+          }
+
+          /*
+            EXISTING DUCK BEHAVIOR:
+            Everything below remains the
+            original Whack-a-Track behavior.
+          */
+
+          hole.dataset.active =
+            "hit";
+
+          trackHealth--;
+
+          if (
+            trackHealth <= 0
+          ) {
+            vibrate([40, 30, 80]);
+          } else {
+            vibrate([15, 30, 45]);
+          }
+
+          playQuackSound();
+
+          $("#wat-health", panel)
+            .value =
+            trackHealth;
+
+          const duckFlip =
+            Math.random() < 0.5
+              ? -1
+              : 1;
+
+          hole.innerHTML =
+            `<img src="assets/duck-hit.png" alt="" class="wat-duck-hit" style="--duck-flip: ${duckFlip};" />`;
+
+          hole.style.zIndex =
+            "3";
+
+          triggerSplash(hole);
+
+          const quackPop =
+            document.createElement(
+              "img"
+            );
+
+          quackPop.src =
+            "assets/quack.png";
+
+          quackPop.alt =
+            "QUACK!";
+
+          quackPop.className =
+            "wat-quack-pop";
+
+          const offsetX =
+            (Math.random() - 0.5) * 44;
+
+          const offsetY =
+            -16 +
+            (Math.random() - 0.5) * 16;
+
+          const baseRot =
+            -15 +
+            Math.random() * 10;
+
+          const midRot =
+            -5 +
+            Math.random() * 20;
+
+          const endRot =
+            5 +
+            Math.random() *
+              20 *
+              (
+                Math.random() < 0.5
+                  ? 1
+                  : -1
+              );
+
+          quackPop.style.setProperty(
+            "--base-rot",
+            `rotate(${baseRot}deg)`
+          );
+
+          quackPop.style.setProperty(
+            "--mid-rot",
+            `rotate(${midRot}deg)`
+          );
+
+          quackPop.style.setProperty(
+            "--end-rot",
+            `rotate(${endRot}deg)`
+          );
+
+          quackPop.style.left =
+            `${
+              hole.offsetLeft +
+              (hole.offsetWidth / 2) -
+              36 +
+              offsetX
+            }px`;
+
+          quackPop.style.top =
+            `${
+              hole.offsetTop +
+              (hole.offsetHeight / 2) -
+              36 +
+              offsetY
+            }px`;
+
+          board.appendChild(
+            quackPop
+          );
+
+          setTimeout(() => {
+            quackPop.remove();
+          }, 400);
+
+          setTimeout(() => {
+            if (
+              hole.dataset.active ===
+              "hit"
+            ) {
+              hole.innerHTML =
+                "";
+              hole.style.zIndex =
+                "1";
+              hole.dataset.target =
+                "";
+            }
+          }, 400);
+
+          if (
+            trackHealth <= 0
+          ) {
+            finish(true);
+          }
+        }
+      );
+
+      board.appendChild(
+        hole
+      );
+    }
+
+    const closeBtn =
+      $("#wat-close", panel);
+
+    const refreshBtn =
+      $("#wat-refresh", panel);
+
+    [closeBtn, refreshBtn].forEach(btn => {
+      if (btn) {
+        Object.assign(btn.style, {
+          backgroundColor: "#000000",
+          color: "#f5d76e",
+          border: "1px solid #d4af37",
+          borderRadius: "8px",
+          padding: "8px 16px",
+          cursor: "pointer",
+          fontWeight: "bold",
+          marginTop: "8px"
         });
       }
+    });
 
+    closeBtn.addEventListener(
+      "click",
+      closeGame
+    );
 
-      /*
-       * We just arrived at the Single.
-       *
-       * Scroll the page up to the
-       * Singles area exactly once.
-       */
-
-      if (!singlesWasActive) {
-
-        singlesWasActive = true;
-
-        window.setTimeout(() => {
-
-          banner.scrollIntoView({
-            behavior: "smooth",
-            block: "start"
-          });
-
-        }, 100);
+    refreshBtn.addEventListener(
+      "click",
+      () => {
+        localStorage.removeItem(
+          REMOVED_TRACKS_KEY
+        );
+        window.location.reload();
       }
+    );
 
+    (
+      $(".player-dock") ||
+      $("main") ||
+      document.body
+    ).insertAdjacentElement(
+      "afterend",
+      panel
+    );
 
+    panel.hidden = true;
+
+    new MutationObserver(
+      () =>
+        setToolbarHidden(
+          !panel.hidden
+        )
+    ).observe(
+      panel,
+      {
+        attributes: true,
+        attributeFilter: [
+          "hidden"
+        ]
+      }
+    );
+
+    game = {
+      panel,
+      board,
+      status:
+        $("#wat-status", panel)
+    };
+
+    return game;
+  }
+
+  function triggerSplash(hole) {
+    const ripple =
+      document.createElement(
+        "div"
+      );
+
+    ripple.className =
+      "wat-ripple";
+
+    hole.appendChild(
+      ripple
+    );
+
+    setTimeout(() => {
+      ripple.remove();
+    }, 320);
+  }
+
+  function hideMoles() {
+    game.board
+      .querySelectorAll(
+        ".wat-hole"
+      )
+      .forEach(hole => {
+        hole.dataset.active =
+          "false";
+
+        hole.dataset.target =
+          "";
+
+        hole.innerHTML =
+          "";
+
+        hole.style.zIndex =
+          "1";
+      });
+  }
+
+  function spawnMole() {
+    if (!active) return;
+
+    const holes = [
+      ...game.board
+        .querySelectorAll(
+          ".wat-hole"
+        )
+    ];
+
+    const hole =
+      holes[
+        Math.floor(
+          Math.random() *
+            holes.length
+        )
+      ];
+
+    hideMoles();
+
+    hole.dataset.active =
+      "true";
+
+    /*
+      Randomly choose between a normal
+      duck target and a snake decoy.
+    */
+    const isSnake =
+      Math.random() <
+      SNAKE_CHANCE;
+
+    if (isSnake) {
+      hole.dataset.target =
+        "snake";
+
+      hole.innerHTML =
+        `<img src="assets/snake.png" alt="" class="wat-snake" />`;
     } else {
+      hole.dataset.target =
+        "duck";
 
-      /*
-       * The Single is no longer active.
-       *
-       * Reset the flags so the next time
-       * Monkey Judge comes around,
-       * it can play and scroll again.
-       */
+      hole.innerHTML =
+        `<img src="assets/duck.png" alt="" class="wat-duck" />`;
+    }
 
-      singlesWasActive = false;
-      audioHasPlayed = false;
+    hole.style.zIndex =
+      "3";
 
-      banner.style.display =
-        "none";
+    triggerSplash(hole);
+
+    clearTimeout(
+      hideTimer
+    );
+
+    hideTimer =
+      setTimeout(
+        () => {
+          if (
+            hole.dataset.active ===
+            "true"
+          ) {
+            const targetImg =
+              hole.querySelector(
+                ".wat-duck, .wat-snake"
+              );
+
+            if (targetImg) {
+              targetImg.classList.add(
+                targetImg.classList.contains(
+                  "wat-snake"
+                )
+                  ? "wat-snake-hiding"
+                  : "wat-duck-hiding"
+              );
+
+              triggerSplash(
+                hole
+              );
+
+              setTimeout(() => {
+                if (
+                  hole.dataset.active ===
+                  "true"
+                ) {
+                  hole.innerHTML =
+                    "";
+
+                  hole.style.zIndex =
+                    "1";
+
+                  hole.dataset.target =
+                    "";
+
+                  hole.dataset.active =
+                    "false";
+                }
+              }, 180);
+            } else {
+              hole.innerHTML =
+                "";
+
+              hole.style.zIndex =
+                "1";
+
+              hole.dataset.target =
+                "";
+
+              hole.dataset.active =
+                "false";
+            }
+          } else {
+            hole.dataset.target =
+              "";
+
+            hole.dataset.active =
+              "false";
+          }
+        },
+        MOLE_VISIBLE_MS
+      );
+
+    moleTimer =
+      setTimeout(
+        spawnMole,
+        MOLE_INTERVAL_MS
+      );
+  }
+
+  function startClock() {
+    clearInterval(
+      gameTimer
+    );
+
+    secondsLeft =
+      GAME_DURATION;
+
+    $("#wat-time",
+      game.panel
+    ).value =
+      secondsLeft;
+
+    gameTimer =
+      setInterval(
+        () => {
+          if (!active) return;
+
+          secondsLeft--;
+
+          $("#wat-time",
+            game.panel
+          ).value =
+            secondsLeft;
+
+          if (
+            secondsLeft <= 0
+          ) {
+            finish(false);
+          }
+        },
+        1000
+      );
+  }
+
+  function finish(won) {
+    if (!active) return;
+
+    /*
+       Remember exactly where the player
+       is standing before advancing.
+    */
+
+    const savedScrollPosition =
+      window.scrollY;
+
+    active = false;
+
+    clearTimeout(
+      moleTimer
+    );
+
+    clearTimeout(
+      hideTimer
+    );
+
+    clearInterval(
+      gameTimer
+    );
+
+    hideMoles();
+
+    if (!won) {
+      game.status.textContent =
+        "The track survived. Try again!";
+      return;
+    }
+
+    const songId =
+      getCurrentSongId();
+
+    const songNumber =
+      getCurrentSongNumber();
+
+    const savedId =
+      saveWhackedTrack(
+        songId
+      );
+
+    const roadClosed =
+      closeRoad(
+        songNumber,
+        songId
+      );
+
+    if (roadClosed) {
+      $("#wat-refresh",
+        game.panel
+      ).hidden = false;
+    }
+
+    game.status.textContent =
+      "TRACK BANISHED! 🚫";
+
+    /*
+       Advance to the next song/card,
+       then immediately restore the
+       exact scroll position.
+    */
+
+    next();
+
+    requestAnimationFrame(() => {
+      window.scrollTo({
+        top: savedScrollPosition,
+        behavior: "instant"
+      });
+    });
+  }
+
+  function closeGame() {
+    active = false;
+
+    clearTimeout(
+      moleTimer
+    );
+
+    clearTimeout(
+      hideTimer
+    );
+
+    clearInterval(
+      gameTimer
+    );
+
+    if (game) {
+      game.panel.hidden =
+        true;
     }
   }
 
+  function startGame(event) {
+    event?.preventDefault();
+    event?.stopImmediatePropagation();
 
-  /* =========================================================
-     WATCH THE PLAYER
-     ========================================================= */
+    game =
+      createGame();
 
-  function startWatching() {
-
-    createBanner();
-
-    updateBanner();
-
-
-    window.setInterval(
-      updateBanner,
-      500
+    clearTimeout(
+      moleTimer
     );
+
+    clearTimeout(
+      hideTimer
+    );
+
+    clearInterval(
+      gameTimer
+    );
+
+    $("#wat-refresh",
+      game.panel
+    ).hidden =
+      getWhackedTracks().length === 0;
+
+    game.panel.hidden =
+      false;
+
+    if (!playing()) {
+      active = false;
+
+      game.status.textContent =
+        "Play a track to start the game.";
+
+      game.panel.scrollIntoView({
+        behavior: "smooth",
+        block: "start"
+      });
+
+      return;
+    }
+
+    const songNumber =
+      getCurrentSongNumber();
+
+    const songId =
+      getCurrentSongId();
+
+    if (
+      isTrackRemembered(
+        songId
+      )
+    ) {
+      active = false;
+
+      const row =
+        findSongRow(
+          songNumber
+        );
+
+      applyRoadworkToRow(
+        row
+      );
+
+      game.status.innerHTML =
+        `🚧 ROAD CLOSED<br>` +
+        `<small>This track is already closed for roadwork.</small>`;
+
+      game.panel.scrollIntoView({
+        behavior: "smooth",
+        block: "start"
+      });
+
+      return;
+    }
+
+    trackHealth =
+      TRACK_HEALTH;
+
+    active = true;
+
+    $("#wat-health",
+      game.panel
+    ).value =
+      trackHealth;
+
+    $("#wat-time",
+      game.panel
+    ).value =
+      GAME_DURATION;
+
+    hideMoles();
+
+    game.status.textContent =
+      "Whack the ducks to banish the track!";
+
+    startClock();
+
+    spawnMole();
+
+    game.panel.scrollIntoView({
+      behavior: "smooth",
+      block: "start"
+    });
   }
-
-
-  /* =========================================================
-     INIT
-     ========================================================= */
 
   function init() {
+    setupToolbar();
 
-    startWatching();
+    loadSavedRoadwork();
+
+    const button =
+      $("#whack-track");
+
+    if (
+      !button ||
+      button.dataset.whackGameBound ===
+        "true"
+    ) {
+      return;
+    }
+
+    button.dataset.whackGameBound =
+      "true";
+
+    Object.assign(
+      button.style,
+      {
+        cursor: "pointer"
+      }
+    );
+
+    button.addEventListener(
+      "click",
+      startGame
+    );
   }
-
 
   if (
     document.readyState ===
     "loading"
   ) {
-
     document.addEventListener(
       "DOMContentLoaded",
       init,
       { once: true }
     );
-
   } else {
-
     init();
   }
 
