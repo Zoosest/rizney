@@ -61,7 +61,6 @@
       cursor:pointer;
     } 
 
-    /* FINISHING TOUCH: slightly smaller logo, same header height */
     .logo-img {
       position:absolute;
       top:1px;
@@ -225,7 +224,6 @@
       border-radius:8px;
     } 
 
-    /* CURRENTLY PLAYING TRACK */
     .song.playing {
       border-color:var(--gold);
       background:#21102e;
@@ -271,9 +269,6 @@
       font-size:.78rem;
     } 
 
-    /* FINISHING TOUCH:
-       Tight footer spacing while keeping curse.png
-       the same size. */
     footer {
       position:relative;
       margin-top:4px;
@@ -393,7 +388,6 @@
         left:75px;
       } 
 
-      /* Slightly smaller mobile logo */
       .logo-img {
         top:1px;
         right:0;
@@ -952,7 +946,6 @@
       )
       .filter(Boolean); 
 
-    /* Make the song IDs available to whack-a-track.js */
     window.rizneySongIds = ids; 
 
     const $ = s => document.querySelector(s); 
@@ -973,10 +966,6 @@
     let cardPlaylist = null;
     let cardPosition = 0; 
 
-    /*
-      Return the real song title from the chronological
-      song row instead of "Song 2", "Song 3", etc.
-    */
     const titleFor = i => {
       if (i === -1) {
         return "MEGA MIX'N'MOJO Intro";
@@ -1167,11 +1156,6 @@
         return;
       } 
 
-      /*
-        Normal chronological playback:
-        skip any tracks that have been defeated
-        in Whack-A-Track.
-      */
       let nextIndex =
         currentIndex + 1; 
 
@@ -1340,7 +1324,7 @@
         <button
           class="play"
           type="button"
-        >Play</button>
+        >Play</button> 
       `; 
 
       row.querySelector(
@@ -1438,7 +1422,7 @@
 
               <a href="#">
                 Play song ${cardPlaylist[position] + 1}
-              </a>
+              </a> 
             `; 
 
             card.querySelector(
@@ -1536,6 +1520,55 @@
   <script src="./main.js"></script> 
   <script src="./singles.js"></script> 
   <script src="./whack-a-track.js"></script> 
+
+
+  <!-- =====================================================
+       TEMPORARY TEST RESET BUTTON
+       ONLY RESETS PIRATE / UNLOCK TEST DATA
+       DOES NOT TOUCH WHACK-A-TRACK DATA
+       ===================================================== -->
+
+  <button
+    id="reset-test-data"
+    type="button"
+    style="
+      position:fixed;
+      bottom:10px;
+      right:10px;
+      z-index:999999;
+      padding:8px 12px;
+      background:#55208a;
+      color:#f5d76e;
+      border:1px solid #d4af37;
+      border-radius:999px;
+      font-family:Georgia,'Times New Roman',serif;
+      font-weight:bold;
+      font-size:12px;
+      cursor:pointer;
+    "
+  >
+    RESET TEST DATA
+  </button>
+
+  <script>
+    document
+      .getElementById("reset-test-data")
+      .addEventListener("click", () => {
+
+        localStorage.removeItem("monkeyJudgeCompleted");
+        localStorage.removeItem("pottyTimeUnlocked");
+
+        localStorage.removeItem("delawareCompleted");
+        localStorage.removeItem("niceAndSlowUnlocked");
+
+        localStorage.removeItem("yohoCompleted");
+        localStorage.removeItem("rollingStoneUnlocked");
+
+        alert("Pirate unlocks reset! Reloading...");
+
+        location.reload();
+      });
+  </script>
 
 </body>
 </html>
