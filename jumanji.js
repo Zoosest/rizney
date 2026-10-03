@@ -126,47 +126,22 @@
 
 
   // =========================================================
-  // LOUD SOUND SYSTEM
+  // SIMPLE SOUND SYSTEM
   // =========================================================
 
-  let audioContext =
-    null;
+  /*
+    IMPORTANT:
 
+    Keep sound playback completely separate
+    from the animal pointer/tapping system.
 
-  function getAudioContext() {
+    This is deliberately simple and reliable.
+  */
 
-    if (audioContext) {
-      return audioContext;
-    }
-
-    try {
-
-      const AudioContext =
-        window.AudioContext ||
-        window.webkitAudioContext;
-
-      if (!AudioContext) {
-        return null;
-      }
-
-      audioContext =
-        new AudioContext();
-
-    } catch (e) {
-
-      console.log(
-        "Could not create audio context:",
-        e
-      );
-
-      return null;
-    }
-
-    return audioContext;
-  }
-
-
-  function playSound(path) {
+  function playSound(
+    path,
+    volume = 1.0
+  ) {
 
     try {
 
@@ -174,7 +149,10 @@
         new Audio(path);
 
       audio.volume =
-        1.0;
+        Math.min(
+          1.0,
+          volume
+        );
 
       audio.currentTime =
         0;
@@ -194,98 +172,9 @@
         "Could not play sound:",
         e
       );
-    }
-  }
 
-
-  /*
-    Hit sounds use Web Audio so they can be
-    amplified beyond the normal HTML Audio
-    volume ceiling.
-
-    3.5x gain = MUCH LOUDER.
-  */
-
-  async function playLoudSound(path) {
-
-    const ctx =
-      getAudioContext();
-
-    if (!ctx) {
-
-      playSound(path);
-
-      return;
     }
 
-    try {
-
-      if (
-        ctx.state ===
-        "suspended"
-      ) {
-
-        await ctx.resume();
-      }
-
-
-      const audio =
-        new Audio(path);
-
-      audio.preload =
-        "auto";
-
-      audio.volume =
-        1.0;
-
-
-      const source =
-        ctx.createMediaElementSource(
-          audio
-        );
-
-
-      const gainNode =
-        ctx.createGain();
-
-
-      /*
-        TURN IT UP.
-      */
-
-      gainNode.gain.value =
-        3.5;
-
-
-      source.connect(
-        gainNode
-      );
-
-      gainNode.connect(
-        ctx.destination
-      );
-
-
-      audio.currentTime =
-        0;
-
-
-      await audio.play();
-
-    } catch (e) {
-
-      console.log(
-        "Loud sound playback failed:",
-        e
-      );
-
-      /*
-        Fall back to normal playback
-        if Web Audio isn't available.
-      */
-
-      playSound(path);
-    }
   }
 
 
@@ -296,8 +185,10 @@
   function playJumanjiVoice() {
 
     playSound(
-      JUMANJI_SOUND
+      JUMANJI_SOUND,
+      1.0
     );
+
   }
 
 
@@ -315,22 +206,29 @@
       10% — FUCKING BOOM
       25% — boom
       65% — silence
+
+      HTML audio volume maxes out at 1.0.
+      We use 1.0 here intentionally because
+      the previous Web Audio amplification
+      interfered with tapping on some browsers.
     */
 
     if (
       roll < 0.10
     ) {
 
-      playLoudSound(
-        F_N_BOOM_SOUND
+      playSound(
+        F_N_BOOM_SOUND,
+        1.0
       );
 
     } else if (
       roll < 0.35
     ) {
 
-      playLoudSound(
-        BOOM_SOUND
+      playSound(
+        BOOM_SOUND,
+        1.0
       );
 
     }
@@ -349,12 +247,17 @@
         STYLE_ID
       )
     ) {
+
       return;
+
     }
 
 
     const style =
-      document.createElement("style");
+      document.createElement(
+        "style"
+      );
+
 
     style.id =
       STYLE_ID;
@@ -365,15 +268,21 @@
       @keyframes jumanji-title-pulse {
 
         0% {
-          transform: translateX(-50%) scale(1);
+          transform:
+            translateX(-50%)
+            scale(1);
         }
 
         50% {
-          transform: translateX(-50%) scale(1.04);
+          transform:
+            translateX(-50%)
+            scale(1.04);
         }
 
         100% {
-          transform: translateX(-50%) scale(1);
+          transform:
+            translateX(-50%)
+            scale(1);
         }
 
       }
@@ -382,30 +291,33 @@
       @keyframes jumanji-boom {
 
         0% {
+
           transform:
             translate(-50%, -50%)
-            scale(0.5)
-            rotate(-8deg);
+            scale(0.8);
 
           opacity: 0;
+
         }
 
-        20% {
+        25% {
+
           transform:
             translate(-50%, -50%)
-            scale(1.25)
-            rotate(5deg);
+            scale(1);
 
           opacity: 1;
+
         }
 
         100% {
+
           transform:
             translate(-50%, -50%)
-            scale(1)
-            rotate(0deg);
+            scale(1);
 
           opacity: 0;
+
         }
 
       }
@@ -437,28 +349,36 @@
       }
 
 
+      /*
+        Deliberately boring little
+        "boom" text.
+
+        White.
+        Lowercase.
+        Not dramatic.
+      */
+
       .jumanji-boom-text {
 
         position: absolute;
 
         pointer-events: none;
 
-        color: white;
+        color: #ffffff;
 
         font-family:
           Arial,
           Helvetica,
           sans-serif;
 
-        font-size: 1.25rem;
+        font-size: 1.15rem;
 
-        font-weight: bold;
+        font-weight: normal;
 
-        letter-spacing: 1px;
+        letter-spacing: 0;
 
         text-shadow:
-          0 1px 3px black,
-          0 0 5px black;
+          0 1px 3px #000000;
 
         animation:
           jumanji-boom
@@ -476,6 +396,7 @@
     document.head.appendChild(
       style
     );
+
   }
 
 
@@ -486,12 +407,17 @@
   function createOverlay() {
 
     if (overlay) {
+
       return;
+
     }
 
 
     overlay =
-      document.createElement("div");
+      document.createElement(
+        "div"
+      );
+
 
     overlay.id =
       OVERLAY_ID;
@@ -527,9 +453,11 @@
 
 
     /*
-      Capture clicks on the black background
-      so nothing underneath can accidentally
-      be pressed.
+      Prevent clicks on the black overlay
+      from reaching the website underneath.
+
+      Animal buttons themselves stop propagation
+      separately below.
     */
 
     overlay.addEventListener(
@@ -557,6 +485,7 @@
     document.body.appendChild(
       overlay
     );
+
   }
 
 
@@ -567,12 +496,16 @@
   function createTitles() {
 
     if (!overlay) {
+
       return;
+
     }
 
 
     const top =
-      document.createElement("div");
+      document.createElement(
+        "div"
+      );
 
 
     top.textContent =
@@ -634,7 +567,9 @@
 
 
     const bottom =
-      document.createElement("div");
+      document.createElement(
+        "div"
+      );
 
 
     bottom.textContent =
@@ -687,6 +622,7 @@
     overlay.appendChild(
       bottom
     );
+
   }
 
 
@@ -700,21 +636,17 @@
   ) {
 
     if (!overlay) {
+
       return;
+
     }
 
 
     const boom =
-      document.createElement("div");
+      document.createElement(
+        "div"
+      );
 
-
-    /*
-      Deliberately NOT dramatic.
-
-      Just:
-
-      boom
-    */
 
     boom.className =
       "jumanji-boom-text";
@@ -742,6 +674,7 @@
       boom.remove();
 
     }, 600);
+
   }
 
 
@@ -751,14 +684,14 @@
 
   function randomAnimal() {
 
-    /*
-      After the halfway point, intruders
-      occasionally invade the jungle.
-    */
-
     const progress =
       getProgress();
 
+
+    /*
+      Random inappropriate intruders
+      begin appearing later in the game.
+    */
 
     if (
       progress > 0.55 &&
@@ -766,6 +699,7 @@
     ) {
 
       return {
+
         emoji:
           INTRUDERS[
             Math.floor(
@@ -778,10 +712,12 @@
           true
 
       };
+
     }
 
 
     return {
+
       emoji:
         ANIMALS[
           Math.floor(
@@ -792,7 +728,9 @@
 
       intruder:
         false
+
     };
+
   }
 
 
@@ -803,7 +741,9 @@
   function getProgress() {
 
     if (!gameStartTime) {
+
       return 0;
+
     }
 
 
@@ -820,6 +760,7 @@
           gameDuration
       )
     );
+
   }
 
 
@@ -833,7 +774,9 @@
       !active ||
       !overlay
     ) {
+
       return;
+
     }
 
 
@@ -841,7 +784,9 @@
       animals.length >=
       MAX_ANIMALS
     ) {
+
       return;
+
     }
 
 
@@ -850,7 +795,9 @@
 
 
     const animal =
-      document.createElement("div");
+      document.createElement(
+        "div"
+      );
 
 
     animal.className =
@@ -862,10 +809,8 @@
 
 
     /*
-      Most animals are normal-sized.
-
-      Occasionally:
-      RIDICULOUSLY HUGE.
+      Occasionally spawn a
+      ridiculously huge animal.
     */
 
     const huge =
@@ -880,13 +825,15 @@
 
       size =
         100 +
-        Math.random() * 80;
+        Math.random() *
+        80;
 
     } else {
 
       size =
         30 +
-        Math.random() * 42;
+        Math.random() *
+        42;
 
     }
 
@@ -895,9 +842,9 @@
       `${size}px`;
 
 
-    /*
-      Random starting position.
-    */
+    // =====================================================
+    // RANDOM START POSITION
+    // =====================================================
 
     const width =
       window.innerWidth;
@@ -910,7 +857,8 @@
       Math.random() *
       Math.max(
         20,
-        width - size
+        width -
+          size
       );
 
 
@@ -918,7 +866,8 @@
       Math.random() *
       Math.max(
         20,
-        height - size
+        height -
+          size
       );
 
 
@@ -930,9 +879,9 @@
       `${y}px`;
 
 
-    /*
-      Gradually faster as the song progresses.
-    */
+    // =====================================================
+    // MOVEMENT
+    // =====================================================
 
     const progress =
       getProgress();
@@ -940,26 +889,30 @@
 
     const speedMultiplier =
       0.6 +
-      progress * 2.2;
+      progress *
+        2.2;
 
 
     let vx =
       (
-        Math.random() * 2 - 1
+        Math.random() *
+        2 -
+        1
       ) *
       speedMultiplier;
 
 
     let vy =
       (
-        Math.random() * 2 - 1
+        Math.random() *
+        2 -
+        1
       ) *
       speedMultiplier;
 
 
     /*
-      Occasionally make one move
-      especially weirdly.
+      Some animals move weirdly.
     */
 
     const weird =
@@ -970,7 +923,8 @@
     const wobble =
       weird
         ? 0.08 +
-          Math.random() * 0.18
+          Math.random() *
+          0.18
         : 0;
 
 
@@ -981,7 +935,9 @@
 
     let rotationSpeed =
       (
-        Math.random() * 4 - 2
+        Math.random() *
+        4 -
+        2
       );
 
 
@@ -1016,9 +972,9 @@
     };
 
 
-    /*
-      CLICK / TAP ANIMAL
-    */
+    // =====================================================
+    // TAP / CLICK ANIMAL
+    // =====================================================
 
     animal.addEventListener(
       "pointerdown",
@@ -1029,10 +985,10 @@
         e.stopPropagation();
 
 
-        if (
-          !active
-        ) {
+        if (!active) {
+
           return;
+
         }
 
 
@@ -1042,13 +998,20 @@
 
         const boomX =
           rect.left +
-          rect.width / 2;
+          rect.width /
+            2;
 
 
         const boomY =
           rect.top +
-          rect.height / 2;
+          rect.height /
+            2;
 
+
+        /*
+          Every successful animal hit
+          gets the little white "boom".
+        */
 
         showBoom(
           boomX,
@@ -1056,8 +1019,17 @@
         );
 
 
+        /*
+          Sound is completely separate
+          from the tap/removal logic.
+        */
+
         playHitSound();
 
+
+        /*
+          Remove the animal immediately.
+        */
 
         animal.remove();
 
@@ -1092,6 +1064,7 @@
     animals.push(
       animalObject
     );
+
   }
 
 
@@ -1104,15 +1077,6 @@
     const progress =
       getProgress();
 
-
-    /*
-      Starts around 2.5 seconds.
-
-      Ends around 180ms.
-
-      The exponential curve makes the
-      jungle become increasingly stupid.
-    */
 
     const accelerated =
       Math.pow(
@@ -1129,6 +1093,7 @@
       ) *
       accelerated
     );
+
   }
 
 
@@ -1139,7 +1104,9 @@
   function scheduleNextSpawn() {
 
     if (!active) {
+
       return;
+
     }
 
 
@@ -1148,68 +1115,83 @@
 
 
     spawnTimer =
-      setTimeout(() => {
+      setTimeout(
+        () => {
 
-        if (!active) {
-          return;
-        }
+          if (!active) {
 
+            return;
 
-        spawnAnimal();
+          }
 
-
-        /*
-          Extra chaos late in the game.
-        */
-
-        const progress =
-          getProgress();
-
-
-        if (
-          progress >
-            0.65
-        ) {
 
           spawnAnimal();
 
-        }
 
+          /*
+            Extra chaos after 65%.
+          */
 
-        if (
-          progress >
-            0.80 &&
-          Math.random() <
-            0.65
-        ) {
+          const progress =
+            getProgress();
 
-          spawnAnimal();
-
-        }
-
-
-        if (
-          progress >
-            0.90
-        ) {
-
-          spawnAnimal();
 
           if (
-            Math.random() <
-              0.7
+            progress >
+            0.65
           ) {
 
             spawnAnimal();
 
           }
 
-        }
+
+          /*
+            More chaos after 80%.
+          */
+
+          if (
+            progress >
+              0.80 &&
+            Math.random() <
+              0.65
+          ) {
+
+            spawnAnimal();
+
+          }
 
 
-        scheduleNextSpawn();
+          /*
+            Absolute nonsense after 90%.
+          */
 
-      }, interval);
+          if (
+            progress >
+            0.90
+          ) {
+
+            spawnAnimal();
+
+
+            if (
+              Math.random() <
+              0.7
+            ) {
+
+              spawnAnimal();
+
+            }
+
+          }
+
+
+          scheduleNextSpawn();
+
+        },
+        interval
+      );
+
   }
 
 
@@ -1219,10 +1201,10 @@
 
   function animate() {
 
-    if (
-      !active
-    ) {
+    if (!active) {
+
       return;
+
     }
 
 
@@ -1237,9 +1219,14 @@
       getProgress();
 
 
+    /*
+      Animals get faster over time.
+    */
+
     const speedBoost =
       1 +
-      progress * 2.5;
+      progress *
+        2.5;
 
 
     animals.forEach(
@@ -1247,7 +1234,7 @@
 
         /*
           Weird animals get extra
-          wobble and unpredictable movement.
+          unpredictable movement.
         */
 
         if (
@@ -1263,6 +1250,7 @@
               animal.phase
             ) *
             0.04;
+
 
           animal.vy +=
             Math.cos(
@@ -1284,9 +1272,9 @@
           speedBoost;
 
 
-        /*
-          Bounce around the screen.
-        */
+        // =================================================
+        // BOUNCE OFF EDGES
+        // =================================================
 
         if (
           animal.x <= 0
@@ -1354,6 +1342,10 @@
         }
 
 
+        // =================================================
+        // ROTATION
+        // =================================================
+
         animal.rotation +=
           animal.rotationSpeed *
           speedBoost;
@@ -1394,6 +1386,7 @@
       requestAnimationFrame(
         animate
       );
+
   }
 
 
@@ -1403,10 +1396,10 @@
 
   function startGame() {
 
-    if (
-      active
-    ) {
+    if (active) {
+
       return;
+
     }
 
 
@@ -1426,8 +1419,7 @@
 
 
     /*
-      Get actual YouTube duration
-      when available.
+      Get the actual YouTube duration.
     */
 
     try {
@@ -1435,12 +1427,14 @@
       if (
         window.rizneyPlayer &&
         typeof
-          window.rizneyPlayer.getDuration ===
+          window.rizneyPlayer
+            .getDuration ===
           "function"
       ) {
 
         const duration =
-          window.rizneyPlayer.getDuration();
+          window.rizneyPlayer
+            .getDuration();
 
 
         if (
@@ -1466,14 +1460,14 @@
 
 
     /*
-      Start with one lonely animal.
+      One lonely animal.
     */
 
     spawnAnimal();
 
 
     /*
-      Schedule the jungle invasion.
+      Start the jungle invasion.
     */
 
     scheduleNextSpawn();
@@ -1487,8 +1481,8 @@
 
 
     /*
-      Let the song play for three seconds
-      before the stupid Jumanji voice appears.
+      Jumanji voice appears
+      three seconds into the game.
     */
 
     jumanjiSoundTimer =
@@ -1496,6 +1490,7 @@
         playJumanjiVoice,
         3000
       );
+
   }
 
 
@@ -1508,12 +1503,16 @@
   ) {
 
     if (!overlay) {
+
       return;
+
     }
 
 
     const messageBox =
-      document.createElement("div");
+      document.createElement(
+        "div"
+      );
 
 
     messageBox.textContent =
@@ -1566,6 +1565,7 @@
     overlay.appendChild(
       messageBox
     );
+
   }
 
 
@@ -1589,6 +1589,7 @@
 
       animationFrame =
         null;
+
     }
 
 
@@ -1602,6 +1603,7 @@
 
       spawnTimer =
         null;
+
     }
 
 
@@ -1615,6 +1617,7 @@
 
       jumanjiSoundTimer =
         null;
+
     }
 
 
@@ -1624,11 +1627,13 @@
 
       overlay =
         null;
+
     }
 
 
     animals =
       [];
+
   }
 
 
@@ -1638,10 +1643,10 @@
 
   function finishGame() {
 
-    if (
-      finished
-    ) {
+    if (finished) {
+
       return;
+
     }
 
 
@@ -1662,6 +1667,7 @@
 
       animationFrame =
         null;
+
     }
 
 
@@ -1675,6 +1681,7 @@
 
       spawnTimer =
         null;
+
     }
 
 
@@ -1688,15 +1695,14 @@
 
       jumanjiSoundTimer =
         null;
+
     }
 
 
     /*
-      If any animals remain,
-      JUMANJI WINS.
+      Animals remaining = Jumanji wins.
 
-      If somehow every animal was
-      destroyed, the player escaped.
+      Zero animals = player escaped.
     */
 
     if (
@@ -1727,10 +1733,13 @@
     if (
       !window.rizneyPlayer ||
       typeof
-        window.rizneyPlayer.getVideoData !==
+        window.rizneyPlayer
+          .getVideoData !==
         "function"
     ) {
+
       return;
+
     }
 
 
@@ -1755,6 +1764,10 @@
         JUMANJI_VIDEO_ID
       ) {
 
+        /*
+          Start when Jumanji begins.
+        */
+
         if (
           !active &&
           !finished
@@ -1766,14 +1779,14 @@
 
 
         /*
-          Keep game duration synchronized
-          with the actual YouTube video.
+          Keep duration synchronized.
         */
 
         if (
           window.rizneyPlayer &&
           typeof
-            window.rizneyPlayer.getDuration ===
+            window.rizneyPlayer
+              .getDuration ===
             "function"
         ) {
 
@@ -1796,8 +1809,8 @@
 
 
         /*
-          End slightly before YouTube itself
-          advances to the next track.
+          Finish slightly before the
+          YouTube player advances.
         */
 
         if (
@@ -1806,7 +1819,8 @@
 
           const currentTime =
             typeof
-              window.rizneyPlayer.getCurrentTime ===
+              window.rizneyPlayer
+                .getCurrentTime ===
               "function"
               ? window.rizneyPlayer
                   .getCurrentTime()
@@ -1815,7 +1829,8 @@
 
           const duration =
             typeof
-              window.rizneyPlayer.getDuration ===
+              window.rizneyPlayer
+                .getDuration ===
               "function"
               ? window.rizneyPlayer
                   .getDuration()
@@ -1835,11 +1850,10 @@
 
         }
 
-
       } else {
 
         /*
-          We have left Jumanji.
+          We left Jumanji.
         */
 
         if (
@@ -1861,7 +1875,7 @@
 
       /*
         Don't let a YouTube API hiccup
-        kill the rest of the website.
+        break the website.
       */
 
     }
@@ -1882,6 +1896,7 @@
       checkJumanji,
       250
     );
+
   }
 
 
