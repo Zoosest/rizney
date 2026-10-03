@@ -1,9 +1,4 @@
-Absolutely 😂. One file. One dumb game. Brick by brick.
-For this version, you lose when the Jumanji song ends and there are still animals on screen. Then it flashes:
-YOU GOT JUMANJI'D
-If you manage to tap every animal before the song ends, you escape the chaos.
-Paste this into a new GitHub file named jumanji.js:
-Writing
+
 /* =========================================================
    JUMANJI CHAOS
    "YOU GOT JUMANJI'D"
@@ -68,31 +63,88 @@ Writing
   // SETTINGS
   // =========================================================
 
-  const MIN_SPAWN_INTERVAL = 220;
-  const MAX_SPAWN_INTERVAL = 2600;
+  const OVERLAY_ID =
+    "jumanji-chaos-overlay";
 
-  const MAX_ANIMALS = 180;
+  const STYLE_ID =
+    "jumanji-chaos-styles";
 
-  const OVERLAY_ID = "jumanji-chaos-overlay";
+  const MAX_ANIMALS =
+    180;
+
+  const START_INTERVAL =
+    2500;
+
+  const END_INTERVAL =
+    180;
 
 
   // =========================================================
   // STATE
   // =========================================================
 
-  let active = false;
+  let active =
+    false;
 
-  let animals = [];
+  let finished =
+    false;
 
-  let spawnTimer = null;
+  let animals =
+    [];
 
-  let animationFrame = null;
+  let animationFrame =
+    null;
 
-  let lastTime = 0;
+  let spawnTimer =
+    null;
 
-  let lastProgressCheck = 0;
+  let nextSpawnAt =
+    0;
 
-  let gameFinished = false;
+  let lastTime =
+    0;
+
+
+  // =========================================================
+  // CREATE STYLES
+  // =========================================================
+
+  function injectStyles() {
+
+    if (
+      document.getElementById(
+        STYLE_ID
+      )
+    ) {
+      return;
+    }
+
+    const style =
+      document.createElement(
+        "style"
+      );
+
+    style.id =
+      STYLE_ID;
+
+    style.textContent = `
+      @keyframes jumanji-chaos-shake {
+
+        0% {
+          transform: rotate(-5deg) scale(1);
+        }
+
+        100% {
+          transform: rotate(5deg) scale(1.04);
+        }
+
+      }
+    `;
+
+    document.head.appendChild(
+      style
+    );
+  }
 
 
   // =========================================================
@@ -101,16 +153,19 @@ Writing
 
   function createOverlay() {
 
-    if (
+    let overlay =
       document.getElementById(
         OVERLAY_ID
-      )
-    ) {
-      return;
+      );
+
+    if (overlay) {
+      return overlay;
     }
 
-    const overlay =
-      document.createElement("div");
+    overlay =
+      document.createElement(
+        "div"
+      );
 
     overlay.id =
       OVERLAY_ID;
@@ -120,49 +175,16 @@ Writing
       inset: 0;
       width: 100vw;
       height: 100vh;
-      pointer-events: none;
       overflow: hidden;
+      pointer-events: none;
       z-index: 2000;
     `;
 
     document.body.appendChild(
       overlay
     );
-  }
 
-
-  // =========================================================
-  // REMOVE OVERLAY
-  // =========================================================
-
-  function removeOverlay() {
-
-    const overlay =
-      document.getElementById(
-        OVERLAY_ID
-      );
-
-    if (overlay) {
-      overlay.remove();
-    }
-  }
-
-
-  // =========================================================
-  // CLEAR ANIMALS
-  // =========================================================
-
-  function clearAnimals() {
-
-    animals.forEach(animal => {
-
-      if (animal.element) {
-        animal.element.remove();
-      }
-
-    });
-
-    animals = [];
+    return overlay;
   }
 
 
@@ -170,7 +192,10 @@ Writing
   // RANDOM NUMBER
   // =========================================================
 
-  function random(min, max) {
+  function random(
+    min,
+    max
+  ) {
 
     return (
       Math.random() *
@@ -181,27 +206,29 @@ Writing
 
 
   // =========================================================
-  // SPAWN INTERVAL
-  //
-  // Starts slow.
-  // Gets ridiculous near the end.
+  // SPAWN SPEED
   // =========================================================
 
-  function getSpawnInterval(progress) {
+  function getSpawnInterval(
+    progress
+  ) {
 
     /*
-      progress = 0 → beginning
-      progress = 1 → end
+      Slow at the beginning.
+      Completely ridiculous near the end.
     */
 
     const eased =
-      Math.pow(progress, 1.7);
+      Math.pow(
+        progress,
+        1.8
+      );
 
     return (
-      MAX_SPAWN_INTERVAL -
+      START_INTERVAL -
       (
-        MAX_SPAWN_INTERVAL -
-        MIN_SPAWN_INTERVAL
+        START_INTERVAL -
+        END_INTERVAL
       ) *
       eased
     );
@@ -209,10 +236,12 @@ Writing
 
 
   // =========================================================
-  // SPAWN ANIMAL
+  // SPAWN ONE ANIMAL
   // =========================================================
 
-  function spawnAnimal(progress) {
+  function spawnAnimal(
+    progress
+  ) {
 
     if (!active) {
       return;
@@ -234,9 +263,10 @@ Writing
       return;
     }
 
-
     const animal =
-      document.createElement("button");
+      document.createElement(
+        "button"
+      );
 
     animal.type =
       "button";
@@ -249,116 +279,109 @@ Writing
         )
       ];
 
+    const size =
+      Math.round(
+        random(30, 60)
+      );
 
     animal.style.cssText = `
-      position: absolute;
-      left: 0;
-      top: 0;
-      padding: 0;
-      margin: 0;
-      border: none;
-      background: transparent;
-      cursor: pointer;
-      pointer-events: auto;
-      user-select: none;
-      -webkit-user-select: none;
-      touch-action: manipulation;
-      font-size: ${Math.round(
-        random(28, 58)
-      )}px;
-      line-height: 1;
-      transform-origin: center center;
+      position:absolute;
+      left:0;
+      top:0;
+      padding:0;
+      margin:0;
+      border:0;
+      background:transparent;
+      color:inherit;
+      font-size:${size}px;
+      line-height:1;
+      cursor:pointer;
+      pointer-events:auto;
+      user-select:none;
+      -webkit-user-select:none;
+      touch-action:manipulation;
     `;
-
-
-    /*
-      Random starting position.
-    */
-
-    const width =
-      window.innerWidth;
-
-    const height =
-      window.innerHeight;
-
-    const x =
-      random(
-        0,
-        Math.max(1, width - 60)
-      );
-
-    const y =
-      random(
-        0,
-        Math.max(1, height - 60)
-      );
-
-
-    /*
-      Movement becomes more ridiculous
-      as the song progresses.
-    */
-
-    const speed =
-      0.15 +
-      progress * 0.9;
-
-
-    const vx =
-      random(-0.45, 0.45) *
-      speed;
-
-    const vy =
-      random(-0.45, 0.45) *
-      speed;
-
-
-    const wobble =
-      random(0.5, 2.5);
-
-    const wobbleSpeed =
-      random(0.001, 0.004);
-
-    const rotationSpeed =
-      random(-0.08, 0.08);
 
 
     const record = {
 
-      element: animal,
+      element:
+        animal,
 
-      x,
+      x:
+        random(
+          0,
+          Math.max(
+            1,
+            window.innerWidth - 70
+          )
+        ),
 
-      y,
+      y:
+        random(
+          0,
+          Math.max(
+            1,
+            window.innerHeight - 70
+          )
+        ),
 
-      vx,
+      vx:
+        random(
+          -0.18,
+          0.18
+        ) *
+        (1 + progress * 3),
 
-      vy,
-
-      wobble,
-
-      wobbleSpeed,
+      vy:
+        random(
+          -0.18,
+          0.18
+        ) *
+        (1 + progress * 3),
 
       rotation:
-        random(0, 360),
+        random(
+          0,
+          360
+        ),
 
-      rotationSpeed,
+      rotationSpeed:
+        random(
+          -0.08,
+          0.08
+        ),
+
+      wobble:
+        random(
+          1,
+          4
+        ),
 
       phase:
-        random(0, Math.PI * 2)
+        random(
+          0,
+          Math.PI * 2
+        ),
 
+      wobbleSpeed:
+        random(
+          0.001,
+          0.004
+        )
     };
 
 
-    /*
-      Tapping an animal removes it.
-    */
+    // =======================================================
+    // TAP ANIMAL = REMOVE ANIMAL
+    // =======================================================
 
     animal.addEventListener(
       "click",
       event => {
 
         event.preventDefault();
+
         event.stopPropagation();
 
         animal.remove();
@@ -368,7 +391,6 @@ Writing
             item =>
               item !== record
           );
-
       }
     );
 
@@ -384,100 +406,109 @@ Writing
 
 
   // =========================================================
-  // SPAWN LOGIC
+  // SCHEDULE NEXT ANIMAL
   // =========================================================
 
-  function scheduleSpawn(progress) {
-
-    clearTimeout(
-      spawnTimer
-    );
+  function scheduleNextSpawn(
+    progress
+  ) {
 
     if (!active) {
       return;
     }
-
 
     const interval =
       getSpawnInterval(
         progress
       );
 
-
-    spawnTimer =
-      setTimeout(
-        () => {
-
-          if (!active) {
-            return;
-          }
-
-
-          /*
-            Near the end, occasionally
-            throw out little animal bursts.
-          */
-
-          if (
-            progress > 0.75 &&
-            Math.random() < 0.35
-          ) {
-
-            const burst =
-              Math.min(
-                3,
-                MAX_ANIMALS -
-                animals.length
-              );
-
-
-            for (
-              let i = 0;
-              i < burst;
-              i++
-            ) {
-
-              spawnAnimal(
-                progress
-              );
-
-            }
-
-          } else {
-
-            spawnAnimal(
-              progress
-            );
-
-          }
-
-
-          scheduleSpawn(
-            progress
-          );
-
-        },
-        interval
-      );
+    nextSpawnAt =
+      Date.now() +
+      interval;
   }
 
 
   // =========================================================
-  // ANIMATION
+  // PROCESS SPAWNING
   // =========================================================
 
-  function animate(timestamp) {
+  function processSpawning(
+    progress
+  ) {
 
     if (!active) {
       return;
     }
 
+    const now =
+      Date.now();
+
+    if (
+      now <
+      nextSpawnAt
+    ) {
+      return;
+    }
+
+
+    /*
+      Spawn one.
+    */
+
+    spawnAnimal(
+      progress
+    );
+
+
+    /*
+      Near the end, occasionally
+      throw out several at once.
+    */
+
+    if (
+      progress > 0.75 &&
+      Math.random() < 0.35
+    ) {
+
+      spawnAnimal(
+        progress
+      );
+    }
+
+
+    if (
+      progress > 0.90 &&
+      Math.random() < 0.45
+    ) {
+
+      spawnAnimal(
+        progress
+      );
+    }
+
+
+    scheduleNextSpawn(
+      progress
+    );
+  }
+
+
+  // =========================================================
+  // ANIMATE
+  // =========================================================
+
+  function animate(
+    timestamp
+  ) {
+
+    if (!active) {
+      return;
+    }
 
     if (!lastTime) {
       lastTime =
         timestamp;
     }
-
 
     const delta =
       Math.min(
@@ -485,7 +516,6 @@ Writing
         lastTime,
         40
       );
-
 
     lastTime =
       timestamp;
@@ -505,27 +535,20 @@ Writing
           animal.wobbleSpeed *
           delta;
 
-
         animal.x +=
           animal.vx *
           delta;
-
 
         animal.y +=
           animal.vy *
           delta;
 
 
-        /*
-          Weird floating motion.
-        */
-
         const wobbleX =
           Math.sin(
             animal.phase
           ) *
           animal.wobble;
-
 
         const wobbleY =
           Math.cos(
@@ -540,42 +563,39 @@ Writing
 
 
         /*
-          Bounce off the edges.
+          Bounce around the screen.
         */
 
         if (
-          animal.x < -60 ||
+          animal.x < -50 ||
           animal.x > width + 20
         ) {
 
           animal.vx *= -1;
-
         }
 
 
         if (
-          animal.y < -60 ||
+          animal.y < -50 ||
           animal.y > height + 20
         ) {
 
           animal.vy *= -1;
-
         }
 
 
         animal.x =
           Math.max(
-            -60,
+            -50,
             Math.min(
               width + 20,
               animal.x
             )
           );
 
-
         animal.y =
           Math.max(
-            -60,
+            -50,
             Math.min(
               height + 20,
               animal.y
@@ -593,7 +613,6 @@ Writing
               ${animal.rotation}deg
             )
           `;
-
       }
     );
 
@@ -606,33 +625,13 @@ Writing
 
 
   // =========================================================
-  // YOU GOT JUMANJI'D
+  // BIG MESSAGE
   // =========================================================
 
-  function showJumanjiLoss() {
-
-    gameFinished =
-      true;
-
-    active =
-      false;
-
-
-    clearTimeout(
-      spawnTimer
-    );
-
-
-    if (animationFrame) {
-
-      cancelAnimationFrame(
-        animationFrame
-      );
-
-      animationFrame =
-        null;
-    }
-
+  function showMessage(
+    text,
+    isLoss
+  ) {
 
     const overlay =
       document.getElementById(
@@ -644,152 +643,65 @@ Writing
     }
 
 
-    /*
-      Make the remaining animals
-      disappear behind the message.
-    */
-
     const message =
-      document.createElement("div");
+      document.createElement(
+        "div"
+      );
 
     message.style.cssText = `
-      position: fixed;
-      inset: 0;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      text-align: center;
-      pointer-events: none;
-      font-family: Impact, Arial Black, sans-serif;
-      font-size: clamp(3rem, 11vw, 8rem);
-      font-weight: 900;
-      color: #f5d76e;
+      position:fixed;
+      inset:0;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      text-align:center;
+      pointer-events:none;
+      padding:20px;
+      font-family:Impact,"Arial Black",sans-serif;
+      font-size:clamp(3rem,11vw,8rem);
+      font-weight:900;
+      line-height:.95;
+      color:#f5d76e;
       text-shadow:
         5px 5px 0 #c084fc,
         10px 10px 0 #120b18,
-        0 0 25px rgba(255,255,255,0.8);
-      transform: rotate(-5deg);
-      z-index: 9999;
-      animation: jumanjiShake 0.12s infinite alternate;
+        0 0 30px rgba(255,255,255,.8);
+      z-index:9999;
+      animation:jumanji-chaos-shake .12s infinite alternate;
     `;
 
-
     message.textContent =
-      "YOU GOT JUMANJI'D";
-
+      text;
 
     overlay.appendChild(
       message
     );
 
 
-    /*
-      Keep the message up for
-      a few seconds, then clean up.
-    */
+    if (isLoss) {
 
-    setTimeout(
-      () => {
+      /*
+        Leave the animals underneath
+        the message for maximum stupidity.
+      */
 
-        removeOverlay();
+      setTimeout(
+        stopGame,
+        5000
+      );
 
-        clearAnimals();
+    } else {
 
-        gameFinished =
-          false;
-
-      },
-      5000
-    );
+      setTimeout(
+        stopGame,
+        3000
+      );
+    }
   }
 
 
   // =========================================================
-  // YOU ESCAPED
-  // =========================================================
-
-  function showEscapeMessage() {
-
-    gameFinished =
-      true;
-
-    active =
-      false;
-
-
-    clearTimeout(
-      spawnTimer
-    );
-
-
-    if (animationFrame) {
-
-      cancelAnimationFrame(
-        animationFrame
-      );
-
-      animationFrame =
-        null;
-    }
-
-
-    const overlay =
-      document.getElementById(
-        OVERLAY_ID
-      );
-
-    if (!overlay) {
-      return;
-    }
-
-
-    const message =
-      document.createElement("div");
-
-    message.style.cssText = `
-      position: fixed;
-      inset: 0;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      text-align: center;
-      pointer-events: none;
-      font-family: Georgia, serif;
-      font-size: clamp(2.5rem, 9vw, 6rem);
-      font-weight: bold;
-      color: #51cf66;
-      text-shadow:
-        4px 4px 0 #120b18,
-        0 0 25px rgba(81,207,102,0.8);
-      z-index: 9999;
-    `;
-
-
-    message.textContent =
-      "YOU ESCAPED JUMANJI";
-
-
-    overlay.appendChild(
-      message
-    );
-
-
-    setTimeout(
-      () => {
-
-        removeOverlay();
-
-        gameFinished =
-          false;
-
-      },
-      3000
-    );
-  }
-
-
-  // =========================================================
-  // START GAME
+  // START
   // =========================================================
 
   function startGame() {
@@ -798,11 +710,10 @@ Writing
       return;
     }
 
-
     active =
       true;
 
-    gameFinished =
+    finished =
       false;
 
     animals =
@@ -812,21 +723,37 @@ Writing
       0;
 
 
-    createOverlay();
+    injectStyles();
+
+    const overlay =
+      createOverlay();
 
 
     /*
-      Start with just one animal.
+      Clean out anything left over.
     */
 
-    spawnAnimal(0);
+    overlay.innerHTML =
+      "";
 
 
     /*
-      Begin the gradual escalation.
+      One lonely animal appears first.
     */
 
-    scheduleSpawn(0);
+    spawnAnimal(
+      0
+    );
+
+
+    /*
+      First spawn happens after
+      the initial slow interval.
+    */
+
+    scheduleNextSpawn(
+      0
+    );
 
 
     animationFrame =
@@ -837,7 +764,7 @@ Writing
 
 
   // =========================================================
-  // STOP GAME
+  // STOP
   // =========================================================
 
   function stopGame() {
@@ -849,7 +776,6 @@ Writing
     clearTimeout(
       spawnTimer
     );
-
 
     spawnTimer =
       null;
@@ -866,18 +792,89 @@ Writing
     }
 
 
-    clearAnimals();
+    const overlay =
+      document.getElementById(
+        OVERLAY_ID
+      );
 
-    removeOverlay();
+    if (overlay) {
+      overlay.remove();
+    }
 
 
-    gameFinished =
+    animals =
+      [];
+
+    finished =
       false;
+
+    lastTime =
+      0;
   }
 
 
   // =========================================================
-  // CHECK PLAYER / SONG
+  // GAME OVER
+  // =========================================================
+
+  function finishGame() {
+
+    if (
+      finished
+    ) {
+      return;
+    }
+
+    finished =
+      true;
+
+    active =
+      false;
+
+
+    if (animationFrame) {
+
+      cancelAnimationFrame(
+        animationFrame
+      );
+
+      animationFrame =
+        null;
+    }
+
+
+    clearTimeout(
+      spawnTimer
+    );
+
+
+    /*
+      If there are still animals,
+      YOU GOT JUMANJI'D.
+    */
+
+    if (
+      animals.length > 0
+    ) {
+
+      showMessage(
+        "YOU GOT JUMANJI'D",
+        true
+      );
+
+    } else {
+
+      showMessage(
+        "YOU ESCAPED JUMANJI",
+        false
+      );
+
+    }
+  }
+
+
+  // =========================================================
+  // CHECK PLAYER
   // =========================================================
 
   function checkJumanji() {
@@ -891,7 +888,6 @@ Writing
       typeof player.getVideoData !==
         "function"
     ) {
-
       return;
     }
 
@@ -905,25 +901,24 @@ Writing
       const data =
         player.getVideoData();
 
-
       if (data) {
 
         videoId =
           String(
-            data.video_id || ""
+            data.video_id ||
+            ""
           );
-
       }
 
-    } catch (e) {
+    } catch (error) {
 
       return;
     }
 
 
-    /*
-      Not Jumanji.
-    */
+    // =======================================================
+    // NOT JUMANJI
+    // =======================================================
 
     if (
       videoId !==
@@ -938,17 +933,16 @@ Writing
     }
 
 
-    /*
-      Start the game.
-    */
+    // =======================================================
+    // START
+    // =======================================================
 
     if (
       !active &&
-      !gameFinished
+      !finished
     ) {
 
       startGame();
-
     }
 
 
@@ -957,9 +951,9 @@ Writing
     }
 
 
-    /*
-      Get song progress.
-    */
+    // =======================================================
+    // GET TIME
+    // =======================================================
 
     let currentTime =
       0;
@@ -977,7 +971,6 @@ Writing
 
         currentTime =
           player.getCurrentTime();
-
       }
 
 
@@ -988,10 +981,9 @@ Writing
 
         duration =
           player.getDuration();
-
       }
 
-    } catch (e) {
+    } catch (error) {
 
       return;
     }
@@ -1001,7 +993,6 @@ Writing
       !duration ||
       duration <= 0
     ) {
-
       return;
     }
 
@@ -1017,124 +1008,31 @@ Writing
       );
 
 
-    /*
-      Re-schedule the spawn rate
-      based on actual song progress.
-    */
+    // =======================================================
+    // SPAWN ANIMALS
+    // =======================================================
 
-    if (
-      Date.now() -
-        lastProgressCheck >
-      1000
-    ) {
-
-      lastProgressCheck =
-        Date.now();
+    processSpawning(
+      progress
+    );
 
 
-      scheduleSpawn(
-        progress
-      );
-
-
-      /*
-        Extra madness near the end.
-      */
-
-      if (
-        progress > 0.90 &&
-        animals.length <
-          MAX_ANIMALS
-      ) {
-
-        spawnAnimal(
-          progress
-        );
-
-      }
-
-    }
-
-
-    /*
-      SONG IS OVER.
-      If there are animals remaining,
-      YOU GOT JUMANJI'D.
-    */
+    // =======================================================
+    // SONG FINISHED
+    // =======================================================
 
     if (
       currentTime >=
-        duration - 0.5
+      duration - 0.7
     ) {
 
-      if (
-        animals.length > 0
-      ) {
-
-        showJumanjiLoss();
-
-      } else {
-
-        showEscapeMessage();
-
-      }
-
+      finishGame();
     }
-
   }
 
 
   // =========================================================
-  // CSS ANIMATION
-  // =========================================================
-
-  function injectStyles() {
-
-    if (
-      document.getElementById(
-        "jumanji-chaos-styles"
-      )
-    ) {
-
-      return;
-    }
-
-
-    const style =
-      document.createElement("style");
-
-
-    style.id =
-      "jumanji-chaos-styles";
-
-
-    style.textContent = `
-      @keyframes jumanjiShake {
-
-        from {
-          transform:
-            rotate(-5deg)
-            scale(1);
-        }
-
-        to {
-          transform:
-            rotate(5deg)
-            scale(1.04);
-        }
-
-      }
-    `;
-
-
-    document.head.appendChild(
-      style
-    );
-  }
-
-
-  // =========================================================
-  // INITIALIZATION
+  // INITIALIZE
   // =========================================================
 
   function init() {
@@ -1143,15 +1041,14 @@ Writing
 
 
     /*
-      Check frequently so the game
-      follows whatever song is playing.
+      Check often enough to catch
+      the Jumanji song immediately.
     */
 
     setInterval(
       checkJumanji,
-      500
+      250
     );
-
   }
 
 
@@ -1168,19 +1065,6 @@ Writing
   } else {
 
     init();
-
   }
 
 })();
-And that's the whole damn game. 😂
-Your index.html only needs this at the bottom:
-<script src="./main.js"></script>
-<script src="./singles.js"></script>
-<script src="./whack-a-track.js"></script>
-<script src="./jumanji.js"></script>
-So the flow is:
-Jumanji starts → 🐒 → 🐍 → 🦁 → 🐘 → more → MORE → OH GOD → ANIMALS EVERYWHERE → song ends →
-YOU GOT JUMANJI'D
-And if you somehow clear the whole screen before the song finishes:
-YOU ESCAPED JUMANJI
-No cookies. No storage. No scoring system. No bullshit. 😸
