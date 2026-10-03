@@ -1,7 +1,7 @@
 /* =========================================================
    JUMANJI CHAOS
+   "YOU GOT JUMANJI'D!"
    "JUNGLE MADNESS"
-   "YOU GOT JUMANJI'D"
    ========================================================= */
 
 (() => {
@@ -11,7 +11,8 @@
   // JUMANJI VIDEO
   // =========================================================
 
-  const JUMANJI_VIDEO_ID = "FOeZaZRRRZ0";
+  const JUMANJI_VIDEO_ID =
+    "FOeZaZRRRZ0";
 
 
   // =========================================================
@@ -60,6 +61,23 @@
 
 
   // =========================================================
+  // COMPLETELY UNNECESSARY INTRUDERS
+  // =========================================================
+
+  const INTRUDERS = [
+    "🦆",
+    "🐔",
+    "🐖",
+    "🐐",
+    "🦃",
+    "🐓",
+    "🐈",
+    "🐕",
+    "🦄"
+  ];
+
+
+  // =========================================================
   // SETTINGS
   // =========================================================
 
@@ -103,7 +121,24 @@
 
 
   // =========================================================
-  // CREATE STYLES
+  // RANDOM
+  // =========================================================
+
+  function random(
+    min,
+    max
+  ) {
+
+    return (
+      Math.random() *
+      (max - min) +
+      min
+    );
+  }
+
+
+  // =========================================================
+  // STYLES
   // =========================================================
 
   function injectStyles() {
@@ -125,19 +160,8 @@
       STYLE_ID;
 
     style.textContent = `
-      @keyframes jumanji-chaos-shake {
 
-        0% {
-          transform: rotate(-5deg) scale(1);
-        }
-
-        100% {
-          transform: rotate(5deg) scale(1.04);
-        }
-
-      }
-
-      @keyframes jumanji-title-pulse {
+      @keyframes jumanji-pulse {
 
         0% {
           transform: scale(1);
@@ -149,9 +173,23 @@
 
       }
 
-      #jumanji-chaos-overlay button {
-        -webkit-tap-highlight-color: transparent;
+      @keyframes jumanji-shake {
+
+        0% {
+          transform: rotate(-4deg);
+        }
+
+        100% {
+          transform: rotate(4deg);
+        }
+
       }
+
+      #jumanji-chaos-overlay button {
+        -webkit-tap-highlight-color:
+          transparent;
+      }
+
     `;
 
     document.head.appendChild(
@@ -175,6 +213,7 @@
       return overlay;
     }
 
+
     overlay =
       document.createElement(
         "div"
@@ -185,16 +224,16 @@
 
 
     /*
-      THIS IS THE IMPORTANT PART.
+      THE WEBSITE IS NOW GONE.
 
-      The overlay covers the ENTIRE browser window.
-      It receives pointer events so nothing underneath
-      can accidentally be pressed.
+      Black screen.
+      Nothing underneath can be touched.
     */
 
     overlay.style.cssText = `
       position: fixed;
       inset: 0;
+
       width: 100vw;
       height: 100vh;
 
@@ -216,9 +255,7 @@
 
 
     /*
-      Swallow clicks/taps that happen on the
-      black background instead of allowing them
-      to reach the website underneath.
+      Eat background clicks.
     */
 
     overlay.addEventListener(
@@ -226,18 +263,12 @@
       event => {
 
         event.preventDefault();
-
         event.stopPropagation();
 
       },
       true
     );
 
-
-    /*
-      Also swallow pointer events on the
-      background itself.
-    */
 
     overlay.addEventListener(
       "pointerdown",
@@ -249,8 +280,8 @@
         ) {
 
           event.preventDefault();
-
           event.stopPropagation();
+
         }
 
       },
@@ -268,10 +299,10 @@
 
 
   // =========================================================
-  // JUNGLE MADNESS TITLE
+  // TOP TITLE
   // =========================================================
 
-  function createTitle(
+  function createTopTitle(
     overlay
   ) {
 
@@ -280,22 +311,21 @@
         "div"
       );
 
-    title.id =
-      "jumanji-madness-title";
-
     title.textContent =
-      "JUNGLE MADNESS";
+      "YOU GOT JUMANJI'D!";
+
 
     title.style.cssText = `
       position: absolute;
 
-      top: 12px;
+      top: 10px;
       left: 0;
+
       width: 100%;
 
       text-align: center;
 
-      color: #ffffff;
+      color: #228b22;
 
       font-family:
         Impact,
@@ -303,7 +333,73 @@
         sans-serif;
 
       font-size:
-        clamp(2rem, 8vw, 5rem);
+        clamp(1.8rem, 7vw, 5rem);
+
+      font-weight: 900;
+
+      letter-spacing:
+        0.06em;
+
+      line-height: 1;
+
+      pointer-events: none;
+
+      z-index: 100000;
+
+      text-shadow:
+        3px 3px 0 #063d06,
+        0 0 15px #228b22;
+
+      animation:
+        jumanji-pulse
+        .4s
+        infinite
+        alternate;
+    `;
+
+
+    overlay.appendChild(
+      title
+    );
+  }
+
+
+  // =========================================================
+  // BOTTOM TITLE
+  // =========================================================
+
+  function createBottomTitle(
+    overlay
+  ) {
+
+    const title =
+      document.createElement(
+        "div"
+      );
+
+    title.textContent =
+      "JUNGLE MADNESS";
+
+
+    title.style.cssText = `
+      position: absolute;
+
+      bottom: 12px;
+      left: 0;
+
+      width: 100%;
+
+      text-align: center;
+
+      color: #228b22;
+
+      font-family:
+        Impact,
+        "Arial Black",
+        sans-serif;
+
+      font-size:
+        clamp(1.8rem, 7vw, 5rem);
 
       font-weight: 900;
 
@@ -314,41 +410,22 @@
 
       pointer-events: none;
 
-      user-select: none;
-      -webkit-user-select: none;
+      z-index: 100000;
 
       text-shadow:
-        4px 4px 0 #222,
-        0 0 15px rgba(255,255,255,.35);
+        3px 3px 0 #063d06,
+        0 0 15px #228b22;
 
       animation:
-        jumanji-title-pulse
+        jumanji-pulse
         .35s
         infinite
         alternate;
-
-      z-index: 100000;
     `;
+
 
     overlay.appendChild(
       title
-    );
-  }
-
-
-  // =========================================================
-  // RANDOM NUMBER
-  // =========================================================
-
-  function random(
-    min,
-    max
-  ) {
-
-    return (
-      Math.random() *
-      (max - min) +
-      min
     );
   }
 
@@ -366,6 +443,7 @@
         progress,
         1.8
       );
+
 
     return (
       START_INTERVAL -
@@ -397,6 +475,7 @@
       return;
     }
 
+
     const overlay =
       document.getElementById(
         OVERLAY_ID
@@ -412,8 +491,10 @@
         "button"
       );
 
+
     animal.type =
       "button";
+
 
     animal.textContent =
       ANIMALS[
@@ -424,10 +505,29 @@
       ];
 
 
-    const size =
+    // -------------------------------------------------------
+    // OCCASIONAL ABSURDLY HUGE ANIMAL
+    // -------------------------------------------------------
+
+    let size =
       Math.round(
         random(30, 65)
       );
+
+
+    if (
+      Math.random() <
+      0.045
+    ) {
+
+      size =
+        Math.round(
+          random(
+            100,
+            180
+          )
+        );
+    }
 
 
     animal.style.cssText = `
@@ -465,6 +565,11 @@
       -webkit-tap-highlight-color:
         transparent;
     `;
+
+
+    const weird =
+      Math.random() <
+      0.12;
 
 
     const record = {
@@ -532,12 +637,21 @@
         random(
           0.001,
           0.004
+        ),
+
+      weird:
+        weird,
+
+      weirdPhase:
+        random(
+          0,
+          Math.PI * 2
         )
     };
 
 
     // =======================================================
-    // TAP ANIMAL = REMOVE IT
+    // TAP ANIMAL
     // =======================================================
 
     animal.addEventListener(
@@ -545,7 +659,6 @@
       event => {
 
         event.preventDefault();
-
         event.stopPropagation();
 
         animal.remove();
@@ -565,7 +678,195 @@
       event => {
 
         event.preventDefault();
+        event.stopPropagation();
 
+      },
+      true
+    );
+
+
+    overlay.appendChild(
+      animal
+    );
+
+    animals.push(
+      record
+    );
+  }
+
+
+  // =========================================================
+  // RANDOM INTRUDER
+  // =========================================================
+
+  function spawnIntruder() {
+
+    if (!active) {
+      return;
+    }
+
+    if (
+      animals.length >=
+      MAX_ANIMALS
+    ) {
+      return;
+    }
+
+
+    const overlay =
+      document.getElementById(
+        OVERLAY_ID
+      );
+
+    if (!overlay) {
+      return;
+    }
+
+
+    const animal =
+      document.createElement(
+        "button"
+      );
+
+
+    animal.type =
+      "button";
+
+
+    animal.textContent =
+      INTRUDERS[
+        Math.floor(
+          Math.random() *
+          INTRUDERS.length
+        )
+      ];
+
+
+    const size =
+      Math.round(
+        random(
+          45,
+          95
+        )
+      );
+
+
+    animal.style.cssText = `
+      position:absolute;
+
+      left:0;
+      top:0;
+
+      padding:0;
+      margin:0;
+
+      border:0;
+
+      background:transparent;
+
+      font-size:
+        ${size}px;
+
+      line-height:1;
+
+      pointer-events:auto;
+
+      touch-action:none;
+
+      user-select:none;
+      -webkit-user-select:none;
+
+      cursor:crosshair;
+
+      z-index:60000;
+    `;
+
+
+    const record = {
+
+      element:
+        animal,
+
+      x:
+        random(
+          0,
+          window.innerWidth - 60
+        ),
+
+      y:
+        random(
+          70,
+          window.innerHeight - 100
+        ),
+
+      vx:
+        random(
+          -0.7,
+          0.7
+        ),
+
+      vy:
+        random(
+          -0.7,
+          0.7
+        ),
+
+      rotation:
+        random(
+          0,
+          360
+        ),
+
+      rotationSpeed:
+        random(
+          -0.2,
+          0.2
+        ),
+
+      wobble:
+        random(
+          2,
+          7
+        ),
+
+      phase:
+        random(
+          0,
+          Math.PI * 2
+        ),
+
+      wobbleSpeed:
+        random(
+          0.004,
+          0.01
+        )
+    };
+
+
+    animal.addEventListener(
+      "pointerdown",
+      event => {
+
+        event.preventDefault();
+        event.stopPropagation();
+
+        animal.remove();
+
+        animals =
+          animals.filter(
+            item =>
+              item !== record
+          );
+      },
+      true
+    );
+
+
+    animal.addEventListener(
+      "click",
+      event => {
+
+        event.preventDefault();
         event.stopPropagation();
 
       },
@@ -595,10 +896,12 @@
       return;
     }
 
+
     const interval =
       getSpawnInterval(
         progress
       );
+
 
     nextSpawnAt =
       Date.now() +
@@ -618,8 +921,10 @@
       return;
     }
 
+
     const now =
       Date.now();
+
 
     if (
       now <
@@ -634,14 +939,24 @@
     );
 
 
-    /*
-      Starts getting ridiculous
-      around the final quarter.
-    */
+    // -------------------------------------------------------
+    // MORE CHAOS LATE IN THE SONG
+    // -------------------------------------------------------
 
     if (
-      progress > 0.75 &&
-      Math.random() < 0.35
+      progress > 0.65 &&
+      Math.random() < 0.25
+    ) {
+
+      spawnAnimal(
+        progress
+      );
+    }
+
+
+    if (
+      progress > 0.80 &&
+      Math.random() < 0.45
     ) {
 
       spawnAnimal(
@@ -652,12 +967,25 @@
 
     if (
       progress > 0.90 &&
-      Math.random() < 0.45
+      Math.random() < 0.65
     ) {
 
       spawnAnimal(
         progress
       );
+    }
+
+
+    // -------------------------------------------------------
+    // RANDOM INTRUDER
+    // -------------------------------------------------------
+
+    if (
+      progress > 0.55 &&
+      Math.random() < 0.08
+    ) {
+
+      spawnIntruder();
     }
 
 
@@ -679,11 +1007,13 @@
       return;
     }
 
+
     if (!lastTime) {
 
       lastTime =
         timestamp;
     }
+
 
     const delta =
       Math.min(
@@ -691,6 +1021,7 @@
         lastTime,
         40
       );
+
 
     lastTime =
       timestamp;
@@ -710,13 +1041,44 @@
           animal.wobbleSpeed *
           delta;
 
+
         animal.x +=
           animal.vx *
           delta;
 
+
         animal.y +=
           animal.vy *
           delta;
+
+
+        // ---------------------------------------------------
+        // WEIRD ANIMALS
+        // ---------------------------------------------------
+
+        if (
+          animal.weird
+        ) {
+
+          animal.weirdPhase +=
+            0.01 *
+            delta;
+
+
+          animal.x +=
+            Math.sin(
+              animal.weirdPhase
+            ) *
+            1.5;
+
+
+          animal.y +=
+            Math.cos(
+              animal.weirdPhase *
+              1.7
+            ) *
+            1.5;
+        }
 
 
         const wobbleX =
@@ -724,6 +1086,7 @@
             animal.phase
           ) *
           animal.wobble;
+
 
         const wobbleY =
           Math.cos(
@@ -743,7 +1106,7 @@
         // ---------------------------------------------------
 
         if (
-          animal.x < -50 ||
+          animal.x < -60 ||
           animal.x > width + 20
         ) {
 
@@ -752,7 +1115,7 @@
 
 
         if (
-          animal.y < 50 ||
+          animal.y < 55 ||
           animal.y > height + 20
         ) {
 
@@ -762,16 +1125,17 @@
 
         animal.x =
           Math.max(
-            -50,
+            -60,
             Math.min(
               width + 20,
               animal.x
             )
           );
 
+
         animal.y =
           Math.max(
-            50,
+            55,
             Math.min(
               height + 20,
               animal.y
@@ -801,7 +1165,7 @@
 
 
   // =========================================================
-  // BIG MESSAGE
+  // BIG END MESSAGE
   // =========================================================
 
   function showMessage(
@@ -823,6 +1187,11 @@
       document.createElement(
         "div"
       );
+
+
+    message.textContent =
+      text;
+
 
     message.style.cssText = `
       position: fixed;
@@ -852,24 +1221,22 @@
 
       line-height: .95;
 
-      color: #f5d76e;
+      color: #228b22;
 
       text-shadow:
-        5px 5px 0 #c084fc,
-        10px 10px 0 #120b18,
-        0 0 30px rgba(255,255,255,.8);
+        5px 5px 0 #063d06,
+        10px 10px 0 #000000,
+        0 0 30px #228b22;
 
       z-index: 200000;
 
       animation:
-        jumanji-chaos-shake
+        jumanji-shake
         .12s
         infinite
         alternate;
     `;
 
-    message.textContent =
-      text;
 
     overlay.appendChild(
       message
@@ -889,6 +1256,7 @@
         stopGame,
         3000
       );
+
     }
   }
 
@@ -902,6 +1270,7 @@
     if (active) {
       return;
     }
+
 
     active =
       true;
@@ -927,19 +1296,22 @@
       "";
 
 
-    /*
-      JUNGLE MADNESS
-      appears immediately.
-    */
+    createTopTitle(
+      overlay
+    );
 
-    createTitle(
+
+    createBottomTitle(
       overlay
     );
 
 
     /*
-      One lonely animal
-      begins the madness.
+      The first animal.
+      Lonely.
+      Innocent.
+      Completely unaware
+      of what is coming.
     */
 
     spawnAnimal(
@@ -985,6 +1357,7 @@
         OVERLAY_ID
       );
 
+
     if (overlay) {
 
       overlay.remove();
@@ -1003,7 +1376,7 @@
 
 
   // =========================================================
-  // GAME OVER
+  // FINISH
   // =========================================================
 
   function finishGame() {
@@ -1011,6 +1384,7 @@
     if (finished) {
       return;
     }
+
 
     finished =
       true;
@@ -1031,7 +1405,7 @@
 
 
     /*
-      If even ONE animal survives:
+      If ANY animals remain...
       YOU GOT JUMANJI'D.
     */
 
@@ -1040,7 +1414,7 @@
     ) {
 
       showMessage(
-        "YOU GOT JUMANJI'D",
+        "YOU GOT JUMANJI'D!",
         true
       );
 
@@ -1083,6 +1457,7 @@
 
       const data =
         player.getVideoData();
+
 
       if (data) {
 
@@ -1136,7 +1511,7 @@
 
 
     // =======================================================
-    // GET TIME
+    // PLAYER TIME
     // =======================================================
 
     let currentTime =
@@ -1194,7 +1569,7 @@
 
 
     // =======================================================
-    // SPAWN ANIMALS
+    // SPAWN
     // =======================================================
 
     processSpawning(
@@ -1203,7 +1578,7 @@
 
 
     // =======================================================
-    // SONG FINISHED
+    // SONG END
     // =======================================================
 
     if (
