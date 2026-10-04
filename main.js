@@ -942,7 +942,6 @@
   }
 
   function handleShareClick(row, songTitle) {
-    // Check locks first
     if (
       (isRollingStoneRow(row) && !isRollingStoneUnlocked()) ||
       (isNiceAndSlowRow(row) && !isNiceAndSlowUnlocked()) ||
@@ -952,18 +951,15 @@
       return;
     }
 
-    // Build the share link pointing to your site with a song query/fragment parameter
     const songIndex = row.dataset.songIndex || "";
     const cleanUrl = `${window.location.origin}${window.location.pathname}?song=${songIndex}`;
 
-    // Try native mobile share sheet first if supported, otherwise copy to clipboard
     if (navigator.share && /Mobi|Android/i.test(navigator.userAgent)) {
       navigator.share({
         title: `Rizney Music Archive — ${songTitle}`,
         text: `Check out "${songTitle}" on Rizney Music!`,
         url: cleanUrl
       }).catch(() => {
-        // Fallback to clipboard if share sheet is canceled
         copyToClipboard(cleanUrl, songTitle);
       });
     } else {
@@ -1001,6 +997,34 @@
   }
 
   /* =========================================================
+     AUTO-PLAY FROM SHARED LINK (?song=X)
+     ========================================================= */
+
+  function handleSharedSongParameter() {
+    const params = new URLSearchParams(window.location.search);
+    const songIndexParam = params.get("song");
+
+    if (!songIndexParam) return;
+
+    const targetIndex = Number(songIndexParam);
+    if (!Number.isInteger(targetIndex) || targetIndex < 1) return;
+
+    window.setTimeout(() => {
+      const rows = songRows();
+      const targetRow = rows[targetIndex - 1];
+
+      if (targetRow) {
+        targetRow.scrollIntoView({
+          behavior: "smooth",
+          block: "center"
+        });
+
+        playSongFromRow(targetRow);
+      }
+    }, 600);
+  }
+
+  /* =========================================================
      WHACK-A-TRACK SONG TIPS
      ========================================================= */
 
@@ -1017,139 +1041,83 @@
       }
     };
 
-    const message =
-      messages[songNumber];
+    const message = messages[songNumber];
 
     if (!message) {
       return;
     }
 
-    let tip =
-      document.getElementById(
-        "whac-song-tip"
-      );
+    let tip = document.getElementById("whac-song-tip");
 
     if (!tip) {
-      tip =
-        document.createElement("div");
-
-      tip.id =
-        "whac-song-tip";
-
+      tip = document.createElement("div");
+      tip.id = "whac-song-tip";
       document.body.appendChild(tip);
     }
 
-    clearTimeout(
-      whacTipTimer
-    );
+    clearTimeout(whacTipTimer);
 
     tip.innerHTML = `
       <strong>${message.title}</strong>
-
-      <button
-        type="button"
-        id="whac-song-tip-button"
-      >
+      <button type="button" id="whac-song-tip-button">
         ${message.button}
       </button>
     `;
 
-    const button =
-      document.getElementById(
-        "whac-song-tip-button"
-      );
+    const button = document.getElementById("whac-song-tip-button");
 
     if (button) {
       button.onclick = () => {
-        const whackButton =
-          document.getElementById(
-            "whack-track"
-          );
+        const whackButton = document.getElementById("whack-track");
 
         if (whackButton) {
           whackButton.click();
         }
 
-        tip.classList.remove(
-          "visible"
-        );
+        tip.classList.remove("visible");
       };
     }
 
     requestAnimationFrame(() => {
-      tip.classList.add(
-        "visible"
-      );
+      tip.classList.add("visible");
     });
 
-    whacTipTimer =
-      window.setTimeout(() => {
-        tip.classList.remove(
-          "visible"
-        );
-      }, 7000);
+    whacTipTimer = window.setTimeout(() => {
+      tip.classList.remove("visible");
+    }, 7000);
   }
 
   function checkForWhacSongTip() {
-    const nowPlaying =
-      document.getElementById(
-        "now-playing"
-      );
+    const nowPlaying = document.getElementById("now-playing");
 
     if (!nowPlaying) {
       return;
     }
 
-    const text =
-      nowPlaying.textContent
-        .toLowerCase();
+    const text = nowPlaying.textContent.toLowerCase();
 
-    let currentSongNumber =
-      null;
+    let currentSongNumber = null;
 
-    if (
-      text.includes(
-        "hijacked"
-      )
-    ) {
+    if (text.includes("hijacked")) {
       currentSongNumber = 4;
     }
 
-    if (
-      text.includes(
-        "chucky (child's play)"
-      )
-    ) {
+    if (text.includes("chucky (child's play)")) {
       currentSongNumber = 9;
     }
 
-    /*
-      A different song resets the trigger.
-    */
-    if (
-      currentSongNumber === null
-    ) {
+    if (currentSongNumber === null) {
       whacTipLastSong = null;
       return;
     }
 
-    /*
-      Only show the popup once per
-      visit to that song.
-    */
-    if (
-      whacTipLastSong ===
-      currentSongNumber
-    ) {
+    if (whacTipLastSong === currentSongNumber) {
       return;
     }
 
-    whacTipLastSong =
-      currentSongNumber;
+    whacTipLastSong = currentSongNumber;
 
-    showWhacSongTip(
-      currentSongNumber
-    );
+    showWhacSongTip(currentSongNumber);
   }
 
   /* =========================================================
@@ -1158,40 +1126,22 @@
 
   function getSavedWhackedTracks() {
     try {
-      const raw =
-        localStorage.getItem(
-          REMOVED_TRACKS_KEY
-        );
-
-      const parsed =
-        JSON.parse(
-          raw || "[]"
-        );
-
-      return Array.isArray(parsed)
-        ? parsed
-        : [];
+      const raw = localStorage.getItem(REMOVED_TRACKS_KEY);
+      const parsed = JSON.parse(raw || "[]");
+      return Array.isArray(parsed) ? parsed : [];
     } catch (error) {
       return [];
     }
   }
 
   function getSongIdForNumber(songNumber) {
-    if (
-      !songNumber ||
-      !Number.isInteger(songNumber)
-    ) {
+    if (!songNumber || !Number.isInteger(songNumber)) {
       return null;
     }
 
     try {
-      if (
-        typeof ids !== "undefined" &&
-        ids[songNumber - 1]
-      ) {
-        return String(
-          ids[songNumber - 1]
-        );
+      if (typeof ids !== "undefined" && ids[songNumber - 1]) {
+        return String(ids[songNumber - 1]);
       }
     } catch (error) {}
 
@@ -1199,102 +1149,60 @@
   }
 
   function restoreRoadworkRows() {
-    const saved =
-      new Set(
-        getSavedWhackedTracks()
-      );
+    const saved = new Set(getSavedWhackedTracks());
 
     if (!saved.size) {
       return;
     }
 
-    document
-      .querySelectorAll(
-        "#song-list .song"
-      )
-      .forEach(row => {
-        const songNumber =
-          Number(
-            row.dataset.songIndex
-          );
+    document.querySelectorAll("#song-list .song").forEach(row => {
+      const songNumber = Number(row.dataset.songIndex);
 
-        if (
-          !Number.isInteger(
-            songNumber
-          ) ||
-          songNumber < 1
-        ) {
-          return;
-        }
+      if (!Number.isInteger(songNumber) || songNumber < 1) {
+        return;
+      }
 
-        const songId =
-          getSongIdForNumber(
-            songNumber
-          );
+      const songId = getSongIdForNumber(songNumber);
 
-        if (
-          songId &&
-          saved.has(songId)
-        ) {
-          row.classList.add(
-            "rizney-roadwork"
-          );
-
-          row.dataset.rizneyRoadwork =
-            "true";
-        }
-      });
+      if (songId && saved.has(songId)) {
+        row.classList.add("rizney-roadwork");
+        row.dataset.rizneyRoadwork = "true";
+      }
+    });
   }
 
   function setupRoadworkWatching() {
-    const songList =
-      document.getElementById(
-        "song-list"
-      );
+    const songList = document.getElementById("song-list");
 
     if (!songList) {
       return;
     }
 
-    const observer =
-      new MutationObserver(
-        mutations => {
-          let changed = false;
+    const observer = new MutationObserver(mutations => {
+      let changed = false;
 
-          for (
-            const mutation of mutations
-          ) {
-            if (
-              mutation.type ===
-                "childList" &&
-              mutation.addedNodes.length
-            ) {
-              changed = true;
-              break;
-            }
-          }
-
-          if (changed) {
-            requestAnimationFrame(
-              () => {
-                updateSongRowNumbersOnly();
-                restoreRoadworkRows();
-                updatePottyTimeLock();
-                updateNiceAndSlowLock();
-                updateRollingStoneLock();
-              }
-            );
-          }
+      for (const mutation of mutations) {
+        if (mutation.type === "childList" && mutation.addedNodes.length) {
+          changed = true;
+          break;
         }
-      );
-
-    observer.observe(
-      songList,
-      {
-        childList: true,
-        subtree: true
       }
-    );
+
+      if (changed) {
+        requestAnimationFrame(() => {
+          updateSongRowNumbersOnly();
+          restoreRoadworkRows();
+          updatePottyTimeLock();
+          updateNiceAndSlowLock();
+          updateRollingStoneLock();
+        });
+      }
+    });
+
+    observer.observe(songList, {
+      childList: true,
+      subtree: true
+    });
 
     restoreRoadworkRows();
   }
@@ -1302,12 +1210,9 @@
   function updateSongRowNumbersOnly() {
     const rows = songRows();
 
-    rows.forEach(
-      (row, index) => {
-        row.dataset.songIndex =
-          String(index + 1);
-      }
-    );
+    rows.forEach((row, index) => {
+      row.dataset.songIndex = String(index + 1);
+    });
   }
 
   /* =========================================================
@@ -1315,11 +1220,7 @@
      ========================================================= */
 
   function isPottyTimeUnlocked() {
-    return (
-      localStorage.getItem(
-        POTTY_TIME_UNLOCK_KEY
-      ) === "true"
-    );
+    return localStorage.getItem(POTTY_TIME_UNLOCK_KEY) === "true";
   }
 
   function isPottyTimeRow(row) {
@@ -1327,42 +1228,25 @@
       return false;
     }
 
-    const songIndex =
-      Number(
-        row.dataset.songIndex
-      );
+    const songIndex = Number(row.dataset.songIndex);
 
-    if (
-      !Number.isInteger(songIndex) ||
-      songIndex < 1
-    ) {
+    if (!Number.isInteger(songIndex) || songIndex < 1) {
       return false;
     }
 
-    const info =
-      SONG_INFO[songIndex];
+    const info = SONG_INFO[songIndex];
 
-    return (
-      info &&
-      info[0] === "POTTY TIME"
-    );
+    return info && info[0] === "POTTY TIME";
   }
 
   function isPottyTimeSongNumber(songNumber) {
-    if (
-      !Number.isInteger(songNumber) ||
-      songNumber < 1
-    ) {
+    if (!Number.isInteger(songNumber) || songNumber < 1) {
       return false;
     }
 
-    const info =
-      SONG_INFO[songNumber];
+    const info = SONG_INFO[songNumber];
 
-    return (
-      info &&
-      info[0] === "POTTY TIME"
-    );
+    return info && info[0] === "POTTY TIME";
   }
 
   function updatePottyTimeLock() {
@@ -1373,13 +1257,9 @@
         return;
       }
 
-      const locked =
-        !isPottyTimeUnlocked();
+      const locked = !isPottyTimeUnlocked();
 
-      row.classList.toggle(
-        "rizney-potty-locked",
-        locked
-      );
+      row.classList.toggle("rizney-potty-locked", locked);
     });
   }
 
@@ -1392,21 +1272,15 @@
       return;
     }
 
-    pottyTimeLockWatcher =
-      window.setInterval(() => {
+    pottyTimeLockWatcher = window.setInterval(() => {
+      updatePottyTimeLock();
+
+      if (isPottyTimeUnlocked()) {
+        window.clearInterval(pottyTimeLockWatcher);
+        pottyTimeLockWatcher = null;
         updatePottyTimeLock();
-
-        if (isPottyTimeUnlocked()) {
-          window.clearInterval(
-            pottyTimeLockWatcher
-          );
-
-          pottyTimeLockWatcher =
-            null;
-
-          updatePottyTimeLock();
-        }
-      }, 500);
+      }
+    }, 500);
   }
 
   /* =========================================================
@@ -1414,11 +1288,7 @@
      ========================================================= */
 
   function isNiceAndSlowUnlocked() {
-    return (
-      localStorage.getItem(
-        NICE_AND_SLOW_UNLOCK_KEY
-      ) === "true"
-    );
+    return localStorage.getItem(NICE_AND_SLOW_UNLOCK_KEY) === "true";
   }
 
   function isNiceAndSlowRow(row) {
@@ -1426,42 +1296,25 @@
       return false;
     }
 
-    const songIndex =
-      Number(
-        row.dataset.songIndex
-      );
+    const songIndex = Number(row.dataset.songIndex);
 
-    if (
-      !Number.isInteger(songIndex) ||
-      songIndex < 1
-    ) {
+    if (!Number.isInteger(songIndex) || songIndex < 1) {
       return false;
     }
 
-    const info =
-      SONG_INFO[songIndex];
+    const info = SONG_INFO[songIndex];
 
-    return (
-      info &&
-      info[0] === "Nice & Slow"
-    );
+    return info && info[0] === "Nice & Slow";
   }
 
   function isNiceAndSlowSongNumber(songNumber) {
-    if (
-      !Number.isInteger(songNumber) ||
-      songNumber < 1
-    ) {
+    if (!Number.isInteger(songNumber) || songNumber < 1) {
       return false;
     }
 
-    const info =
-      SONG_INFO[songNumber];
+    const info = SONG_INFO[songNumber];
 
-    return (
-      info &&
-      info[0] === "Nice & Slow"
-    );
+    return info && info[0] === "Nice & Slow";
   }
 
   function updateNiceAndSlowLock() {
@@ -1484,11 +1337,7 @@
      ========================================================= */
 
   function isRollingStoneUnlocked() {
-    return (
-      localStorage.getItem(
-        ROLLING_STONE_UNLOCK_KEY
-      ) === "true"
-    );
+    return localStorage.getItem(ROLLING_STONE_UNLOCK_KEY) === "true";
   }
 
   function isRollingStoneRow(row) {
@@ -1496,44 +1345,25 @@
       return false;
     }
 
-    const songIndex =
-      Number(
-        row.dataset.songIndex
-      );
+    const songIndex = Number(row.dataset.songIndex);
 
-    if (
-      !Number.isInteger(songIndex) ||
-      songIndex < 1
-    ) {
+    if (!Number.isInteger(songIndex) || songIndex < 1) {
       return false;
     }
 
-    const info =
-      SONG_INFO[songIndex];
+    const info = SONG_INFO[songIndex];
 
-    return (
-      info &&
-      info[0] ===
-        "A Rolling Stone Gathers NO MAS"
-    );
+    return info && info[0] === "A Rolling Stone Gathers NO MAS";
   }
 
   function isRollingStoneSongNumber(songNumber) {
-    if (
-      !Number.isInteger(songNumber) ||
-      songNumber < 1
-    ) {
+    if (!Number.isInteger(songNumber) || songNumber < 1) {
       return false;
     }
 
-    const info =
-      SONG_INFO[songNumber];
+    const info = SONG_INFO[songNumber];
 
-    return (
-      info &&
-      info[0] ===
-        "A Rolling Stone Gathers NO MAS"
-    );
+    return info && info[0] === "A Rolling Stone Gathers NO MAS";
   }
 
   function updateRollingStoneLock() {
@@ -1578,7 +1408,6 @@
     const span = document.createElement("span");
 
     span.textContent = FALLBACK_ICON;
-
     span.style.display = "flex";
     span.style.alignItems = "center";
     span.style.justifyContent = "center";
@@ -1597,7 +1426,6 @@
     const actualFilename = iconFilename(filename);
     const label = iconLabel(actualFilename);
 
-    // Update aria-label to reflect that clicking this animal shares/copies the link
     button.title = `Share link for: ${songTitle}`;
     button.setAttribute("aria-label", `Share link for ${songTitle}`);
 
@@ -1608,9 +1436,7 @@
     img.loading = "lazy";
     img.decoding = "async";
 
-    img.src =
-      RAW_PREFIX +
-      encodeURIComponent(actualFilename);
+    img.src = RAW_PREFIX + encodeURIComponent(actualFilename);
 
     img.onerror = () => {
       img.replaceWith(fallback());
@@ -1622,76 +1448,40 @@
   }
 
   function songRows() {
-    return Array.from(
-      document.querySelectorAll("#song-list .song")
-    );
+    return Array.from(document.querySelectorAll("#song-list .song"));
   }
 
   function playSongFromRow(row) {
     if (!row) return;
 
-    /*
-      🔒 A ROLLING STONE GATHERS NO MAS LOCK
-    */
-    if (
-      isRollingStoneRow(row) &&
-      !isRollingStoneUnlocked()
-    ) {
-      row.classList.add(
-        "rizney-rolling-stone-locked"
-      );
-
+    if (isRollingStoneRow(row) && !isRollingStoneUnlocked()) {
+      row.classList.add("rizney-rolling-stone-locked");
       return;
     }
 
     if (isRollingStoneRow(row)) {
-      row.classList.remove(
-        "rizney-rolling-stone-locked"
-      );
+      row.classList.remove("rizney-rolling-stone-locked");
     }
 
-    /*
-      🔒 NICE & SLOW LOCK
-    */
-    if (
-      isNiceAndSlowRow(row) &&
-      !isNiceAndSlowUnlocked()
-    ) {
-      row.classList.add(
-        "rizney-nice-slow-locked"
-      );
-
+    if (isNiceAndSlowRow(row) && !isNiceAndSlowUnlocked()) {
+      row.classList.add("rizney-nice-slow-locked");
       return;
     }
 
     if (isNiceAndSlowRow(row)) {
-      row.classList.remove(
-        "rizney-nice-slow-locked"
-      );
+      row.classList.remove("rizney-nice-slow-locked");
     }
 
-    /*
-      🔒 POTTY TIME LOCK
-    */
-    if (
-      isPottyTimeRow(row) &&
-      !isPottyTimeUnlocked()
-    ) {
-      row.classList.add(
-        "rizney-potty-locked"
-      );
-
+    if (isPottyTimeRow(row) && !isPottyTimeUnlocked()) {
+      row.classList.add("rizney-potty-locked");
       return;
     }
 
     if (isPottyTimeRow(row)) {
-      row.classList.remove(
-        "rizney-potty-locked"
-      );
+      row.classList.remove("rizney-potty-locked");
     }
 
-    const playButton =
-      row.querySelector(".play");
+    const playButton = row.querySelector(".play");
 
     if (playButton) {
       playButton.click();
@@ -1703,37 +1493,22 @@
      ========================================================= */
 
   function setupSearch() {
-    const songListContainer =
-      document.getElementById("song-list");
+    const songListContainer = document.getElementById("song-list");
 
-    if (
-      !songListContainer ||
-      document.getElementById("archive-search-container")
-    ) {
+    if (!songListContainer || document.getElementById("archive-search-container")) {
       return;
     }
 
-    const container =
-      document.createElement("div");
+    const container = document.createElement("div");
+    container.id = "archive-search-container";
 
-    container.id =
-      "archive-search-container";
+    const wrapper = document.createElement("div");
+    wrapper.id = "archive-search-wrapper";
 
-    const wrapper =
-      document.createElement("div");
+    const icon = document.createElement("span");
+    icon.className = "search-magnifying-glass-column";
 
-    wrapper.id =
-      "archive-search-wrapper";
-
-    const icon =
-      document.createElement("span");
-
-    icon.className =
-      "search-magnifying-glass-column";
-
-    const iconImage =
-      document.createElement("img");
-
+    const iconImage = document.createElement("img");
     iconImage.src = SEARCH_ICON;
     iconImage.alt = "";
     iconImage.width = 20;
@@ -1743,23 +1518,14 @@
 
     icon.appendChild(iconImage);
 
-    const input =
-      document.createElement("input");
-
+    const input = document.createElement("input");
     input.type = "search";
     input.id = "archive-search";
-    input.placeholder =
-      "Search songs, keywords, or animals...";
-    input.setAttribute(
-      "autocomplete",
-      "off"
-    );
+    input.placeholder = "Search songs, keywords, or animals...";
+    input.setAttribute("autocomplete", "off");
 
-    const dropdown =
-      document.createElement("div");
-
-    dropdown.id =
-      "search-dropdown";
+    const dropdown = document.createElement("div");
+    dropdown.id = "search-dropdown";
 
     wrapper.appendChild(icon);
     wrapper.appendChild(input);
@@ -1767,157 +1533,96 @@
     container.appendChild(wrapper);
     container.appendChild(dropdown);
 
-    songListContainer.parentNode.insertBefore(
-      container,
-      songListContainer
-    );
+    songListContainer.parentNode.insertBefore(container, songListContainer);
 
-    input.addEventListener(
-      "input",
-      () => {
-        const query =
-          input.value.toLowerCase().trim();
+    input.addEventListener("input", () => {
+      const query = input.value.toLowerCase().trim();
 
-        dropdown.innerHTML = "";
+      dropdown.innerHTML = "";
 
-        if (query.length === 0) {
-          dropdown.classList.remove("active");
-          return;
-        }
+      if (query.length === 0) {
+        dropdown.classList.remove("active");
+        return;
+      }
 
-        const matches = [];
+      const matches = [];
 
-        SONG_INFO.forEach(
-          (info, index) => {
-            const title =
-              info[0].toLowerCase();
+      SONG_INFO.forEach((info, index) => {
+        const title = info[0].toLowerCase();
+        const keyword = info[1].toLowerCase();
+        const animal = iconLabel(iconFilename(info[2])).toLowerCase();
 
-            const keyword =
-              info[1].toLowerCase();
-
-            const animal =
-              iconLabel(
-                iconFilename(info[2])
-              ).toLowerCase();
-
-            if (
-              title.includes(query) ||
-              keyword.includes(query) ||
-              animal.includes(query)
-            ) {
-              matches.push({
-                index,
-                title: info[0],
-                keyword: info[1],
-                animal:
-                  iconLabel(
-                    iconFilename(info[2])
-                  )
-              });
-            }
-          }
-        );
-
-        if (matches.length === 0) {
-          const noResult =
-            document.createElement("div");
-
-          noResult.className =
-            "search-result-item";
-
-          noResult.style.justifyContent =
-            "center";
-
-          noResult.style.fontStyle =
-            "italic";
-
-          noResult.textContent =
-            "No matching songs found";
-
-          dropdown.appendChild(noResult);
-          dropdown.classList.add("active");
-
-          return;
-        }
-
-        matches
-          .slice(0, 15)
-          .forEach(match => {
-            const item =
-              document.createElement("a");
-
-            item.className =
-              "search-result-item";
-
-            item.href = "#";
-
-            const textSpan =
-              document.createElement("span");
-
-            textSpan.className =
-              "search-result-text";
-
-            textSpan.textContent =
-              `♫ ${match.title}`;
-
-            const metaSpan =
-              document.createElement("span");
-
-            metaSpan.className =
-              "search-result-meta";
-
-            metaSpan.textContent =
-              `${match.animal} • ${match.keyword}`;
-
-            item.appendChild(textSpan);
-            item.appendChild(metaSpan);
-
-            item.addEventListener(
-              "click",
-              event => {
-                event.preventDefault();
-
-                dropdown.classList.remove(
-                  "active"
-                );
-
-                input.value = "";
-
-                const rows = songRows();
-
-                const targetRow =
-                  rows[match.index - 1];
-
-                if (targetRow) {
-                  targetRow.scrollIntoView({
-                    behavior: "smooth",
-                    block: "center"
-                  });
-
-                  playSongFromRow(
-                    targetRow
-                  );
-                }
-              }
-            );
-
-            dropdown.appendChild(item);
+        if (
+          title.includes(query) ||
+          keyword.includes(query) ||
+          animal.includes(query)
+        ) {
+          matches.push({
+            index,
+            title: info[0],
+            keyword: info[1],
+            animal: iconLabel(iconFilename(info[2]))
           });
-
-        dropdown.classList.add("active");
-      }
-    );
-
-    document.addEventListener(
-      "click",
-      event => {
-        if (!container.contains(event.target)) {
-          dropdown.classList.remove(
-            "active"
-          );
         }
+      });
+
+      if (matches.length === 0) {
+        const noResult = document.createElement("div");
+        noResult.className = "search-result-item";
+        noResult.style.justifyContent = "center";
+        noResult.style.fontStyle = "italic";
+        noResult.textContent = "No matching songs found";
+
+        dropdown.appendChild(noResult);
+        dropdown.classList.add("active");
+        return;
       }
-    );
+
+      matches.slice(0, 15).forEach(match => {
+        const item = document.createElement("a");
+        item.className = "search-result-item";
+        item.href = "#";
+
+        const textSpan = document.createElement("span");
+        textSpan.className = "search-result-text";
+        textSpan.textContent = `♫ ${match.title}`;
+
+        const metaSpan = document.createElement("span");
+        metaSpan.className = "search-result-meta";
+        metaSpan.textContent = `${match.animal} • ${match.keyword}`;
+
+        item.appendChild(textSpan);
+        item.appendChild(metaSpan);
+
+        item.addEventListener("click", event => {
+          event.preventDefault();
+          dropdown.classList.remove("active");
+          input.value = "";
+
+          const rows = songRows();
+          const targetRow = rows[match.index - 1];
+
+          if (targetRow) {
+            targetRow.scrollIntoView({
+              behavior: "smooth",
+              block: "center"
+            });
+
+            playSongFromRow(targetRow);
+          }
+        });
+
+        dropdown.appendChild(item);
+      });
+
+      dropdown.classList.add("active");
+    });
+
+    document.addEventListener("click", event => {
+      if (!container.contains(event.target)) {
+        dropdown.classList.remove("active");
+      }
+    });
   }
 
   /* =========================================================
@@ -1925,8 +1630,7 @@
      ========================================================= */
 
   function makeSongNumber(row, index) {
-    const oldNumber =
-      row.querySelector(".song-number");
+    const oldNumber = row.querySelector(".song-number");
 
     if (!oldNumber) return;
 
@@ -1934,29 +1638,16 @@
       return;
     }
 
-    const numberLink =
-      document.createElement("a");
-
-    numberLink.className =
-      "song-number";
-
+    const numberLink = document.createElement("a");
+    numberLink.className = "song-number";
     numberLink.href = "#";
+    numberLink.textContent = oldNumber.textContent.trim();
+    numberLink.setAttribute("aria-label", `Play song ${index + 2}`);
 
-    numberLink.textContent =
-      oldNumber.textContent.trim();
-
-    numberLink.setAttribute(
-      "aria-label",
-      `Play song ${index + 2}`
-    );
-
-    numberLink.addEventListener(
-      "click",
-      event => {
-        event.preventDefault();
-        playSongFromRow(row);
-      }
-    );
+    numberLink.addEventListener("click", event => {
+      event.preventDefault();
+      playSongFromRow(row);
+    });
 
     oldNumber.replaceWith(numberLink);
   }
@@ -1968,83 +1659,45 @@
   function updateSongRows() {
     const rows = songRows();
 
-    rows.forEach(
-      (row, index) => {
-        row.dataset.songIndex =
-          String(index + 1);
+    rows.forEach((row, index) => {
+      row.dataset.songIndex = String(index + 1);
 
-        const info =
-          SONG_INFO[index + 1];
+      const info = SONG_INFO[index + 1];
 
-        if (!info) return;
+      if (!info) return;
 
-        const titleElement =
-          row.querySelector(
-            ".song-title"
-          );
+      const titleElement = row.querySelector(".song-title");
 
-        if (!titleElement) return;
+      if (!titleElement) return;
 
-        titleElement.innerHTML = "";
+      titleElement.innerHTML = "";
 
-        const titleText =
-          document.createTextNode(
-            `♫ ${info[0]}`
-          );
+      const titleText = document.createTextNode(`♫ ${info[0]}`);
 
-        const keyword =
-          document.createElement("small");
+      const keyword = document.createElement("small");
+      keyword.textContent = `${iconLabel(iconFilename(info[2]))} — ${info[1]}`;
 
-        keyword.textContent =
-          `${iconLabel(iconFilename(info[2]))} — ${info[1]}`;
+      titleElement.appendChild(titleText);
+      titleElement.appendChild(keyword);
 
-        titleElement.appendChild(
-          titleText
-        );
+      titleElement.setAttribute("role", "button");
+      titleElement.setAttribute("tabindex", "0");
+      titleElement.setAttribute("aria-label", `Play ${info[0]}`);
 
-        titleElement.appendChild(
-          keyword
-        );
+      titleElement.addEventListener("click", event => {
+        event.preventDefault();
+        event.stopPropagation();
+        playSongFromRow(row);
+      });
 
-        titleElement.setAttribute(
-          "role",
-          "button"
-        );
-
-        titleElement.setAttribute(
-          "tabindex",
-          "0"
-        );
-
-        titleElement.setAttribute(
-          "aria-label",
-          `Play ${info[0]}`
-        );
-
-        titleElement.addEventListener(
-          "click",
-          event => {
-            event.preventDefault();
-            event.stopPropagation();
-            playSongFromRow(row);
-          }
-        );
-
-        titleElement.addEventListener(
-          "keydown",
-          event => {
-            if (
-              event.key === "Enter" ||
-              event.key === " "
-            ) {
-              event.preventDefault();
-              event.stopPropagation();
-              playSongFromRow(row);
-            }
-          }
-        );
-      }
-    );
+      titleElement.addEventListener("keydown", event => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          event.stopPropagation();
+          playSongFromRow(row);
+        }
+      });
+    });
 
     restoreRoadworkRows();
     updatePottyTimeLock();
@@ -2059,50 +1712,34 @@
   function putIcons() {
     const rows = songRows();
 
-    rows.forEach(
-      (row, index) => {
-        row.dataset.songIndex =
-          String(index + 1);
+    rows.forEach((row, index) => {
+      row.dataset.songIndex = String(index + 1);
 
-        if (
-          row.querySelector(
-            ".animal-button"
-          )
-        ) {
-          return;
-        }
-
-        const info =
-          SONG_INFO[index + 1];
-
-        if (!info) return;
-
-        const filename =
-          info[2];
-
-        if (!filename) return;
-
-        const songTitle = info[0];
-        const icon = makeImage(filename, songTitle);
-
-        row.appendChild(icon);
-
-        // Clicking the animal icon now copies the share link for your site instead of playing audio
-        icon.addEventListener(
-          "click",
-          event => {
-            event.preventDefault();
-            event.stopPropagation();
-            handleShareClick(row, songTitle);
-          }
-        );
-
-        makeSongNumber(
-          row,
-          index
-        );
+      if (row.querySelector(".animal-button")) {
+        return;
       }
-    );
+
+      const info = SONG_INFO[index + 1];
+
+      if (!info) return;
+
+      const filename = info[2];
+
+      if (!filename) return;
+
+      const songTitle = info[0];
+      const icon = makeImage(filename, songTitle);
+
+      row.appendChild(icon);
+
+      icon.addEventListener("click", event => {
+        event.preventDefault();
+        event.stopPropagation();
+        handleShareClick(row, songTitle);
+      });
+
+      makeSongNumber(row, index);
+    });
 
     restoreRoadworkRows();
     updatePottyTimeLock();
@@ -2115,25 +1752,17 @@
      ========================================================= */
 
   function getCardSongIndex(card) {
-    const link =
-      card.querySelector("a");
+    const link = card.querySelector("a");
 
     if (!link) return -1;
 
-    const match =
-      link.textContent.match(
-        /(\d+)/
-      );
+    const match = link.textContent.match(/(\d+)/);
 
     if (!match) return -1;
 
-    const songNumber =
-      Number(match[1]);
+    const songNumber = Number(match[1]);
 
-    if (
-      !Number.isInteger(songNumber) ||
-      songNumber < 1
-    ) {
+    if (!Number.isInteger(songNumber) || songNumber < 1) {
       return -1;
     }
 
@@ -2143,52 +1772,33 @@
   function playCard(card) {
     if (!card) return;
 
-    const link =
-      card.querySelector("a");
+    const link = card.querySelector("a");
 
     if (!link) return;
 
-    const songIndex =
-      getCardSongIndex(card);
+    const songIndex = getCardSongIndex(card);
 
-    if (
-      isPottyTimeSongNumber(songIndex) &&
-      !isPottyTimeUnlocked()
-    ) {
+    if (isPottyTimeSongNumber(songIndex) && !isPottyTimeUnlocked()) {
       return;
     }
 
-    if (
-      isNiceAndSlowSongNumber(songIndex) &&
-      !isNiceAndSlowUnlocked()
-    ) {
+    if (isNiceAndSlowSongNumber(songIndex) && !isNiceAndSlowUnlocked()) {
       return;
     }
 
-    if (
-      isRollingStoneSongNumber(songIndex) &&
-      !isRollingStoneUnlocked()
-    ) {
+    if (isRollingStoneSongNumber(songIndex) && !isRollingStoneUnlocked()) {
       return;
     }
 
-    if (
-      typeof link.onclick ===
-      "function"
-    ) {
+    if (typeof link.onclick === "function") {
       link.onclick({
         preventDefault() {},
         stopPropagation() {}
       });
-
       return;
     }
 
-    if (
-      songIndex >= 0 &&
-      typeof window.play ===
-        "function"
-    ) {
+    if (songIndex >= 0 && typeof window.play === "function") {
       window.play(songIndex);
     }
   }
@@ -2196,164 +1806,78 @@
   function makeCardClickable(card) {
     if (!card) return;
 
-    if (
-      card.dataset.animalCardReady ===
-      "true"
-    ) {
+    if (card.dataset.animalCardReady === "true") {
       return;
     }
 
-    card.addEventListener(
-      "click",
-      event => {
+    card.addEventListener("click", event => {
+      event.preventDefault();
+      event.stopPropagation();
+      playCard(card);
+    });
+
+    card.addEventListener("keydown", event => {
+      if (event.key === "Enter" || event.key === " ") {
         event.preventDefault();
         event.stopPropagation();
         playCard(card);
       }
-    );
+    });
 
-    card.addEventListener(
-      "keydown",
-      event => {
-        if (
-          event.key === "Enter" ||
-          event.key === " "
-        ) {
-          event.preventDefault();
-          event.stopPropagation();
-          playCard(card);
-        }
-      }
-    );
-
-    card.setAttribute(
-      "role",
-      "button"
-    );
-
-    card.setAttribute(
-      "tabindex",
-      "0"
-    );
-
-    card.setAttribute(
-      "aria-label",
-      "Play this music reading card"
-    );
-
-    card.dataset.animalCardReady =
-      "true";
+    card.setAttribute("role", "button");
+    card.setAttribute("tabindex", "0");
+    card.setAttribute("aria-label", "Play this music reading card");
+    card.dataset.animalCardReady = "true";
   }
 
   function addAnimalToCard(card) {
     if (!card) return;
 
-    const songIndex =
-      getCardSongIndex(card);
+    const songIndex = getCardSongIndex(card);
 
     if (songIndex < 0) return;
 
-    const info =
-      SONG_INFO[songIndex];
+    const info = SONG_INFO[songIndex];
 
     if (!info) return;
 
-    const animalFile =
-      info[2];
+    const animalFile = info[2];
 
     if (!animalFile) return;
 
-    const actualFilename =
-      iconFilename(animalFile);
+    const actualFilename = iconFilename(animalFile);
+    const animalName = iconLabel(actualFilename);
 
-    const animalName =
-      iconLabel(actualFilename);
-
-    if (
-      card.querySelector(
-        ".card-animal-icon"
-      )
-    ) {
+    if (card.querySelector(".card-animal-icon")) {
       makeCardClickable(card);
       return;
     }
 
-    const symbol =
-      card.querySelector(
-        ".symbol"
-      );
+    const symbol = card.querySelector(".symbol");
+    const strong = card.querySelector("strong");
+    const link = card.querySelector("a");
 
-    const strong =
-      card.querySelector(
-        "strong"
-      );
+    if (symbol) symbol.style.display = "none";
+    if (strong) strong.style.display = "none";
+    if (link) link.style.display = "none";
 
-    const link =
-      card.querySelector("a");
-
-    if (symbol) {
-      symbol.style.display =
-        "none";
-    }
-
-    if (strong) {
-      strong.style.display =
-        "none";
-    }
-
-    if (link) {
-      link.style.display =
-        "none";
-    }
-
-    const img =
-      document.createElement(
-        "img"
-      );
-
-    img.className =
-      "card-animal-icon";
-
-    img.src =
-      RAW_PREFIX +
-      encodeURIComponent(
-        actualFilename
-      );
-
-    img.alt =
-      animalName;
-
-    img.title =
-      animalName;
-
-    img.loading =
-      "lazy";
-
-    img.decoding =
-      "async";
-
-    img.dataset.songIndex =
-      String(songIndex);
+    const img = document.createElement("img");
+    img.className = "card-animal-icon";
+    img.src = RAW_PREFIX + encodeURIComponent(actualFilename);
+    img.alt = animalName;
+    img.title = animalName;
+    img.loading = "lazy";
+    img.decoding = "async";
+    img.dataset.songIndex = String(songIndex);
 
     img.onerror = () => {
-      img.replaceWith(
-        fallback()
-      );
+      img.replaceWith(fallback());
     };
 
-    const name =
-      document.createElement(
-        "span"
-      );
-
-    name.className =
-      "card-animal-name";
-
-    name.textContent =
-      animalName;
-
-    name.dataset.songIndex =
-      String(songIndex);
+    const name = document.createElement("span");
+    name.className = "card-animal-name";
+    name.textContent = animalName;
+    name.dataset.songIndex = String(songIndex);
 
     card.appendChild(img);
     card.appendChild(name);
@@ -2369,16 +1893,11 @@
     updatingCards = true;
 
     try {
-      const cardElements =
-        document.querySelectorAll(
-          "#cards .card"
-        );
+      const cardElements = document.querySelectorAll("#cards .card");
 
-      cardElements.forEach(
-        card => {
-          addAnimalToCard(card);
-        }
-      );
+      cardElements.forEach(card => {
+        addAnimalToCard(card);
+      });
     } finally {
       updatingCards = false;
     }
@@ -2391,79 +1910,41 @@
   let cardsToggleOpen = false;
 
   function setupCardsToggle() {
-    const button =
-      document.getElementById(
-        "draw-cards"
-      );
-
-    const cards =
-      document.getElementById(
-        "cards"
-      );
-
-    const reading =
-      document.getElementById(
-        "reading"
-      );
+    const button = document.getElementById("draw-cards");
+    const cards = document.getElementById("cards");
+    const reading = document.getElementById("reading");
 
     if (!button || !cards || !reading) {
       return;
     }
 
-    cardsToggleOpen =
-      !!cards.querySelector(".card");
+    cardsToggleOpen = !!cards.querySelector(".card");
 
-    button.setAttribute(
-      "aria-expanded",
-      String(cardsToggleOpen)
-    );
+    button.setAttribute("aria-expanded", String(cardsToggleOpen));
 
-    button.addEventListener(
-      "click",
-      () => {
-        if (cardsToggleOpen) {
-          cardsToggleOpen = false;
+    button.addEventListener("click", () => {
+      if (cardsToggleOpen) {
+        cardsToggleOpen = false;
+        reading.hidden = true;
+        cards.style.display = "none";
+        button.setAttribute("aria-expanded", "false");
+        return;
+      }
 
-          cardPlaylist = null;
-          cardPosition = 0;
+      cardsToggleOpen = true;
+      reading.hidden = false;
+      button.setAttribute("aria-expanded", "true");
 
-          reading.hidden = true;
-
-          cards.style.display =
-            "none";
-
-          button.setAttribute(
-            "aria-expanded",
-            "false"
-          );
-
+      requestAnimationFrame(() => {
+        if (!cardsToggleOpen) {
           return;
         }
 
-        cardsToggleOpen = true;
-
-        reading.hidden = false;
-
-        button.setAttribute(
-          "aria-expanded",
-          "true"
-        );
-
-        requestAnimationFrame(
-          () => {
-            if (!cardsToggleOpen) {
-              return;
-            }
-
-            cards.style.display =
-              "grid";
-
-            addCardIcons();
-            scheduleReadingScroll();
-          }
-        );
-      }
-    );
+        cards.style.display = "grid";
+        addCardIcons();
+        scheduleReadingScroll();
+      });
+    });
   }
 
   /* =========================================================
@@ -2473,65 +1954,32 @@
   let scrollScheduled = false;
 
   function positionReading() {
-    const reading =
-      document.getElementById(
-        "reading"
-      );
+    const reading = document.getElementById("reading");
 
     if (!reading) return;
 
-    const cards =
-      document.getElementById(
-        "cards"
-      );
+    const cards = document.getElementById("cards");
 
-    if (
-      cards &&
-      !cardsToggleOpen
-    ) {
+    if (cards && !cardsToggleOpen) {
       return;
     }
 
-    const readingRect =
-      reading.getBoundingClientRect();
+    const readingRect = reading.getBoundingClientRect();
+    const readingDocumentTop = window.scrollY + readingRect.top;
+    const readingHeight = readingRect.height;
+    const viewportHeight = window.innerHeight;
 
-    const readingDocumentTop =
-      window.scrollY +
-      readingRect.top;
-
-    const readingHeight =
-      readingRect.height;
-
-    const viewportHeight =
-      window.innerHeight;
-
-    const dock =
-      document.querySelector(
-        ".player-dock"
-      );
-
-    const dockHeight =
-      dock
-        ? dock.getBoundingClientRect()
-            .height
-        : 0;
-
-    const usableHeight =
-      viewportHeight -
-      dockHeight;
+    const dock = document.querySelector(".player-dock");
+    const dockHeight = dock ? dock.getBoundingClientRect().height : 0;
+    const usableHeight = viewportHeight - dockHeight;
 
     const targetY =
       readingDocumentTop -
       dockHeight -
-      (usableHeight -
-        readingHeight) /
-        2;
+      (usableHeight - readingHeight) / 2;
 
     window.scrollTo({
-      top: Math.max(
-        0,
-        targetY
-      ),
+      top: Math.max(0, targetY),
       behavior: "smooth"
     });
   }
@@ -2543,21 +1991,17 @@
 
     scrollScheduled = true;
 
-    requestAnimationFrame(
-      () => {
-        scrollScheduled = false;
+    requestAnimationFrame(() => {
+      scrollScheduled = false;
 
-        requestAnimationFrame(
-          () => {
-            addCardIcons();
+      requestAnimationFrame(() => {
+        addCardIcons();
 
-            if (cardsToggleOpen) {
-              positionReading();
-            }
-          }
-        );
-      }
-    );
+        if (cardsToggleOpen) {
+          positionReading();
+        }
+      });
+    });
   }
 
   /* =========================================================
@@ -2565,52 +2009,37 @@
      ========================================================= */
 
   function setupCardWatching() {
-    const cards =
-      document.getElementById(
-        "cards"
-      );
+    const cards = document.getElementById("cards");
 
     if (!cards) return;
 
-    const observer =
-      new MutationObserver(
-        mutations => {
-          let newCards = false;
+    const observer = new MutationObserver(mutations => {
+      let newCards = false;
 
-          for (
-            const mutation of mutations
-          ) {
-            if (
-              mutation.type ===
-                "childList" &&
-              mutation.addedNodes.length
-            ) {
-              newCards = true;
-              break;
-            }
-          }
-
-          if (!newCards) {
-            return;
-          }
-
-          if (!updatingCards) {
-            addCardIcons();
-
-            if (cardsToggleOpen) {
-              scheduleReadingScroll();
-            }
-          }
+      for (const mutation of mutations) {
+        if (mutation.type === "childList" && mutation.addedNodes.length) {
+          newCards = true;
+          break;
         }
-      );
-
-    observer.observe(
-      cards,
-      {
-        childList: true,
-        subtree: true
       }
-    );
+
+      if (!newCards) {
+        return;
+      }
+
+      if (!updatingCards) {
+        addCardIcons();
+
+        if (cardsToggleOpen) {
+          scheduleReadingScroll();
+        }
+      }
+    });
+
+    observer.observe(cards, {
+      childList: true,
+      subtree: true
+    });
 
     addCardIcons();
   }
@@ -2660,17 +2089,13 @@
     updateNiceAndSlowLock();
 
     updateRollingStoneLock();
+
+    // Catch and process shared song parameters (?song=X) when the page loads
+    handleSharedSongParameter();
   }
 
-  if (
-    document.readyState ===
-    "loading"
-  ) {
-    document.addEventListener(
-      "DOMContentLoaded",
-      init,
-      { once: true }
-    );
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", init, { once: true });
   } else {
     init();
   }
