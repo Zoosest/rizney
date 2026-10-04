@@ -236,7 +236,7 @@
     ["Christmas Means CARNAGE!!", "Devotion", "goose.png"],
     ["Pep Love", "Plenty", "pig.png"],
     ["Don't Fence Me In (Macauley Culkin Syndrome)", "Potential", "larva.png"],
-    ["Surfin U.S.A 🏄‍♀️️", "Autonomy", "sea-lion.png"],
+    ["Surfin U.S.A 🏄‍♀", "Autonomy", "sea-lion.png"],
     ["And a Chocolate Chippy Cookie", "Attentiveness", "mongoose.png"],
     ["Good Grief", "Gratitude", "turkey.png"],
     ["Fixer Upper", "Kindness", "deer.png"],
@@ -914,7 +914,7 @@
   }
 
   /* =========================================================
-     SHARE LINK NOTIFICATION TOAST
+     SHARE LINK NOTIFICATION TOAST (CLEAN URL ONLY)
      ========================================================= */
 
   let toastTimer = null;
@@ -954,32 +954,22 @@
     const songIndex = row.dataset.songIndex || "";
     const cleanUrl = `${window.location.origin}${window.location.pathname}?song=${songIndex}`;
 
-    if (navigator.share && /Mobi|Android/i.test(navigator.userAgent)) {
-      navigator.share({
-        title: `Rizney Music Archive — ${songTitle}`,
-        text: `Check out "${songTitle}" on Rizney Music!`,
-        url: cleanUrl
-      }).catch(() => {
-        copyToClipboard(cleanUrl, songTitle);
-      });
-    } else {
-      copyToClipboard(cleanUrl, songTitle);
-    }
+    copyToClipboard(cleanUrl);
   }
 
-  function copyToClipboard(url, songTitle) {
+  function copyToClipboard(url) {
     if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(url).then(() => {
-        showShareToast(`🔗 Link copied for "${songTitle}"!`);
+        showShareToast(`🔗 Copied link: ${url}`);
       }).catch(() => {
-        fallbackCopyText(url, songTitle);
+        fallbackCopyText(url);
       });
     } else {
-      fallbackCopyText(url, songTitle);
+      fallbackCopyText(url);
     }
   }
 
-  function fallbackCopyText(text, songTitle) {
+  function fallbackCopyText(text) {
     const textarea = document.createElement("textarea");
     textarea.value = text;
     textarea.style.position = "fixed";
@@ -989,7 +979,7 @@
     textarea.select();
     try {
       document.execCommand("copy");
-      showShareToast(`🔗 Link copied for "${songTitle}"!`);
+      showShareToast(`🔗 Copied link: ${text}`);
     } catch (err) {
       showShareToast("⚠️ Could not copy link automatically");
     }
@@ -1009,7 +999,6 @@
     const targetIndex = Number(songIndexParam);
     if (!Number.isInteger(targetIndex) || targetIndex < 1) return;
 
-    // Flag to tell your site's default initializer to back off if needed
     window.__rizneySharedSongTarget = targetIndex;
 
     const checkReadyInterval = window.setInterval(() => {
@@ -1029,7 +1018,6 @@
           window.setTimeout(() => {
             playSongFromRow(targetRow);
 
-            // Autoplay policy fallback: tap anywhere to kick it off if blocked
             const unlockAutoplay = () => {
               playSongFromRow(targetRow);
               document.removeEventListener("click", unlockAutoplay);
@@ -1450,8 +1438,8 @@
     const actualFilename = iconFilename(filename);
     const label = iconLabel(actualFilename);
 
-    button.title = `Share link for: ${songTitle}`;
-    button.setAttribute("aria-label", `Share link for ${songTitle}`);
+    button.title = `Copy link for: ${songTitle}`;
+    button.setAttribute("aria-label", `Copy link for ${songTitle}`);
 
     const img = document.createElement("img");
 
@@ -2114,7 +2102,6 @@
 
     updateRollingStoneLock();
 
-    // Catch and process shared song parameters (?song=X) when the page loads
     handleSharedSongParameter();
   }
 
