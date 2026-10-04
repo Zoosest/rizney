@@ -987,7 +987,7 @@
   }
 
   /* =========================================================
-     AUTO-PLAY FROM SHARED LINK (?song=X) - PRIORITY OVERRIDE
+     AUTO-PLAY FROM SHARED LINK (?song=X) - HARD OVERRIDE
      ========================================================= */
 
   function handleSharedSongParameter() {
@@ -1001,9 +1001,18 @@
 
     window.__rizneySharedSongTarget = targetIndex;
 
-    // Suppress default first-song auto-play if native handlers check for it
+    // Hard-suppress default player behaviors
     window.autoload = false;
     window.skipAutoload = true;
+    window.initialSong = null;
+
+    // Clear any audio elements or source attributes trying to load immediately on startup
+    const audioElements = document.querySelectorAll("audio, video");
+    audioElements.forEach(el => {
+      el.pause();
+      el.removeAttribute("src");
+      el.load();
+    });
 
     const checkReadyInterval = window.setInterval(() => {
       const rows = songRows();
@@ -1033,7 +1042,7 @@
           }, 500);
         }
       }
-    }, 150);
+    }, 100);
 
     window.setTimeout(() => {
       window.clearInterval(checkReadyInterval);
@@ -2065,7 +2074,7 @@
      ========================================================= */
 
   function init() {
-    // Run shared song check first so it can disable default autoload
+    // Run shared song check first so it can disable default autoload and media players
     handleSharedSongParameter();
 
     addStyles();
