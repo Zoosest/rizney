@@ -1001,6 +1001,10 @@
 
     window.__rizneySharedSongTarget = targetIndex;
 
+    // Suppress default first-song auto-play if native handlers check for it
+    window.autoload = false;
+    window.skipAutoload = true;
+
     const checkReadyInterval = window.setInterval(() => {
       const rows = songRows();
       
@@ -2061,6 +2065,9 @@
      ========================================================= */
 
   function init() {
+    // Run shared song check first so it can disable default autoload
+    handleSharedSongParameter();
+
     addStyles();
 
     setupSearch();
@@ -2101,8 +2108,6 @@
     updateNiceAndSlowLock();
 
     updateRollingStoneLock();
-
-    handleSharedSongParameter();
   }
 
   if (document.readyState === "loading") {
