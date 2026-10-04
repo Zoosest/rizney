@@ -43,6 +43,14 @@
     "rollingStoneUnlocked";
 
   /*
+    Special Whac-a-Track suggestions
+    for two particularly suspicious tracks.
+  */
+  let whacTipLastSong = null;
+
+  let whacTipTimer = null;
+
+  /*
     Song information is kept in chronological order.
     The first entry [index 0] is your intro track, followed by your animal-icon songs.
   */
@@ -632,6 +640,64 @@
         cursor: not-allowed;
       }
 
+      /*
+        =======================================================
+        WHAC-A-TRACK SONG TIPS
+        =======================================================
+      */
+
+      #whac-song-tip {
+        position: fixed;
+        left: 50%;
+        bottom: 110px;
+        transform: translateX(-50%) translateY(20px);
+        width: min(90%, 420px);
+        box-sizing: border-box;
+        padding: 14px 16px;
+        background: linear-gradient(145deg, #21102e, #090509);
+        border: 2px solid var(--gold, #d4af37);
+        border-radius: 12px;
+        color: var(--bright-purple, #e0aaff);
+        text-align: center;
+        font-family: Georgia, "Times New Roman", serif;
+        box-shadow: 0 8px 24px rgba(0,0,0,.65);
+        z-index: 99998;
+        opacity: 0;
+        pointer-events: none;
+        transition:
+          opacity .25s ease,
+          transform .25s ease;
+      }
+
+      #whac-song-tip.visible {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+        pointer-events: auto;
+      }
+
+      #whac-song-tip strong {
+        display: block;
+        color: var(--bright-gold, #f5d76e);
+        font-size: 1rem;
+        line-height: 1.35;
+        margin-bottom: 8px;
+      }
+
+      #whac-song-tip button {
+        padding: 8px 14px;
+        background: var(--purple, #c084fc);
+        color: #120b18;
+        border: 0;
+        border-radius: 5px;
+        font-family: Georgia, "Times New Roman", serif;
+        font-weight: 700;
+        cursor: pointer;
+      }
+
+      #whac-song-tip button:hover {
+        background: var(--bright-purple, #e0aaff);
+      }
+
       #cards {
         display: grid;
         grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -819,6 +885,158 @@
     `;
 
     document.head.appendChild(style);
+  }
+
+  /* =========================================================
+     WHACK-A-TRACK SONG TIPS
+     ========================================================= */
+
+  function showWhacSongTip(songNumber) {
+    const messages = {
+      4: {
+        title: "This track is kinda whack... 😸",
+        button: "PLAY WHAC-A-TRACK"
+      },
+
+      9: {
+        title: "This track is definitely whack!! 😸",
+        button: "PLAY WHAC-A-TRACK"
+      }
+    };
+
+    const message =
+      messages[songNumber];
+
+    if (!message) {
+      return;
+    }
+
+    let tip =
+      document.getElementById(
+        "whac-song-tip"
+      );
+
+    if (!tip) {
+      tip =
+        document.createElement("div");
+
+      tip.id =
+        "whac-song-tip";
+
+      document.body.appendChild(tip);
+    }
+
+    clearTimeout(
+      whacTipTimer
+    );
+
+    tip.innerHTML = `
+      <strong>${message.title}</strong>
+
+      <button
+        type="button"
+        id="whac-song-tip-button"
+      >
+        ${message.button}
+      </button>
+    `;
+
+    const button =
+      document.getElementById(
+        "whac-song-tip-button"
+      );
+
+    if (button) {
+      button.onclick = () => {
+        const whackButton =
+          document.getElementById(
+            "whack-track"
+          );
+
+        if (whackButton) {
+          whackButton.click();
+        }
+
+        tip.classList.remove(
+          "visible"
+        );
+      };
+    }
+
+    requestAnimationFrame(() => {
+      tip.classList.add(
+        "visible"
+      );
+    });
+
+    whacTipTimer =
+      window.setTimeout(() => {
+        tip.classList.remove(
+          "visible"
+        );
+      }, 7000);
+  }
+
+  function checkForWhacSongTip() {
+    const nowPlaying =
+      document.getElementById(
+        "now-playing"
+      );
+
+    if (!nowPlaying) {
+      return;
+    }
+
+    const text =
+      nowPlaying.textContent
+        .toLowerCase();
+
+    let currentSongNumber =
+      null;
+
+    if (
+      text.includes(
+        "hijacked"
+      )
+    ) {
+      currentSongNumber = 4;
+    }
+
+    if (
+      text.includes(
+        "chucky (child's play)"
+      )
+    ) {
+      currentSongNumber = 9;
+    }
+
+    /*
+      A different song resets the trigger.
+    */
+    if (
+      currentSongNumber === null
+    ) {
+      whacTipLastSong = null;
+      return;
+    }
+
+    /*
+      Only show the popup once per
+      visit to that song.
+    */
+    if (
+      whacTipLastSong ===
+      currentSongNumber
+    ) {
+      return;
+    }
+
+    whacTipLastSong =
+      currentSongNumber;
+
+    showWhacSongTip(
+      currentSongNumber
+    );
   }
 
   /* =========================================================
@@ -2349,6 +2567,15 @@
     setupCardsToggle();
 
     setupCardWatching();
+
+    /*
+      Watch the currently playing song for
+      the special Whac-a-Track suggestions.
+    */
+    window.setInterval(
+      checkForWhacSongTip,
+      500
+    );
 
     addCardIcons();
 
