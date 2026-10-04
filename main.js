@@ -649,7 +649,7 @@
       #whac-song-tip {
         position: fixed;
         left: 50%;
-        bottom: 110px;
+        bottom: 180px;
         transform: translateX(-50%) translateY(20px);
         width: min(90%, 420px);
         box-sizing: border-box;
