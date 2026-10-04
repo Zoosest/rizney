@@ -1009,19 +1009,40 @@
     const targetIndex = Number(songIndexParam);
     if (!Number.isInteger(targetIndex) || targetIndex < 1) return;
 
-    window.setTimeout(() => {
+    const checkReadyInterval = window.setInterval(() => {
       const rows = songRows();
-      const targetRow = rows[targetIndex - 1];
+      
+      if (rows.length >= targetIndex) {
+        window.clearInterval(checkReadyInterval);
+        
+        const targetRow = rows[targetIndex - 1];
 
-      if (targetRow) {
-        targetRow.scrollIntoView({
-          behavior: "smooth",
-          block: "center"
-        });
+        if (targetRow) {
+          targetRow.scrollIntoView({
+            behavior: "smooth",
+            block: "center"
+          });
 
-        playSongFromRow(targetRow);
+          window.setTimeout(() => {
+            playSongFromRow(targetRow);
+
+            // Fallback for browser autoplay policies: play on the very first user tap anywhere
+            const unlockAutoplay = () => {
+              playSongFromRow(targetRow);
+              document.removeEventListener("click", unlockAutoplay);
+              document.removeEventListener("keydown", unlockAutoplay);
+            };
+            document.addEventListener("click", unlockAutoplay, { once: true });
+            document.addEventListener("keydown", unlockAutoplay, { once: true });
+
+          }, 400);
+        }
       }
-    }, 600);
+    }, 150);
+
+    window.setTimeout(() => {
+      window.clearInterval(checkReadyInterval);
+    }, 5000);
   }
 
   /* =========================================================
