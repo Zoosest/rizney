@@ -236,7 +236,7 @@
     ["Christmas Means CARNAGE!!", "Devotion", "goose.png"],
     ["Pep Love", "Plenty", "pig.png"],
     ["Don't Fence Me In (Macauley Culkin Syndrome)", "Potential", "larva.png"],
-    ["Surfin U.S.A 🏄‍♀️", "Autonomy", "sea-lion.png"],
+    ["Surfin U.S.A 🏄‍♀️️", "Autonomy", "sea-lion.png"],
     ["And a Chocolate Chippy Cookie", "Attentiveness", "mongoose.png"],
     ["Good Grief", "Gratitude", "turkey.png"],
     ["Fixer Upper", "Kindness", "deer.png"],
@@ -997,7 +997,7 @@
   }
 
   /* =========================================================
-     AUTO-PLAY FROM SHARED LINK (?song=X)
+     AUTO-PLAY FROM SHARED LINK (?song=X) - PRIORITY OVERRIDE
      ========================================================= */
 
   function handleSharedSongParameter() {
@@ -1008,6 +1008,9 @@
 
     const targetIndex = Number(songIndexParam);
     if (!Number.isInteger(targetIndex) || targetIndex < 1) return;
+
+    // Flag to tell your site's default initializer to back off if needed
+    window.__rizneySharedSongTarget = targetIndex;
 
     const checkReadyInterval = window.setInterval(() => {
       const rows = songRows();
@@ -1026,7 +1029,7 @@
           window.setTimeout(() => {
             playSongFromRow(targetRow);
 
-            // Fallback for browser autoplay policies: play on the very first user tap anywhere
+            // Autoplay policy fallback: tap anywhere to kick it off if blocked
             const unlockAutoplay = () => {
               playSongFromRow(targetRow);
               document.removeEventListener("click", unlockAutoplay);
@@ -1035,7 +1038,7 @@
             document.addEventListener("click", unlockAutoplay, { once: true });
             document.addEventListener("keydown", unlockAutoplay, { once: true });
 
-          }, 400);
+          }, 500);
         }
       }
     }, 150);
