@@ -169,7 +169,7 @@
     ["The Rules (stampede)", "Migration", "wildebeest.png"],
     ["Bottle Shock (PEW)", "Limits", "skunk.png"],
     ["JEWS (Ante Up)", "Fearlessness", "shark.png"],
-    ["F*** Resilience", "Rebirth", "butterfly.png"],
+    ["F Resilience", "Rebirth", "butterfly.png"],
     ["Monkey Judge 🐒⚖", "Articulation", "howler-monkey.png"],
     ["Mask or No Mask (voodoo dolls)", "Display", "peacock.png"],
     ["6 Ways To Sunday", "Demarcation", "scorpion.png"],
@@ -282,7 +282,7 @@
   ];
 
   /* =========================================================
-     STYLES
+     STYLES (Includes Share Notification Toast)
      ========================================================= */
 
   function addStyles() {
@@ -490,22 +490,12 @@
         cursor: pointer;
       }
 
-      /*
-        NORMAL SONGS DO NOT CHANGE COLOR ON HOVER.
-        The gold appearance belongs only to the
-        currently playing song.
-      */
-
       #song-list .song-title:focus-visible {
         outline: 2px solid var(--bright-gold, #f5d76e);
         outline-offset: 3px;
         border-radius: 4px;
       }
 
-      /*
-        CURRENTLY PLAYING SONG:
-        Title + animal + keyword text become gold.
-      */
       #song-list .song.playing .song-title,
       #song-list .song.playing .song-title small {
         color: var(--bright-gold, #f5d76e) !important;
@@ -548,6 +538,42 @@
         border: 0;
         background: transparent;
         box-sizing: border-box;
+        transition: transform 0.15s ease;
+      }
+
+      #song-list .animal-button:hover img {
+        transform: scale(1.08);
+      }
+
+      /*
+        =======================================================
+        SHARE NOTIFICATION TOAST
+        =======================================================
+      */
+
+      #rizney-share-toast {
+        position: fixed;
+        left: 50%;
+        bottom: 120px;
+        transform: translateX(-50%) translateY(20px);
+        background: linear-gradient(145deg, #21102e, #090509);
+        border: 2px solid var(--bright-gold, #f5d76e);
+        color: var(--bright-gold, #f5d76e);
+        padding: 10px 18px;
+        border-radius: 12px;
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: 0.9rem;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7);
+        z-index: 99999;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.25s ease, transform 0.25s ease;
+        text-align: center;
+      }
+
+      #rizney-share-toast.visible {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
       }
 
       /*
@@ -885,6 +911,93 @@
     `;
 
     document.head.appendChild(style);
+  }
+
+  /* =========================================================
+     SHARE LINK NOTIFICATION TOAST
+     ========================================================= */
+
+  let toastTimer = null;
+
+  function showShareToast(message) {
+    let toast = document.getElementById("rizney-share-toast");
+
+    if (!toast) {
+      toast = document.createElement("div");
+      toast.id = "rizney-share-toast";
+      document.body.appendChild(toast);
+    }
+
+    clearTimeout(toastTimer);
+
+    toast.textContent = message;
+
+    requestAnimationFrame(() => {
+      toast.classList.add("visible");
+    });
+
+    toastTimer = window.setTimeout(() => {
+      toast.classList.remove("visible");
+    }, 3000);
+  }
+
+  function handleShareClick(row, songTitle) {
+    // Check locks first
+    if (
+      (isRollingStoneRow(row) && !isRollingStoneUnlocked()) ||
+      (isNiceAndSlowRow(row) && !isNiceAndSlowUnlocked()) ||
+      (isPottyTimeRow(row) && !isPottyTimeUnlocked())
+    ) {
+      showShareToast("🔒 This song is currently locked!");
+      return;
+    }
+
+    // Build the share link pointing to your site with a song query/fragment parameter
+    const songIndex = row.dataset.songIndex || "";
+    const cleanUrl = `${window.location.origin}${window.location.pathname}?song=${songIndex}`;
+
+    // Try native mobile share sheet first if supported, otherwise copy to clipboard
+    if (navigator.share && /Mobi|Android/i.test(navigator.userAgent)) {
+      navigator.share({
+        title: `Rizney Music Archive — ${songTitle}`,
+        text: `Check out "${songTitle}" on Rizney Music!`,
+        url: cleanUrl
+      }).catch(() => {
+        // Fallback to clipboard if share sheet is canceled
+        copyToClipboard(cleanUrl, songTitle);
+      });
+    } else {
+      copyToClipboard(cleanUrl, songTitle);
+    }
+  }
+
+  function copyToClipboard(url, songTitle) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(url).then(() => {
+        showShareToast(`🔗 Link copied for "${songTitle}"!`);
+      }).catch(() => {
+        fallbackCopyText(url, songTitle);
+      });
+    } else {
+      fallbackCopyText(url, songTitle);
+    }
+  }
+
+  function fallbackCopyText(text, songTitle) {
+    const textarea = document.createElement("textarea");
+    textarea.value = text;
+    textarea.style.position = "fixed";
+    textarea.style.opacity = "0";
+    document.body.appendChild(textarea);
+    textarea.focus();
+    textarea.select();
+    try {
+      document.execCommand("copy");
+      showShareToast(`🔗 Link copied for "${songTitle}"!`);
+    } catch (err) {
+      showShareToast("⚠️ Could not copy link automatically");
+    }
+    document.body.removeChild(textarea);
   }
 
   /* =========================================================
@@ -1475,7 +1588,7 @@
     return span;
   }
 
-  function makeImage(filename) {
+  function makeImage(filename, songTitle) {
     const button = document.createElement("button");
 
     button.type = "button";
@@ -1484,8 +1597,9 @@
     const actualFilename = iconFilename(filename);
     const label = iconLabel(actualFilename);
 
-    button.title = label;
-    button.setAttribute("aria-label", label);
+    // Update aria-label to reflect that clicking this animal shares/copies the link
+    button.title = `Share link for: ${songTitle}`;
+    button.setAttribute("aria-label", `Share link for ${songTitle}`);
 
     const img = document.createElement("img");
 
@@ -1518,10 +1632,6 @@
 
     /*
       🔒 A ROLLING STONE GATHERS NO MAS LOCK
-
-      This song cannot be played until
-      the YOHO Pirate Duel has been
-      successfully completed.
     */
     if (
       isRollingStoneRow(row) &&
@@ -1542,10 +1652,6 @@
 
     /*
       🔒 NICE & SLOW LOCK
-
-      Nice & Slow cannot be played until
-      the Delaware Pirate Duel has been
-      successfully completed.
     */
     if (
       isNiceAndSlowRow(row) &&
@@ -1566,10 +1672,6 @@
 
     /*
       🔒 POTTY TIME LOCK
-
-      POTTY TIME cannot be played until
-      the Monkey Judge pirate duel has
-      been successfully completed.
     */
     if (
       isPottyTimeRow(row) &&
@@ -1951,7 +2053,7 @@
   }
 
   /* =========================================================
-     ANIMAL ICONS ON SONG ROWS
+     ANIMAL ICONS AS SHARE BUTTONS
      ========================================================= */
 
   function putIcons() {
@@ -1980,17 +2082,18 @@
 
         if (!filename) return;
 
-        const icon =
-          makeImage(filename);
+        const songTitle = info[0];
+        const icon = makeImage(filename, songTitle);
 
         row.appendChild(icon);
 
+        // Clicking the animal icon now copies the share link for your site instead of playing audio
         icon.addEventListener(
           "click",
           event => {
             event.preventDefault();
             event.stopPropagation();
-            playSongFromRow(row);
+            handleShareClick(row, songTitle);
           }
         );
 
@@ -2048,12 +2151,6 @@
     const songIndex =
       getCardSongIndex(card);
 
-    /*
-      🔒 POTTY TIME LOCK
-
-      Music Reading cards must obey the same
-      unlock rule as the normal song rows.
-    */
     if (
       isPottyTimeSongNumber(songIndex) &&
       !isPottyTimeUnlocked()
@@ -2061,12 +2158,6 @@
       return;
     }
 
-    /*
-      🔒 NICE & SLOW LOCK
-
-      Music Reading cards must obey the same
-      unlock rule as the normal song rows.
-    */
     if (
       isNiceAndSlowSongNumber(songIndex) &&
       !isNiceAndSlowUnlocked()
@@ -2074,12 +2165,6 @@
       return;
     }
 
-    /*
-      🔒 A ROLLING STONE GATHERS NO MAS LOCK
-
-      Music Reading cards must obey the same
-      unlock rule as the normal song rows.
-    */
     if (
       isRollingStoneSongNumber(songIndex) &&
       !isRollingStoneUnlocked()
@@ -2222,7 +2307,9 @@
     }
 
     const img =
-      document.createElement("img");
+      document.createElement(
+        "img"
+      );
 
     img.className =
       "card-animal-icon";
@@ -2545,20 +2632,11 @@
 
     setupPottyTimeLockWatching();
 
-    /*
-      Delaware Pirate Duel tells main.js
-      immediately when Nice & Slow is unlocked.
-    */
     window.addEventListener(
       "niceAndSlowUnlocked",
       updateNiceAndSlowLock
     );
 
-    /*
-      YOHO Pirate Duel tells main.js
-      immediately when A Rolling Stone
-      Gathers NO MAS is unlocked.
-    */
     window.addEventListener(
       "rollingStoneUnlocked",
       updateRollingStoneLock
@@ -2568,10 +2646,6 @@
 
     setupCardWatching();
 
-    /*
-      Watch the currently playing song for
-      the special Whac-a-Track suggestions.
-    */
     window.setInterval(
       checkForWhacSongTip,
       500
