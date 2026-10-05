@@ -968,6 +968,39 @@
 
     const introVideoId = 'mkKOtZPLkzY';
 
+    /*
+      =========================================================
+      SHARED SONG LINK
+      =========================================================
+
+      Normal visit:
+        No ?song= parameter
+        → load the normal intro.
+
+      Shared visit:
+        ?song=1 through ?song=222
+        → load that archive song directly when the
+          YouTube player is created.
+
+      The archive numbering is 1-based:
+        ?song=1   → ids[0]
+        ?song=222 → ids[221]
+
+      The intro is NOT part of this numbering.
+    */
+
+    const sharedSongParams =
+      new URLSearchParams(window.location.search);
+
+    const sharedSongNumber =
+      Number(sharedSongParams.get('song'));
+
+    const hasValidSharedSong =
+      sharedSongParams.has('song') &&
+      Number.isInteger(sharedSongNumber) &&
+      sharedSongNumber >= 1 &&
+      sharedSongNumber <= 222;
+
     const ids = songs
       .map(url =>
         url.match(
@@ -975,6 +1008,24 @@
         )?.[1]
       )
       .filter(Boolean);
+
+    /*
+      Choose the video's initial source BEFORE the
+      YouTube player is created.
+
+      This is the important fix:
+      the intro is no longer loaded first on a
+      shared-song URL.
+    */
+    const initialVideoId =
+      hasValidSharedSong
+        ? ids[sharedSongNumber - 1]
+        : introVideoId;
+
+    const initialSongIndex =
+      hasValidSharedSong
+        ? sharedSongNumber - 1
+        : -1;
 
     window.rizneySongIds = ids;
 
@@ -1271,7 +1322,12 @@
         'player',
         {
 
-          videoId: introVideoId,
+          /*
+            IMPORTANT:
+            On a shared URL this is the shared song,
+            not the intro.
+          */
+          videoId: initialVideoId,
 
           playerVars: {
             autoplay: 0,
@@ -1287,8 +1343,31 @@
               window.rizneyPlayer =
                 player;
 
-              nowPlaying.textContent =
-                "Now playing: MEGA MIX'N'MOJO Intro";
+              /*
+                Set the archive position immediately
+                when this is a shared-song visit.
+
+                Normal visits remain at the intro.
+              */
+              if (hasValidSharedSong) {
+
+                currentIndex =
+                  initialSongIndex;
+
+                nowPlaying.textContent =
+                  `Now playing: ${titleFor(currentIndex)}`;
+
+                updatePlayingIndicator();
+
+              } else {
+
+                currentIndex = -1;
+
+                nowPlaying.textContent =
+                  "Now playing: MEGA MIX'N'MOJO Intro";
+
+                updatePlayingIndicator();
+              }
 
               updateButtons();
             },
