@@ -1064,6 +1064,8 @@
 
     /*
       Stop any ordinary media elements that may have started.
+      This prevents the normal intro from continuing while
+      the shared song is being selected.
     */
     const audioElements =
       document.querySelectorAll("audio, video");
@@ -1113,22 +1115,95 @@
 
       /*
         Scroll directly to the shared song.
-
-        IMPORTANT:
-        We intentionally DO NOT call playSongFromRow()
-        here.
-
-        The shared link should only scroll to the song.
-        The visitor must explicitly choose to play it.
-
-        This also means pressing CARDS, RANDOM,
-        WHAC-A-TRACK, or another control will NOT
-        accidentally resurrect the shared song.
       */
       targetRow.scrollIntoView({
         behavior: "smooth",
         block: "center"
       });
+
+      /*
+        -------------------------------------------------------
+        SHARED-LINK AUTOPLAY
+        -------------------------------------------------------
+
+        Give the normal player startup a moment to finish,
+        then explicitly play the shared song.
+
+        IMPORTANT:
+
+        If the visitor interacts with ANY normal control
+        before this happens, cancel the pending shared-song
+        playback.
+
+        This prevents the shared song from suddenly coming
+        back after pressing RANDOM, NEXT, PREVIOUS, CARDS,
+        WHAC-A-TRACK, etc.
+      */
+
+      let sharedSongCancelled = false;
+
+      const cancelSharedSong = () => {
+        sharedSongCancelled = true;
+
+        document.removeEventListener(
+          "click",
+          cancelSharedSong
+        );
+
+        document.removeEventListener(
+          "keydown",
+          cancelSharedSong
+        );
+      };
+
+      /*
+        Listen for a real user interaction while the shared
+        song is waiting to take control.
+
+        We intentionally do NOT prevent the user's action.
+        We only cancel the pending shared-song autoplay.
+      */
+      document.addEventListener(
+        "click",
+        cancelSharedSong,
+        { once: true }
+      );
+
+      document.addEventListener(
+        "keydown",
+        cancelSharedSong,
+        { once: true }
+      );
+
+      /*
+        Give the existing player startup time to settle.
+        Then explicitly play the requested archive song,
+        unless the visitor already chose another action.
+      */
+      window.setTimeout(() => {
+        if (sharedSongCancelled) {
+          return;
+        }
+
+        document.removeEventListener(
+          "click",
+          cancelSharedSong
+        );
+
+        document.removeEventListener(
+          "keydown",
+          cancelSharedSong
+        );
+
+        /*
+          Explicitly select the shared archive row.
+
+          This is the important part that was missing from
+          the current version of the function.
+        */
+        playSongFromRow(targetRow);
+
+      }, 900);
 
     }, 100);
 
