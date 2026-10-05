@@ -1026,7 +1026,7 @@
   }
 
   /* =========================================================
-     AUTO-PLAY FROM SHARED LINK (?song=X)
+     SHARED LINK (?song=X)
      ========================================================= */
 
   function handleSharedSongParameter() {
@@ -1113,42 +1113,22 @@
 
       /*
         Scroll directly to the shared song.
+
+        IMPORTANT:
+        We intentionally DO NOT call playSongFromRow()
+        here.
+
+        The shared link should only scroll to the song.
+        The visitor must explicitly choose to play it.
+
+        This also means pressing CARDS, RANDOM,
+        WHAC-A-TRACK, or another control will NOT
+        accidentally resurrect the shared song.
       */
       targetRow.scrollIntoView({
         behavior: "smooth",
         block: "center"
       });
-
-      /*
-        Give the page a moment to finish positioning,
-        then use the SAME play mechanism used by the
-        normal archive controls.
-      */
-      window.setTimeout(() => {
-        playSongFromRow(targetRow);
-
-        /*
-          If the browser blocks automatic playback,
-          the first user click or key press will play
-          the shared song instead of the intro.
-        */
-        const unlockAutoplay = () => {
-          playSongFromRow(targetRow);
-        };
-
-        document.addEventListener(
-          "click",
-          unlockAutoplay,
-          { once: true }
-        );
-
-        document.addEventListener(
-          "keydown",
-          unlockAutoplay,
-          { once: true }
-        );
-
-      }, 700);
 
     }, 100);
 
