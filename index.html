@@ -172,6 +172,34 @@
       padding-bottom:8px;
     }
 
+    /* =========================================================
+       TRACK LISTING HEADER
+       ========================================================= */
+
+    .track-listing-header {
+      display:flex;
+      align-items:baseline;
+      justify-content:space-between;
+      gap:12px;
+      border-bottom:1px solid var(--gold);
+      padding-bottom:8px;
+    }
+
+    .track-listing-header h2 {
+      margin:0;
+      border-bottom:0;
+      padding-bottom:0;
+    }
+
+    .share-hint {
+      flex:0 0 auto;
+      color:var(--muted);
+      font-family:Georgia,"Times New Roman",serif;
+      font-size:.68rem;
+      font-style:italic;
+      white-space:nowrap;
+    }
+
     #cards {
       display:grid;
       grid-template-columns:repeat(3,minmax(0,1fr));
@@ -441,6 +469,10 @@
         margin-left:5px;
       }
 
+      .share-hint {
+        font-size:.61rem;
+      }
+
       footer {
         margin-top:3px;
         padding:2px 0 3px;
@@ -555,7 +587,10 @@
 
     <section>
 
-      <h2>Track listing</h2>
+      <div class="track-listing-header">
+        <h2>Track listing</h2>
+        <span class="share-hint">Tap animal to share</span>
+      </div>
 
       <div id="song-list"></div>
 
@@ -1520,4 +1555,3 @@
 
 </body>
 </html>
-
