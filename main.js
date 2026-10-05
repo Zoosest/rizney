@@ -43,6 +43,45 @@
     "rollingStoneUnlocked";
 
   /*
+    =========================================================
+    SHARED LINK — EARLY STARTUP CHECK
+    =========================================================
+
+    IMPORTANT:
+
+    Normal visit:
+      No ?song= parameter
+      → normal intro behavior remains untouched.
+
+    Shared song link:
+      ?song=1 through ?song=222
+      → suppress the normal intro/autoload immediately.
+
+    This happens BEFORE DOMContentLoaded so the regular
+    player startup has a chance to see these flags.
+  */
+
+  const sharedSongParams =
+    new URLSearchParams(window.location.search);
+
+  const sharedSongNumber =
+    Number(sharedSongParams.get("song"));
+
+  const hasValidSharedSong =
+    sharedSongParams.has("song") &&
+    Number.isInteger(sharedSongNumber) &&
+    sharedSongNumber >= 1 &&
+    sharedSongNumber <= 222;
+
+  if (hasValidSharedSong) {
+    window.__rizneySharedSongTarget = sharedSongNumber;
+
+    window.autoload = false;
+    window.skipAutoload = true;
+    window.initialSong = null;
+  }
+
+  /*
     Special Whac-a-Track suggestions
     for two particularly suspicious tracks.
   */
@@ -987,66 +1026,138 @@
   }
 
   /* =========================================================
-     AUTO-PLAY FROM SHARED LINK (?song=X) - HARD OVERRIDE
+     AUTO-PLAY FROM SHARED LINK (?song=X)
      ========================================================= */
 
   function handleSharedSongParameter() {
-    const params = new URLSearchParams(window.location.search);
-    const songIndexParam = params.get("song");
+    /*
+      If there is no valid shared-song link, do absolutely
+      nothing. This preserves normal intro behavior.
+    */
 
-    if (!songIndexParam) return;
+    if (!hasValidSharedSong) {
+      return;
+    }
 
-    const targetIndex = Number(songIndexParam);
-    if (!Number.isInteger(targetIndex) || targetIndex < 1) return;
+    /*
+      This number represents the ACTUAL archive song number.
 
-    window.__rizneySharedSongTarget = targetIndex;
+      ?song=1 → rows[0] → Unfinished Business
+      ?song=2 → rows[1] → The Age of Hypergamy
+      ...
+      ?song=222 → rows[221] → Divine Comedy
 
-    // Hard-suppress default player behaviors
+      The intro is NOT part of this numbering.
+    */
+
+    const targetSongNumber = sharedSongNumber;
+
+    window.__rizneySharedSongTarget = targetSongNumber;
+
+    /*
+      Re-apply the startup suppression here as well,
+      after the DOM is ready.
+    */
     window.autoload = false;
     window.skipAutoload = true;
     window.initialSong = null;
 
-    // Clear any audio elements or source attributes trying to load immediately on startup
-    const audioElements = document.querySelectorAll("audio, video");
+    /*
+      Stop any ordinary media elements that may have started.
+    */
+    const audioElements =
+      document.querySelectorAll("audio, video");
+
     audioElements.forEach(el => {
-      el.pause();
-      el.removeAttribute("src");
-      el.load();
+      try {
+        el.pause();
+        el.removeAttribute("src");
+        el.load();
+      } catch (error) {}
     });
 
+    /*
+      Wait for the actual archive rows to exist.
+    */
     const checkReadyInterval = window.setInterval(() => {
       const rows = songRows();
-      
-      if (rows.length >= targetIndex) {
-        window.clearInterval(checkReadyInterval);
-        
-        const targetRow = rows[targetIndex - 1];
 
-        if (targetRow) {
-          targetRow.scrollIntoView({
-            behavior: "smooth",
-            block: "center"
-          });
-
-          window.setTimeout(() => {
-            playSongFromRow(targetRow);
-
-            const unlockAutoplay = () => {
-              playSongFromRow(targetRow);
-              document.removeEventListener("click", unlockAutoplay);
-              document.removeEventListener("keydown", unlockAutoplay);
-            };
-            document.addEventListener("click", unlockAutoplay, { once: true });
-            document.addEventListener("keydown", unlockAutoplay, { once: true });
-
-          }, 500);
-        }
+      /*
+        We need at least targetSongNumber rows because
+        song #1 is rows[0], not the intro.
+      */
+      if (rows.length < targetSongNumber) {
+        return;
       }
+
+      window.clearInterval(checkReadyInterval);
+
+      /*
+        CRITICAL MAPPING:
+
+        Song 1 → rows[0]
+        Song 2 → rows[1]
+        Song 222 → rows[221]
+
+        This intentionally skips the intro.
+      */
+      const targetRow =
+        rows[targetSongNumber - 1];
+
+      if (!targetRow) {
+        return;
+      }
+
+      targetRow.dataset.songIndex =
+        String(targetSongNumber);
+
+      /*
+        Scroll directly to the shared song.
+      */
+      targetRow.scrollIntoView({
+        behavior: "smooth",
+        block: "center"
+      });
+
+      /*
+        Give the page a moment to finish positioning,
+        then use the SAME play mechanism used by the
+        normal archive controls.
+      */
+      window.setTimeout(() => {
+        playSongFromRow(targetRow);
+
+        /*
+          If the browser blocks automatic playback,
+          the first user click or key press will play
+          the shared song instead of the intro.
+        */
+        const unlockAutoplay = () => {
+          playSongFromRow(targetRow);
+        };
+
+        document.addEventListener(
+          "click",
+          unlockAutoplay,
+          { once: true }
+        );
+
+        document.addEventListener(
+          "keydown",
+          unlockAutoplay,
+          { once: true }
+        );
+
+      }, 700);
+
     }, 100);
 
+    /*
+      Safety timeout so the watcher can never run forever.
+    */
     window.setTimeout(() => {
       window.clearInterval(checkReadyInterval);
-    }, 5000);
+    }, 10000);
   }
 
   /* =========================================================
@@ -2074,7 +2185,13 @@
      ========================================================= */
 
   function init() {
-    // Run shared song check first so it can disable default autoload and media players
+    /*
+      Shared-link handling runs first.
+
+      If there is no ?song= link, this function returns
+      immediately and the site's normal intro behavior
+      remains unchanged.
+    */
     handleSharedSongParameter();
 
     addStyles();
