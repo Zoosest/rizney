@@ -1483,15 +1483,21 @@
 
       introTransitionPending = false;
 
-      cardPlaylist =
-        [...ids.keys()]
-          .sort(
-            () => Math.random() - 0.5
-          )
-          .slice(
-            0,
-            Math.min(6, ids.length)
-          );
+      // Fisher–Yates shuffle: shuffle the song indices fairly.
+      cardPlaylist = [...ids.keys()];
+
+      for (let i = cardPlaylist.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+
+        [cardPlaylist[i], cardPlaylist[j]] =
+          [cardPlaylist[j], cardPlaylist[i]];
+      }
+
+      // Keep only the first six shuffled songs.
+      cardPlaylist = cardPlaylist.slice(
+        0,
+        Math.min(6, ids.length)
+      );
 
       cardPosition = 0;
 
