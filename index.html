@@ -402,7 +402,7 @@
       margin:0 auto;
     }
 
-    /* NEW DONATION OVERLAY */
+    /* DONATION OVERLAY */
 
     #donate-overlay {
       position:fixed;
@@ -411,63 +411,74 @@
       display:none;
       overflow-y:auto;
       background:rgba(0,0,0,.97);
-      padding:18px 12px 40px;
+      padding:18px 12px 24px;
     }
 
     #donate-overlay.open {
       display:block;
     }
 
+    /* Same width as Context so Back aligns at the same left edge. */
     .donate-page {
-      width:min(100%,700px);
+      width:min(100%,900px);
       margin:0 auto;
       text-align:center;
+    }
+
+    .donate-page > .context-close {
+      display:block;
+      width:max-content;
+      margin:0 0 10px;
     }
 
     .donate-page h1 {
       display:block;
       color:var(--bright-gold);
-      font-size:1.7rem;
+      font-size:1.4rem;
       text-align:center;
-      margin:8px 0 20px;
-    }
-
-    .donate-image {
-      display:block;
-      width:100%;
-      max-width:500px;
-      max-height:60vh;
-      object-fit:contain;
-      margin:0 auto 22px;
+      margin:4px 0 12px;
     }
 
     .donate-text {
+      width:min(100%,700px);
       color:var(--muted);
-      line-height:1.7;
+      line-height:1.5;
+      font-size:.9rem;
       text-align:left;
-      margin:20px auto;
+      margin:12px auto;
     }
 
     .donate-text p {
       color:var(--muted);
-      line-height:1.7;
+      font-size:inherit;
+      line-height:inherit;
+      margin:0 0 10px;
     }
 
     .donate-support {
       display:inline-block;
       border:1px solid var(--gold);
       border-radius:999px;
-      padding:11px 20px;
+      padding:9px 16px;
       color:#fff;
       background:#55208a;
       font-family:Georgia,"Times New Roman",serif;
-      font-size:.9rem;
+      font-size:.85rem;
       text-decoration:none;
-      margin:10px auto 22px;
+      margin:4px auto 12px;
     }
 
     .donate-support:hover {
       background:#7e35bc;
+    }
+
+    .donate-image {
+      display:block;
+      width:100%;
+      max-width:420px;
+      max-height:35vh;
+      object-fit:contain;
+      margin:8px auto 0;
     }
 
     @media(max-width:500px) {
@@ -566,13 +577,36 @@
         padding:14px 12px 30px;
       }
 
-      .context-page h1,
-      .donate-page h1 {
+      .context-page h1 {
         font-size:1.35rem;
       }
 
+      .donate-page h1 {
+        font-size:1.2rem;
+        margin:2px 0 8px;
+      }
+
+      .donate-text {
+        font-size:.82rem;
+        line-height:1.45;
+        margin:8px auto;
+      }
+
+      .donate-text p {
+        line-height:inherit;
+        margin-bottom:8px;
+      }
+
+      .donate-support {
+        font-size:.8rem;
+        padding:8px 14px;
+        margin:3px auto 8px;
+      }
+
       .donate-image {
-        max-height:55vh;
+        max-height:30vh;
+        max-width:100%;
+        margin-top:5px;
       }
     }
   </style>
@@ -815,7 +849,7 @@
 
   </section>
 
-  <!-- NEW DONATION OVERLAY -->
+  <!-- DONATION OVERLAY -->
 
   <section
     id="donate-overlay"
@@ -839,7 +873,7 @@
 
         <p>
           Anything would really help me out right now. I promise I'm not a malignant narcissist. thanks
-         </p>
+        </p>
 
       </div>
 
@@ -1536,7 +1570,7 @@
       updateButtons();
     };
 
-    /* NEW DONATION OVERLAY CONTROLS */
+    /* DONATION OVERLAY CONTROLS */
 
     const donateButton = $('#donate-button');
     const donateOverlay = $('#donate-overlay');
@@ -1628,4 +1662,3 @@
 
 </body>
 </html>
-
